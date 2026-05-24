@@ -181,12 +181,14 @@ export const useDatasetStore = defineStore("dataset", {
     async deleteDraft(id: string): Promise<void> {
       await repository.deleteDraft(id);
       if (this.currentDraft?.id === id) {
-        this.currentDraft = null;
-        this.sessionSourceType = null;
-        this.sessionSourceLabel = "";
-        this.appMode = "empty";
-        this.saveState = "idle";
+        this.resetEditorState();
       }
+      await this.refreshDrafts();
+    },
+
+    async deleteAllDrafts(): Promise<void> {
+      await repository.deleteAllDrafts();
+      this.resetEditorState();
       await this.refreshDrafts();
     },
 
@@ -253,6 +255,21 @@ export const useDatasetStore = defineStore("dataset", {
     updateSessionSource(sourceType: DatasetSourceType, label = ""): void {
       this.sessionSourceType = sourceType;
       this.sessionSourceLabel = label;
+    },
+
+    resetEditorState(): void {
+      if (this.autosaveTimer) {
+        clearTimeout(this.autosaveTimer);
+        this.autosaveTimer = null;
+      }
+
+      this.currentDraft = null;
+      this.sessionSourceType = null;
+      this.sessionSourceLabel = "";
+      this.appMode = "empty";
+      this.saveState = "idle";
+      this.saveError = "";
+      this.lastPersistedSnapshot = snapshot(null);
     },
 
     async persistPreview(preview: ImportPreview, overrideId?: string): Promise<DatasetDraftRecord> {

@@ -16,8 +16,18 @@ const store = useDatasetStore();
 const sourceDialogOpen = ref(false);
 const fileDialogOpen = ref(false);
 const deleteId = ref("");
+const deleteAllRequested = ref(false);
 
 const drafts = computed(() => store.drafts);
+const deleteDialogOpen = computed(() => Boolean(deleteId.value) || deleteAllRequested.value);
+const bulkDeleteMessage = computed(() => {
+  const draftCount = drafts.value.length;
+  const target = draftCount === 1 ? "den lokalen Entwurf" : `alle ${draftCount} lokalen Entwürfe`;
+  const activeDraftNotice = store.currentDraft
+    ? " Auch der aktuell geladene Entwurf wird gelöscht und der Editor zurückgesetzt."
+    : "";
+  return `Möchten Sie wirklich ${target} löschen?${activeDraftNotice}`;
+});
 
 async function handleImported(preview: ImportPreview): Promise<void> {
   sourceDialogOpen.value = false;
@@ -64,6 +74,21 @@ async function deleteDraft(): Promise<void> {
   await store.deleteDraft(id);
 }
 
+async function confirmDelete(): Promise<void> {
+  if (deleteAllRequested.value) {
+    deleteAllRequested.value = false;
+    await store.deleteAllDrafts();
+    return;
+  }
+
+  await deleteDraft();
+}
+
+function closeDeleteDialog(): void {
+  deleteId.value = "";
+  deleteAllRequested.value = false;
+}
+
 function scrollToDrafts(): void {
   document.getElementById("drafts")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -104,6 +129,7 @@ function scrollToDrafts(): void {
         @open="void openDraft($event)"
         @duplicate="void duplicateDraft($event)"
         @delete="deleteId = $event"
+        @delete-all="deleteAllRequested = true"
         @export="exportDraft($event)"
       />
     </section>
@@ -127,12 +153,12 @@ function scrollToDrafts(): void {
     />
 
     <ConfirmDialog
-      v-if="deleteId"
-      title="Entwurf löschen"
-      message="Möchten Sie diesen lokalen Entwurf wirklich löschen?"
+      v-if="deleteDialogOpen"
+      :title="deleteAllRequested ? 'Alle Entwürfe löschen' : 'Entwurf löschen'"
+      :message="deleteAllRequested ? bulkDeleteMessage : 'Möchten Sie diesen lokalen Entwurf wirklich löschen?'"
       confirm-label="Löschen"
-      @close="deleteId = ''"
-      @confirm="void deleteDraft()"
+      @close="closeDeleteDialog()"
+      @confirm="void confirmDelete()"
     />
   </div>
 </template>

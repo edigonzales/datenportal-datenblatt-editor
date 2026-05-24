@@ -50,6 +50,10 @@ export class DatasetRepository {
     await this.db.datasets.delete(id);
   }
 
+  async deleteAllDrafts(): Promise<void> {
+    await this.db.datasets.clear();
+  }
+
   async duplicateDraft(id: string): Promise<DatasetDraftRecord> {
     const original = await this.getDraft(id);
     if (!original) {

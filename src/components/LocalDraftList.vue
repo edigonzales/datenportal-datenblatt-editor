@@ -10,6 +10,7 @@ const emit = defineEmits<{
   open: [id: string];
   duplicate: [id: string];
   delete: [id: string];
+  "delete-all": [];
   export: [id: string];
 }>();
 </script>
@@ -21,6 +22,9 @@ const emit = defineEmits<{
         <h2>Lokale Entwürfe</h2>
         <p class="muted">Bearbeitungsstände aus diesem Browser, sortiert nach letzter Änderung.</p>
       </div>
+      <button v-if="drafts.length" class="button button--danger" type="button" @click="emit('delete-all')">
+        Alle löschen
+      </button>
     </div>
 
     <div v-if="drafts.length" class="draft-list">
