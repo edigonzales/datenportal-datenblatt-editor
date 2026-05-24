@@ -3,6 +3,13 @@
 #
 # Recommended template: Node.gitignore
 
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+.vite/
+
 # TODO: where does this rule come from?
 docs/_book
 
@@ -79,4 +86,3 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
-

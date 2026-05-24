@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title>Datenblatt Editor</title>
+  <rect width="512" height="512" rx="72" fill="#f5f6f8"/>
+  <rect x="64" y="64" width="384" height="384" rx="40" fill="#ffffff" stroke="#d0d7de" stroke-width="12"/>
+  <path d="M150 140h150l62 62v170H150z" fill="#ffffff" stroke="#5b6470" stroke-width="16"/>
+  <path d="M300 140v62h62" fill="none" stroke="#5b6470" stroke-width="16"/>
+  <path d="M192 264h128M192 322h128" stroke="#d33833" stroke-linecap="round" stroke-width="20"/>
+</svg>

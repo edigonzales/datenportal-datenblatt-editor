@@ -1,0 +1,26 @@
+[
+  {
+    "identifier": "so.afu.nitratmessungen",
+    "title": "Nitratmessungen im Kanton Solothurn",
+    "description": "Messwerte zur Wasserqualität an kantonalen Messstellen.",
+    "modified": "2026-05-12",
+    "organizationUnit": "Amt für Umwelt",
+    "keywords": ["Wasserqualität", "Nitrat"]
+  },
+  {
+    "identifier": "so.agi.gemeindegrenzen",
+    "title": "Gemeindegrenzen im Kanton Solothurn",
+    "description": "Aktueller Gesamtbestand der amtlichen Gemeindegrenzen.",
+    "modified": "2026-04-30",
+    "organizationUnit": "Amt für Geoinformation",
+    "keywords": ["Grenzen", "Gemeinden"]
+  },
+  {
+    "identifier": "so.astat.bevoelkerung",
+    "title": "Bevölkerungsbestand nach Gemeinden",
+    "description": "Jährliche Statistik zum Bevölkerungsbestand.",
+    "modified": "2026-03-18",
+    "organizationUnit": "Amt für Statistik",
+    "keywords": ["Bevölkerung", "Statistik"]
+  }
+]
