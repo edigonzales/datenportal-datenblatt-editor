@@ -3,6 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 async function createLocalDraft(page: Page, expectedCount: number): Promise<void> {
   await page.getByRole("button", { name: "Neues Datenblatt anlegen" }).click();
   await expect(page.locator(".context-bar")).toContainText("Neues Datenblatt");
+  await expect(page.locator(".context-bar")).toHaveCSS("border-radius", "10px");
   await page.getByRole("link", { name: "Start" }).click();
   await expect(page.locator(".draft-card")).toHaveCount(expectedCount);
   await expect(page.locator(".draft-card").first()).toHaveCSS("border-radius", "10px");
@@ -21,7 +22,7 @@ test("shows the simplified start screen", async ({ page }) => {
   const activeTab = page.getByRole("link", { name: "Start" });
   const inactiveTab = page.getByRole("link", { name: "Datensatz" });
 
-  await expect(page.getByRole("heading", { name: "Metadaten und Daten lokal bearbeiten" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Metadaten lokal bearbeiten" })).toBeVisible();
   await expect(page.locator(".action-card")).toHaveCount(4);
   await expect(newDatasetCard).toHaveCSS("border-radius", "10px");
   await expect(primaryButton).toBeVisible();
@@ -41,11 +42,18 @@ test("shows the simplified start screen", async ({ page }) => {
 test("loads a dataset from the offline source dialog", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { name: "Metadaten und Daten lokal bearbeiten" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Metadaten lokal bearbeiten" })).toBeVisible();
   await page.getByRole("button", { name: "Quelle öffnen" }).click();
+  const sourceDialog = page.locator(".dialog");
+  await expect(sourceDialog).toHaveCSS("border-radius", "10px");
   const closeButton = page.getByRole("button", { name: "Schließen" });
   await expect(closeButton).toHaveCSS("background-color", "rgb(243, 246, 249)");
   await expect(closeButton).toHaveCSS("border-color", "rgb(234, 237, 241)");
+  await page.getByLabel("Datenblatt suchen oder Identifier eingeben").fill("missing.dataset");
+  await page.getByRole("button", { name: "Direkt laden" }).click();
+  const errorNotice = page.locator(".notice");
+  await expect(errorNotice).toBeVisible();
+  await expect(errorNotice).toHaveCSS("border-radius", "10px");
 
   await page.getByLabel("Datenblatt suchen oder Identifier eingeben").fill("so.afu.nitratmessungen");
   await page.getByRole("button", { name: "Direkt laden" }).click();
@@ -56,6 +64,30 @@ test("loads a dataset from the offline source dialog", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Nitratmessungen im Kanton Solothurn" })).toBeVisible();
   await expect(page.getByText("Von Quelle geladen")).toBeVisible();
   await expect(page.locator(".status-pill", { hasText: "Gespeichert lokal" }).first()).toBeVisible();
+  await expect(page.locator(".surface").first()).toHaveCSS("border-radius", "10px");
+  await expect(page.locator(".sidebar-panel")).toHaveCSS("border-radius", "10px");
+
+  await page.getByRole("link", { name: "Attribute" }).click();
+  await expect(page.locator(".table-wrap")).toHaveCSS("border-radius", "10px");
+
+  await page.getByRole("link", { name: "Datenblatt-Vorschau" }).click();
+  await expect(page.locator(".json-panel")).toHaveCSS("border-radius", "10px");
+  await expect(page.locator(".json-panel pre")).toHaveCSS("border-radius", "10px");
+});
+
+test("shows 10px radius on empty state and file import surfaces", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Datenblatt importieren" }).click();
+  await expect(page.locator(".dialog")).toHaveCSS("border-radius", "10px");
+  await expect(page.locator(".drop-zone")).toHaveCSS("border-radius", "10px");
+  await page.getByRole("button", { name: "Schließen" }).click();
+
+  await createLocalDraft(page, 1);
+  await page.getByRole("link", { name: "Attribute" }).click();
+  const emptyState = page.locator(".empty-state");
+  await expect(emptyState).toContainText("Noch keine Attribute");
+  await expect(emptyState).toHaveCSS("border-radius", "10px");
 });
 
 test("deletes all local drafts at once", async ({ page }) => {
