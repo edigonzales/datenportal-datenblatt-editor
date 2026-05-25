@@ -22,7 +22,7 @@ Der Server muss nur statische Dateien ausliefern.
 Das Git-Repository enthaelt:
 
 - den Applikationscode
-- Snapshot-Quellen unter `public/mock-sources/`
+- die gemockte Quellen-Datei unter `public/mock-sources/`
 - Tests
 
 ### Build-Ausgabe
@@ -115,7 +115,7 @@ Da die App via Service Worker precached wird, kommen Updates ohnehin ueber neue 
 - Navigation zwischen den Routen
 - Oeffnen lokaler Entwuerfe
 - Bearbeiten und Speichern in IndexedDB
-- Laden der Snapshot-Quellen
+- Laden der `dataset.index.json`
 - Export von JSON
 
 ### Was fuer Offline vorher passiert sein muss
@@ -124,7 +124,7 @@ Die Anwendung muss mindestens einmal erfolgreich geladen worden sein, damit:
 
 - App-Shell
 - Assets
-- Snapshot-JSON-Dateien
+- `dataset.index.json`
 - Service Worker
 
 im Browser verfuegbar sind.
@@ -141,14 +141,14 @@ Praktisch bedeutet das:
 
 Wichtig:
 
-- Snapshot-Inhalte werden nicht separat synchronisiert
-- geaenderte Snapshot-Daten kommen nur mit einem neuen Build auf die Clients
+- Index-Inhalte werden nicht separat synchronisiert
+- geaenderte Mock-Daten kommen nur mit einem neuen Build auf die Clients
 
 ## Snapshot-Daten aktualisieren
 
 Wenn sich die "externen" Quelldaten aendern sollen:
 
-1. JSON-Dateien unter `public/mock-sources/` aktualisieren
+1. `public/mock-sources/dataset.index.json` aktualisieren
 2. `npm run build`
 3. `dist/` neu deployen
 
@@ -211,7 +211,7 @@ Vor einem Release:
 2. `npm test`
 3. `npm run build`
 4. `npm run test:e2e`
-5. Snapshot-Quellen fachlich pruefen
+5. `dataset.index.json` fachlich pruefen
 6. `dist/` deployen
 7. installierte App / Offline-Verhalten einmal pruefen
 
@@ -241,7 +241,7 @@ Ja, nach einmaligem Laden der App-Version.
 
 Lokal im Browser in IndexedDB.
 
-### "Wie werden Snapshot-Quellen aktualisiert?"
+### "Wie wird die Mock-Quelle aktualisiert?"
 
 Nur ueber geaenderte JSON-Dateien plus neuen Build und neues Deployment.
 
@@ -277,8 +277,8 @@ Massnahmen:
 
 Pruefen:
 
-- liegt `index.json` fuer die Quelle im Build?
-- wurde die korrekte Quelle deployed?
+- liegt die erwartete `dataset.index.json` im Build?
+- wurde die korrekte Mock-Datei deployed?
 - ist das JSON syntaktisch gueltig?
 
 ### Lokale Entwuerfe "verschwinden"

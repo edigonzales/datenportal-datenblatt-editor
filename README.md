@@ -132,20 +132,19 @@ spec/           Eingangsspezifikation und Mockups
 
 ## Architektur in Kurzform
 
-- Die Startseite bietet drei Ladewege: Snapshot-Quelle, Dateiimport, lokaler Entwurf.
+- Die Startseite bietet drei Ladewege: Quellen-URL, Dateiimport, lokaler Entwurf.
 - Jeder erfolgreich uebernommene Datensatz wird in ein kanonisches Root-Format normalisiert.
 - Entwuerfe werden unter der Dexie-Datenbank `datenblatt-editor` gespeichert.
 - Formularaenderungen werden mit `750 ms` Debounce nach IndexedDB geschrieben.
 - Der Export ist bei Validierungsfehlern blockiert.
-- Die PWA cached App-Shell, Assets und Snapshot-JSON-Dateien fuer kompletten Offline-Betrieb.
+- Die PWA cached App-Shell, Assets und die gemockte `dataset.index.json` fuer kompletten Offline-Betrieb.
 
 ## Quellenmodell im MVP
 
-Der UI-Begriff "JSON von Endpunkt laden" bleibt bewusst erhalten. Technisch wird im MVP aber keine Live-API verwendet, sondern eine mit der App ausgelieferte Snapshot-Struktur:
+Der UI-Begriff "JSON von Endpunkt laden" bleibt bewusst erhalten. Technisch wird im MVP aber keine Live-API verwendet, sondern eine mit der App ausgelieferte Snapshot-Datei:
 
 ```text
-public/mock-sources/<source>/index.json
-public/mock-sources/<source>/datasets/<identifier>.json
+public/mock-sources/dataset.index.json
 ```
 
 Das hat zwei Konsequenzen:
@@ -160,7 +159,7 @@ Lokale Entwuerfe werden in IndexedDB gehalten. Es gibt zwei Stores:
 - `datasets`
 - `settings`
 
-`datasets` speichert den kompletten Draft inklusive Herkunftsinformationen und Root-JSON. `settings` speichert zuletzt verwendete Filter fuer den Quellen-Dialog.
+`datasets` speichert den kompletten Draft inklusive Herkunftsinformationen und Root-JSON. `settings` speichert zuletzt verwendete URL und Filter fuer den Quellen-Dialog.
 
 ## Validierung
 

@@ -67,8 +67,8 @@ flowchart TD
   - listet, speichert, loescht und dupliziert Drafts
   - verwaltet Settings
 - `endpointLoader.ts`
-  - laedt Suchindizes und Dataset-Details aus Snapshot-Dateien
-  - fuehrt Filterung und Direktladen aus
+  - laedt eine `dataset.index.json` aus einer konfigurierten URL
+  - leitet daraus Suchtreffer ab und importiert den gewaehlten Datensatz
 - `fileImporter.ts`
   - liest lokale Dateien
   - parse + Strukturpruefung + Normalisierung
@@ -87,7 +87,7 @@ flowchart TD
 - `StartPage.vue`
   - Einstieg in die drei Ladewege
 - `SourceLoadDialog.vue`
-  - Snapshot-Quelle waehlen, suchen, Vorschau, uebernehmen
+  - Quellen-URL laden, suchen, Auswahl markieren, uebernehmen
 - `FileImportDialog.vue`
   - Dateiimport mit Fehlerbehandlung und Vorschau
 - `DatasetEditor.vue`
@@ -132,11 +132,11 @@ Die Routen sind bewusst flach gehalten. Der aktuelle Draft wird ueber die `id` i
 
 ### 3. Quellen-Import
 
-1. Benutzer waehlt eine Quelle.
-2. `endpointLoader.ts` laedt `index.json`.
+1. Benutzer oeffnet den Dialog mit einer vorbelegten Quellen-URL.
+2. `endpointLoader.ts` laedt `dataset.index.json`.
 3. Suche/Filter laufen im Browser.
-4. Bei Direktladen oder Trefferwahl wird die passende Dataset-Datei geladen.
-5. Strukturvalidierung und Normalisierung laufen wie beim Dateiimport.
+4. Bei Identifier-Auswahl oder Trefferwahl wird ein Datensatz aus dem geladenen Index selektiert.
+5. Strukturvalidierung und Normalisierung laufen erst bei der Uebernahme in den Editor.
 6. Der Draft wird gespeichert und geoeffnet.
 
 ### 4. Bearbeitung und Autosave
@@ -256,7 +256,7 @@ Wichtige Felder:
 
 Wichtige Eintraege:
 
-- `lastSourceId`
+- `lastSourceUrl`
 - `lastOrganizationUnit`
 
 ## Konfliktbehandlung
@@ -337,8 +337,7 @@ Die Grundidee:
 
 Heute:
 
-- `searchIndexPath`
-- `datasetPathTemplate`
+- `indexUrl`
 
 Spaeter moeglich:
 

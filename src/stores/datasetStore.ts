@@ -1,4 +1,5 @@
 import { defineStore } from "pinia";
+import { defaultSourceIndexUrl } from "../config/metadataSources";
 import type {
   AppMode,
   ConflictResolutionContext,
@@ -35,7 +36,7 @@ export const useDatasetStore = defineStore("dataset", {
     pendingConflict: null as ConflictResolutionContext | null,
     lastPersistedSnapshot: snapshot(null),
     autosaveTimer: null as ReturnType<typeof setTimeout> | null,
-    lastSelectedSourceId: "",
+    lastSourceUrl: "",
     lastOrganizationUnit: ""
   }),
   getters: {
@@ -90,14 +91,14 @@ export const useDatasetStore = defineStore("dataset", {
   actions: {
     async initialize(): Promise<void> {
       await this.refreshDrafts();
-      this.lastSelectedSourceId = (await repository.getSetting<string>("lastSourceId")) ?? "dev";
+      this.lastSourceUrl = (await repository.getSetting<string>("lastSourceUrl")) ?? defaultSourceIndexUrl;
       this.lastOrganizationUnit = (await repository.getSetting<string>("lastOrganizationUnit")) ?? "";
     },
 
-    async rememberSourceFilters(sourceId: string, organizationUnit: string): Promise<void> {
-      this.lastSelectedSourceId = sourceId;
+    async rememberSourceFilters(sourceUrl: string, organizationUnit: string): Promise<void> {
+      this.lastSourceUrl = sourceUrl;
       this.lastOrganizationUnit = organizationUnit;
-      await repository.setSetting("lastSourceId", sourceId);
+      await repository.setSetting("lastSourceUrl", sourceUrl);
       await repository.setSetting("lastOrganizationUnit", organizationUnit);
     },
 

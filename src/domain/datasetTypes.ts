@@ -62,11 +62,8 @@ export type ImportShape = "root" | "naked";
 export type ImportConflictAction = "open-existing" | "save-copy" | "overwrite";
 
 export interface MetadataSource {
-  id: string;
   label: string;
-  searchIndexPath: string;
-  datasetPathTemplate: string;
-  organizationUnits: string[];
+  indexUrl: string;
   version: string;
 }
 
@@ -77,7 +74,7 @@ export interface MetadataSearchRecord {
   modified?: string;
   organizationUnit?: string;
   keywords: string[];
-  sourceId: string;
+  document: unknown;
 }
 
 export interface DatasetDraftRecord {

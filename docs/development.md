@@ -131,9 +131,9 @@ Minimaler Pfad:
 
 ### Neue Quelle oder Snapshot aufnehmen
 
-1. Quelle in `src/config/metadataSources.ts` eintragen
-2. Suchindex unter `public/mock-sources/<source>/index.json` ablegen
-3. Dataset-Dateien unter `public/mock-sources/<source>/datasets/` ablegen
+1. Default-URL in `src/config/metadataSources.ts` anpassen
+2. `dataset.index.json` unter `public/mock-sources/` aktualisieren oder ersetzen
+3. Vollstaendige Dataset-JSONs im Index konsistent halten
 4. Such- und Ladefluss im Browser pruefen
 
 ### Neue Validierungsregel einfuehren
@@ -158,22 +158,19 @@ Regel:
 
 ## Snapshot-Daten pflegen
 
-Die "externen Quellen" des MVP sind lokale JSON-Dateien. Das ist bewusst so, damit die App komplett offline laeuft.
+Die "externe Quelle" des MVP ist eine lokale `dataset.index.json`. Das ist bewusst so, damit die App komplett offline laeuft.
 
 Format:
 
 ```text
-public/mock-sources/dev/index.json
-public/mock-sources/dev/datasets/<identifier>.json
-public/mock-sources/prod/index.json
-public/mock-sources/prod/datasets/<identifier>.json
+public/mock-sources/dataset.index.json
 ```
 
-Der Suchindex enthaelt nur Listen-Metadaten. Die Detaildateien enthalten die eigentlichen Dataset-JSONs.
+Die Datei enthaelt ein JSON-Array vollstaendiger Dataset-Root-Dokumente.
 
 Empfehlung bei Aenderungen:
 
-- Identifier im Suchindex und Dateinamen konsistent halten
+- Identifier und enthaltene Dataset-Dokumente konsistent halten
 - nach Aenderungen immer `npm run build` ausfuehren
 - Ladefluss ueber den Dialog einmal komplett pruefen
 

@@ -99,7 +99,7 @@ function scrollToDrafts(): void {
     <section class="action-grid">
       <article class="action-card">
         <h3>Datenblatt von Quelle laden</h3>
-        <p>Metadaten aus einer konfigurierten Quelle durchsuchen, prüfen und übernehmen.</p>
+        <p>Eine dataset.index.json per URL laden, durchsuchen und in den Editor übernehmen.</p>
         <div class="card-actions" style="margin-top: 16px">
           <button class="button button--primary" type="button" @click="sourceDialogOpen = true">Quelle öffnen</button>
         </div>
@@ -143,11 +143,11 @@ function scrollToDrafts(): void {
 
     <SourceLoadDialog
       v-if="sourceDialogOpen"
-      :initial-source-id="store.lastSelectedSourceId"
+      :initial-source-url="store.lastSourceUrl"
       :initial-organization-unit="store.lastOrganizationUnit"
       @close="sourceDialogOpen = false"
       @imported="void handleImported($event)"
-      @remember="void store.rememberSourceFilters($event.sourceId, $event.organizationUnit)"
+      @remember="void store.rememberSourceFilters($event.sourceUrl, $event.organizationUnit)"
     />
 
     <FileImportDialog v-if="fileDialogOpen" @close="fileDialogOpen = false" @imported="void handleImported($event)" />

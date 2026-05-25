@@ -49,19 +49,36 @@ test("loads a dataset from the offline source dialog", async ({ page }) => {
   const closeButton = page.getByRole("button", { name: "Schließen" });
   await expect(closeButton).toHaveCSS("background-color", "rgb(243, 246, 249)");
   await expect(closeButton).toHaveCSS("border-color", "rgb(234, 237, 241)");
-  await page.getByLabel("Datenblatt suchen oder Identifier eingeben").fill("missing.dataset");
-  await page.getByRole("button", { name: "Direkt laden" }).click();
+  await expect(page.getByLabel("Quelle")).toHaveValue("/mock-sources/dataset.index.json");
+  await expect(page.getByLabel("Quelle")).toHaveCSS("height", "38px");
+  await expect(page.getByLabel("Organisationseinheit")).toHaveCSS("height", "38px");
+  await expect(page.getByRole("heading", { name: "Vorschau" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Identifier auswählen" })).toHaveCount(0);
+  const importButton = page.getByRole("button", { name: "In Editor übernehmen" });
+  await expect(importButton).toBeDisabled();
+
+  await page.getByLabel("Quelle").fill("/missing/dataset.index.json");
+  await page.getByRole("button", { name: "Quelle laden" }).click();
   const errorNotice = page.locator(".notice");
   await expect(errorNotice).toBeVisible();
   await expect(errorNotice).toHaveCSS("border-radius", "10px");
+  await expect(errorNotice).toContainText("Die Quelle konnte nicht geladen werden.");
+
+  await page.getByLabel("Quelle").fill("/mock-sources/dataset.index.json");
+  await page.getByRole("button", { name: "Quelle laden" }).click();
+  await expect(sourceDialog).toContainText("3 Datenblätter gefunden");
 
   await page.getByLabel("Datenblatt suchen oder Identifier eingeben").fill("so.afu.nitratmessungen");
-  await page.getByRole("button", { name: "Direkt laden" }).click();
-  await expect(page.getByRole("button", { name: "In Editor übernehmen" })).toBeVisible();
+  await page.getByRole("button", { name: "Suchen" }).click();
+  const nitratCard = sourceDialog.locator(".draft-card").filter({ hasText: "Nitratmessungen im Kanton Solothurn" }).first();
+  await nitratCard.click();
+  const selectedCard = sourceDialog.locator('.draft-card[data-selected="true"]');
+  await expect(selectedCard).toContainText("Nitratmessungen im Kanton Solothurn");
+  await expect(importButton).toBeEnabled();
 
-  await page.getByRole("button", { name: "In Editor übernehmen" }).click();
+  await importButton.click();
 
-  await expect(page.getByRole("heading", { name: "Nitratmessungen im Kanton Solothurn" })).toBeVisible();
+  await expect(page.locator(".context-bar")).toContainText("Nitratmessungen im Kanton Solothurn");
   await expect(page.getByText("Von Quelle geladen")).toBeVisible();
   await expect(page.locator(".status-pill", { hasText: "Gespeichert lokal" }).first()).toBeVisible();
   await expect(page.locator(".surface").first()).toHaveCSS("border-radius", "10px");

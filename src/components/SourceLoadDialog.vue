@@ -1,48 +1,74 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
-import { defaultSourceId, metadataSources } from "../config/metadataSources";
+import { computed, onMounted, ref } from "vue";
+import { defaultMetadataSource, defaultSourceIndexUrl } from "../config/metadataSources";
 import type { ImportPreview, MetadataSearchRecord } from "../domain/datasetTypes";
 import { loadDatasetFromSource, loadSourceIndex, searchSourceIndex } from "../services/endpointLoader";
 
 const props = defineProps<{
-  initialSourceId?: string;
+  initialSourceUrl?: string;
   initialOrganizationUnit?: string;
 }>();
 
 const emit = defineEmits<{
   close: [];
   imported: [preview: ImportPreview];
-  remember: [payload: { sourceId: string; organizationUnit: string }];
+  remember: [payload: { sourceUrl: string; organizationUnit: string }];
 }>();
 
-const sourceId = ref(props.initialSourceId || defaultSourceId);
+const sourceUrl = ref(props.initialSourceUrl || defaultSourceIndexUrl);
 const organizationUnit = ref(props.initialOrganizationUnit || "");
 const query = ref("");
 const entries = ref<MetadataSearchRecord[]>([]);
 const results = ref<MetadataSearchRecord[]>([]);
-const preview = ref<ImportPreview | null>(null);
+const selectedIdentifier = ref("");
 const loading = ref(false);
 const error = ref("");
 
-const source = computed(() => metadataSources.find((entry) => entry.id === sourceId.value) ?? metadataSources[0]);
+const organizationUnits = computed(() =>
+  [...new Set(entries.value.map((entry) => entry.organizationUnit?.trim() ?? "").filter(Boolean))].sort((left, right) =>
+    left.localeCompare(right, "de-CH")
+  )
+);
+
+const selectedEntry = computed(
+  () => results.value.find((entry) => entry.identifier === selectedIdentifier.value) ?? null
+);
 
 onMounted(async () => {
   await reloadIndex();
 });
 
-watch(sourceId, async () => {
-  preview.value = null;
-  await reloadIndex();
-});
+function rememberFilters(): void {
+  emit("remember", {
+    sourceUrl: sourceUrl.value.trim(),
+    organizationUnit: organizationUnit.value
+  });
+}
+
+function updateResults(): void {
+  results.value = searchSourceIndex(entries.value, query.value, organizationUnit.value);
+
+  if (!results.value.some((entry) => entry.identifier === selectedIdentifier.value)) {
+    selectedIdentifier.value = "";
+  }
+}
 
 async function reloadIndex(): Promise<void> {
   loading.value = true;
   error.value = "";
-  results.value = [];
+  selectedIdentifier.value = "";
   try {
-    entries.value = await loadSourceIndex(source.value);
-    results.value = searchSourceIndex(entries.value, query.value, organizationUnit.value);
+    entries.value = await loadSourceIndex(sourceUrl.value.trim());
+
+    if (organizationUnit.value && !organizationUnits.value.includes(organizationUnit.value)) {
+      organizationUnit.value = "";
+    }
+
+    updateResults();
+    rememberFilters();
   } catch (reason) {
+    entries.value = [];
+    results.value = [];
     error.value = reason instanceof Error ? reason.message : "Die Quelle konnte nicht geladen werden.";
   } finally {
     loading.value = false;
@@ -50,26 +76,36 @@ async function reloadIndex(): Promise<void> {
 }
 
 function runSearch(): void {
-  emit("remember", { sourceId: sourceId.value, organizationUnit: organizationUnit.value });
-  results.value = searchSourceIndex(entries.value, query.value, organizationUnit.value);
-}
-
-async function loadIdentifier(identifier: string): Promise<void> {
-  loading.value = true;
   error.value = "";
-  preview.value = null;
-  try {
-    preview.value = await loadDatasetFromSource(source.value, identifier.trim());
-    emit("remember", { sourceId: sourceId.value, organizationUnit: organizationUnit.value });
-  } catch (reason) {
-    error.value = reason instanceof Error ? reason.message : "Das Datenblatt konnte nicht geladen werden.";
-  } finally {
-    loading.value = false;
-  }
+  updateResults();
+  rememberFilters();
 }
 
 function selectResult(entry: MetadataSearchRecord): void {
-  void loadIdentifier(entry.identifier);
+  selectedIdentifier.value = entry.identifier;
+  error.value = "";
+}
+
+async function importSelected(): Promise<void> {
+  if (!selectedEntry.value) {
+    return;
+  }
+
+  loading.value = true;
+  error.value = "";
+  try {
+    const preview = await loadDatasetFromSource(
+      defaultMetadataSource.label,
+      sourceUrl.value.trim(),
+      selectedEntry.value
+    );
+    rememberFilters();
+    emit("imported", preview);
+  } catch (reason) {
+    error.value = reason instanceof Error ? reason.message : "Das Datenblatt konnte nicht übernommen werden.";
+  } finally {
+    loading.value = false;
+  }
 }
 </script>
 
@@ -79,7 +115,7 @@ function selectResult(entry: MetadataSearchRecord): void {
       <div class="dialog-header">
         <div>
           <h2>Datenblatt von Quelle laden</h2>
-          <p class="muted">Offline-Snapshots der konfigurierten Quellen laden, filtern und vor der Übernahme prüfen.</p>
+          <p class="muted">Eine dataset.index.json laden, durchsuchen und den gewählten Datensatz in den Editor übernehmen.</p>
         </div>
         <button class="button" type="button" @click="emit('close')">Schließen</button>
       </div>
@@ -87,18 +123,29 @@ function selectResult(entry: MetadataSearchRecord): void {
       <div class="section-stack">
         <div class="inline-grid">
           <div class="field-row">
-            <label for="source-select">Quelle</label>
-            <select id="source-select" v-model="sourceId" class="select">
-              <option v-for="entry in metadataSources" :key="entry.id" :value="entry.id">{{ entry.label }}</option>
-            </select>
+            <label for="source-url">Quelle</label>
+            <input
+              id="source-url"
+              v-model="sourceUrl"
+              class="text-input"
+              type="url"
+              placeholder="https://example.org/dataset.index.json"
+            />
+            <p class="field-help">Direkte URL zur externen dataset.index.json-Datei.</p>
           </div>
           <div class="field-row">
             <label for="organization-filter">Organisationseinheit</label>
             <select id="organization-filter" v-model="organizationUnit" class="select">
               <option value="">Alle</option>
-              <option v-for="entry in source.organizationUnits" :key="entry" :value="entry">{{ entry }}</option>
+              <option v-for="entry in organizationUnits" :key="entry" :value="entry">{{ entry }}</option>
             </select>
           </div>
+        </div>
+
+        <div class="action-row">
+          <button class="button" type="button" :disabled="loading || !sourceUrl.trim()" @click="void reloadIndex()">
+            Quelle laden
+          </button>
         </div>
 
         <div class="field-row">
@@ -108,61 +155,47 @@ function selectResult(entry: MetadataSearchRecord): void {
 
         <div class="action-row">
           <button class="button button--primary" type="button" :disabled="loading" @click="runSearch">Suchen</button>
-          <button class="button" type="button" :disabled="loading || !query.trim()" @click="loadIdentifier(query)">
-            Direkt laden
-          </button>
         </div>
 
         <div v-if="error" class="notice" data-tone="danger">
-          <strong>Quelle konnte nicht geladen werden</strong>
+          <strong>Vorgang fehlgeschlagen</strong>
           <span>{{ error }}</span>
         </div>
 
-        <div class="grid-main" style="grid-template-columns: minmax(0, 1fr) 320px">
-          <section class="surface section-stack">
-            <div class="header-line">
-              <div>
-                <h3>Treffer</h3>
-                <p class="muted">{{ loading ? "Lade..." : `${results.length} Datenblätter gefunden` }}</p>
-              </div>
+        <section class="surface section-stack">
+          <div class="header-line">
+            <div>
+              <h3>Treffer</h3>
+              <p class="muted">{{ loading ? "Lade..." : `${results.length} Datenblätter gefunden` }}</p>
             </div>
+          </div>
 
-            <div v-if="results.length" class="draft-list">
-              <button
-                v-for="entry in results"
-                :key="entry.identifier"
-                class="draft-card"
-                type="button"
-                style="text-align: left"
-                @click="selectResult(entry)"
-              >
-                <h3>{{ entry.title }}</h3>
-                <p class="mono">{{ entry.identifier }}</p>
-                <p>{{ entry.description }}</p>
-              </button>
-            </div>
-            <div v-else class="empty-state" style="padding: 24px">
-              <h3>Keine Treffer</h3>
-              <p>Versuchen Sie eine andere Organisationseinheit oder einen anderen Suchbegriff.</p>
-            </div>
-          </section>
+          <div v-if="results.length" class="draft-list">
+            <button
+              v-for="entry in results"
+              :key="entry.identifier"
+              class="draft-card draft-card--selectable"
+              :data-selected="selectedIdentifier === entry.identifier"
+              type="button"
+              style="text-align: left"
+              @click="selectResult(entry)"
+            >
+              <h3>{{ entry.title || "Unbenanntes Datenblatt" }}</h3>
+              <p class="mono">{{ entry.identifier || "ohne Identifier" }}</p>
+              <p>{{ entry.description || "Keine Beschreibung vorhanden." }}</p>
+            </button>
+          </div>
+          <div v-else class="empty-state" style="padding: 24px">
+            <h3>Keine Treffer</h3>
+            <p>Versuchen Sie eine andere Organisationseinheit, eine andere URL oder einen anderen Suchbegriff.</p>
+          </div>
 
-          <section class="sidebar-panel">
-            <h3>Vorschau</h3>
-            <div v-if="preview" class="section-stack">
-              <div>
-                <strong>{{ preview.root.dataset.title || "Unbenanntes Datenblatt" }}</strong>
-                <p class="mono">{{ preview.root.dataset.identifier || "ohne Identifier" }}</p>
-                <p class="muted">Geändert: {{ preview.root.dataset.modified || "unbekannt" }}</p>
-              </div>
-              <p>{{ preview.root.dataset.description }}</p>
-              <button class="button button--primary" type="button" @click="emit('imported', preview)">
-                In Editor übernehmen
-              </button>
-            </div>
-            <p v-else class="muted">Wählen Sie links ein Datenblatt oder laden Sie direkt per Identifier.</p>
-          </section>
-        </div>
+          <div class="action-row">
+            <button class="button button--primary" type="button" :disabled="loading || !selectedEntry" @click="void importSelected()">
+              In Editor übernehmen
+            </button>
+          </div>
+        </section>
       </div>
     </div>
   </div>

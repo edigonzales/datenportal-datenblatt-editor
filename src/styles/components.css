@@ -233,22 +233,42 @@
 .textarea,
 .select {
   width: 100%;
-  min-height: 38px;
-  padding: 8px 10px;
   border: 1px solid var(--jenkins-border);
   border-radius: var(--form-input-border-radius);
   background: var(--surface);
   color: var(--text-color);
 }
 
+.text-input,
+.select {
+  height: 38px;
+  line-height: 1.25;
+}
+
+.text-input {
+  padding: 8px 10px;
+}
+
 .textarea {
   min-height: 92px;
+  padding: 8px 10px;
   resize: vertical;
+}
+
+.select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0 40px 0 10px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6.5L8 10.5L12 6.5' stroke='%23242f3d' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-position: right 12px center;
+  background-repeat: no-repeat;
+  background-size: 16px 16px;
 }
 
 .inline-grid {
   display: grid;
   gap: 12px;
+  align-items: start;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -294,6 +314,27 @@
 .action-card,
 .draft-card {
   padding: 16px;
+}
+
+.draft-card--selectable {
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    background-color 120ms ease,
+    transform 120ms ease;
+}
+
+.draft-card--selectable:hover {
+  border-color: rgba(9, 105, 218, 0.22);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+}
+
+.draft-card--selectable[data-selected="true"] {
+  border-color: var(--accent-color);
+  background: rgba(9, 105, 218, 0.05);
+  box-shadow: 0 0 0 1px rgba(9, 105, 218, 0.16);
+  transform: translateY(-1px);
 }
 
 .action-card h3,
