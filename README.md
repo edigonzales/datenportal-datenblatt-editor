@@ -1,14 +1,14 @@
 # datenblatt-editor
 
-Lokaler, vollstaendig offline-faehiger Metadateneditor fuer genau einen `Dataset` pro JSON-Datei.
+Lokaler, vollstaendig offline-faehiger Metadateneditor fuer genau ein `Dataset` oder eine `DatasetSeries` pro JSON-Datei.
 
 Die Anwendung ist als clientseitige SPA umgesetzt. Es gibt kein Backend, keine Anmeldung und keine Server-Persistenz. Alle Arbeitsstaende bleiben lokal im Browser und werden in IndexedDB gespeichert.
 
 ## Funktionsumfang des MVP
 
-- Bearbeitung genau eines `Dataset`
-- Import von JSON-Dateien im Root-Format oder als nacktes Dataset-Objekt
-- Ablehnung von `DatasetSeries`
+- Bearbeitung einzelner `Dataset`
+- Bearbeitung hierarchischer `DatasetSeries` mit Serienkopf und Ausgaben
+- Import von JSON-Dateien im Root-Format oder als nacktem Objekt fuer `Dataset` und `DatasetSeries`
 - Offline-"Endpunkte" ueber gebuendelte Snapshot-Dateien
 - Lokale Entwuerfe in IndexedDB
 - Debounced Autosave
@@ -16,11 +16,10 @@ Die Anwendung ist als clientseitige SPA umgesetzt. Es gibt kein Backend, keine A
 - Export als Root-JSON
 - Installierbare PWA
 
-Nicht Teil des MVP:
+Nicht Teil der aktuellen Ausbaustufe:
 
-- `DatasetSeries`
-- `DatasetIssue`
-- Serien-Wizard
+- Materialisierung einzelner `DatasetIssue` als getrennte `Dataset`
+- Serien-Wizard fuer Bulk-Operationen
 - Backend-Einreichung
 - Login
 - CSV-Analyse
@@ -132,8 +131,8 @@ spec/           Eingangsspezifikation und Mockups
 
 ## Architektur in Kurzform
 
-- Die Startseite bietet drei Ladewege: Quellen-URL, Dateiimport, lokaler Entwurf.
-- Jeder erfolgreich uebernommene Datensatz wird in ein kanonisches Root-Format normalisiert.
+- Die Startseite bietet Ladewege fuer Quellen, Dateiimport, neue Einzel-Datasets, neue Serien und lokale Entwuerfe.
+- Jeder erfolgreich uebernommene Eintrag wird in ein kanonisches Root-Format fuer `Dataset` oder `DatasetSeries` normalisiert.
 - Entwuerfe werden unter der Dexie-Datenbank `datenblatt-editor` gespeichert.
 - Formularaenderungen werden mit `750 ms` Debounce nach IndexedDB geschrieben.
 - Der Export ist bei Validierungsfehlern blockiert.
@@ -170,8 +169,7 @@ Die App verwendet zwei Ebenen:
 
 Geprueft werden unter anderem:
 
-- Root `type === "Dataset"`
-- kein Serienmuster
+- Root `type === "Dataset"` oder `type === "DatasetSeries"`
 - Pflichtfelder
 - Datumsformat
 - `modified >= issued`
@@ -194,4 +192,4 @@ Die wichtigsten Erweiterungspunkte sind:
 - kontrollierte Vokabulare aus externer Konfiguration
 - staerkere Formularsegmentierung
 - weitere E2E-Szenarien
-- Serienmodell in einer spaeteren Ausbaustufe
+- konfigurierbare Feldverteilung zwischen Serienkopf und Ausgaben

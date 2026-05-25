@@ -4,6 +4,10 @@ import { attributeDataTypeOptions } from "../config/vocabularies";
 
 const props = defineProps<{
   attributes: DatasetAttribute[];
+  title?: string;
+  description?: string;
+  emptyTitle?: string;
+  emptyMessage?: string;
 }>();
 
 function addAttribute(): void {
@@ -40,8 +44,8 @@ function move(index: number, direction: -1 | 1): void {
   <section class="surface section-stack">
     <div class="header-line">
       <div>
-        <h2>Attribute</h2>
-        <p class="muted">Einfache, lokal editierbare Attributliste ohne CSV-Analyse.</p>
+        <h2>{{ title || "Attribute" }}</h2>
+        <p class="muted">{{ description || "Einfache, lokal editierbare Attributliste ohne CSV-Analyse." }}</p>
       </div>
       <button class="button button--primary" type="button" @click="addAttribute">Attribut hinzufügen</button>
     </div>
@@ -134,8 +138,8 @@ function move(index: number, direction: -1 | 1): void {
     </div>
 
     <div v-else class="empty-state" style="padding: 24px">
-      <h3>Noch keine Attribute</h3>
-      <p>Fügen Sie einzelne Attribute manuell hinzu. Eine CSV-Analyse ist im MVP nicht enthalten.</p>
+      <h3>{{ emptyTitle || "Noch keine Attribute" }}</h3>
+      <p>{{ emptyMessage || "Fügen Sie einzelne Attribute manuell hinzu. Eine CSV-Analyse ist im MVP nicht enthalten." }}</p>
     </div>
   </section>
 </template>

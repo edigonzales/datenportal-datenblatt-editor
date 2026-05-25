@@ -1,15 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { createEmptyDatasetRoot } from "./normalize";
-import { validateDataset, validateImportedStructure } from "./validation";
+import { createEmptyDatasetRoot, createEmptyDatasetSeriesRoot } from "./normalize";
+import { validateDataset, validateDatasetSeries, validateImportedStructure } from "./validation";
 
 describe("validateImportedStructure", () => {
-  it("rejects dataset series structures", () => {
+  it("accepts dataset series structures", () => {
     const issues = validateImportedStructure({
       type: "DatasetSeries",
-      series: {}
+      series: {
+        issues: []
+      }
     });
 
-    expect(issues[0]?.code).toBe("dataset-series");
+    expect(issues).toEqual([]);
   });
 });
 
@@ -58,5 +60,37 @@ describe("validateDataset", () => {
 
     expect(result.issues.some((entry) => entry.code === "attribute-duplicate")).toBe(true);
     expect(result.issues.some((entry) => entry.code === "attribute-description")).toBe(true);
+  });
+});
+
+describe("validateDatasetSeries", () => {
+  it("reports series-level and issue-level problems separately", () => {
+    const root = createEmptyDatasetSeriesRoot();
+    root.series.identifier = "so.astat.bevoelkerung";
+    root.series.title = "Bevölkerungsreihe";
+    root.series.description = "Serie";
+    root.series.publisherRef = "pub";
+    root.series.creatorRef = "creator";
+    root.series.contactPoint!.email = "mail@example.org";
+    root.series.issues = [
+      {
+        __localIssueId: "issue-a",
+        identifier: " so.astat.bevoelkerung.2026 ",
+        title: "Ausgabe 2026",
+        description: "Beschreibung",
+        issueLabel: "2026",
+        isCurrentIssue: false,
+        issued: "2026-05-12",
+        modified: "2026-05-01",
+        temporalCoverage: {},
+        attributes: []
+      }
+    ];
+
+    const result = validateDatasetSeries(root, "issue-a");
+
+    expect(result.groups?.find((entry) => entry.scope === "series")?.issues.some((entry) => entry.code === "series-current-issue")).toBe(true);
+    expect(result.groups?.find((entry) => entry.issueId === "issue-a")?.issues.some((entry) => entry.code === "identifier-whitespace")).toBe(true);
+    expect(result.groups?.find((entry) => entry.issueId === "issue-a")?.issues.some((entry) => entry.code === "date-order")).toBe(true);
   });
 });

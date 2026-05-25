@@ -120,6 +120,14 @@
   font-size: 1rem;
 }
 
+.context-bar__actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
 .context-bar__dot {
   color: var(--text-color-muted);
 }
@@ -454,6 +462,11 @@
   background: var(--surface-muted);
 }
 
+.status-section {
+  display: grid;
+  gap: 10px;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -505,6 +518,41 @@
 .surface--alert {
   border-color: rgba(207, 34, 46, 0.22);
   background: rgba(207, 34, 46, 0.04);
+}
+
+.series-workspace {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr) minmax(240px, 280px);
+  align-items: start;
+}
+
+.series-issue-list,
+.series-context-panel {
+  position: sticky;
+  top: 16px;
+}
+
+.series-issue-card {
+  display: grid;
+  gap: 12px;
+}
+
+.context-summary {
+  display: grid;
+  gap: 10px;
+}
+
+.context-summary__row {
+  display: grid;
+  gap: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--jenkins-border-subtle);
+}
+
+.context-summary__row:first-child {
+  padding-top: 0;
+  border-top: 0;
 }
 
 .attribute-table {
@@ -563,6 +611,15 @@
     position: static;
   }
 
+  .series-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .series-issue-list,
+  .series-context-panel {
+    position: static;
+  }
+
   .attribute-table {
     min-width: 900px;
   }
@@ -580,6 +637,10 @@
 
   .context-bar {
     grid-template-columns: 1fr;
+  }
+
+  .context-bar__actions {
+    justify-content: flex-start;
   }
 
   .status-pill {

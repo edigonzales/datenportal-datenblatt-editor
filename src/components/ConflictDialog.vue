@@ -18,7 +18,10 @@ const emit = defineEmits<{
       <div class="dialog-header">
         <div>
           <h2>Identifier-Konflikt</h2>
-          <p class="muted">Es existiert bereits ein lokaler Entwurf für dieses Datenblatt.</p>
+          <p class="muted">
+            Es existiert bereits ein lokaler Entwurf für
+            {{ context.existingDraft.draftKind === "series" ? "diese Datensatzserie" : "dieses Datenblatt" }}.
+          </p>
         </div>
       </div>
 

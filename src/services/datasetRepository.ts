@@ -1,6 +1,6 @@
 import Dexie, { type Table } from "dexie";
 import type { DatasetDraftRecord, SettingRecord } from "../domain/datasetTypes";
-import { cloneDatasetRoot } from "../domain/normalize";
+import { cloneRoot, getDraftKindFromRoot } from "../domain/normalize";
 
 class DatasetEditorDatabase extends Dexie {
   datasets!: Table<DatasetDraftRecord, string>;
@@ -12,6 +12,21 @@ class DatasetEditorDatabase extends Dexie {
       datasets: "id,identifier,title,updatedAt,sourceType",
       settings: "key"
     });
+    this.version(2)
+      .stores({
+        datasets: "id,identifier,title,updatedAt,sourceType,draftKind,[draftKind+identifier]",
+        settings: "key"
+      })
+      .upgrade((tx) =>
+        tx
+          .table("datasets")
+          .toCollection()
+          .modify((draft: Partial<DatasetDraftRecord>) => {
+            if (draft.data) {
+              draft.draftKind = getDraftKindFromRoot(draft.data);
+            }
+          })
+      );
   }
 }
 
@@ -72,12 +87,16 @@ export class DatasetRepository {
     return copy;
   }
 
-  async findByIdentifier(identifier: string, excludeId?: string): Promise<DatasetDraftRecord | undefined> {
+  async findByIdentifier(
+    identifier: string,
+    draftKind: DatasetDraftRecord["draftKind"],
+    excludeId?: string
+  ): Promise<DatasetDraftRecord | undefined> {
     if (!identifier.trim()) {
       return undefined;
     }
 
-    const drafts = await this.db.datasets.where("identifier").equals(identifier).toArray();
+    const drafts = await this.db.datasets.where("[draftKind+identifier]").equals([draftKind, identifier]).toArray();
     const draft = drafts.find((entry) => entry.id !== excludeId);
     return draft ? cloneDraft(draft) : undefined;
   }
@@ -95,6 +114,7 @@ export class DatasetRepository {
 function cloneDraft(draft: DatasetDraftRecord): DatasetDraftRecord {
   return {
     ...draft,
-    data: cloneDatasetRoot(draft.data)
+    draftKind: draft.draftKind ?? getDraftKindFromRoot(draft.data),
+    data: cloneRoot(draft.data)
   };
 }

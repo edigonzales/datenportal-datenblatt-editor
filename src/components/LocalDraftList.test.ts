@@ -12,6 +12,7 @@ function createDraft(id: string): DatasetDraftRecord {
 
   return {
     id,
+    draftKind: "dataset",
     identifier: root.dataset.identifier ?? "",
     title: root.dataset.title ?? "",
     updatedAt: "2026-05-24T09:00:00.000Z",

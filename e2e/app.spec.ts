@@ -23,7 +23,7 @@ test("shows the simplified start screen", async ({ page }) => {
   const inactiveTab = page.getByRole("link", { name: "Datensatz" });
 
   await expect(page.getByRole("heading", { name: "Metadaten lokal bearbeiten" })).toBeVisible();
-  await expect(page.locator(".action-card")).toHaveCount(4);
+  await expect(page.locator(".action-card")).toHaveCount(6);
   await expect(newDatasetCard).toHaveCSS("border-radius", "10px");
   await expect(primaryButton).toBeVisible();
   await expect(draftCard.getByRole("button", { name: "Zu den Entwürfen" })).toBeVisible();
@@ -66,9 +66,9 @@ test("loads a dataset from the offline source dialog", async ({ page }) => {
 
   await page.getByLabel("Quelle").fill("/mock-sources/dataset.index.json");
   await page.getByRole("button", { name: "Quelle laden" }).click();
-  await expect(sourceDialog).toContainText("3 Datenblätter gefunden");
+  await expect(sourceDialog).toContainText("3 Einträge gefunden");
 
-  await page.getByLabel("Datenblatt suchen oder Identifier eingeben").fill("so.afu.nitratmessungen");
+  await page.getByLabel("Eintrag suchen oder Identifier eingeben").fill("so.afu.nitratmessungen");
   await page.getByRole("button", { name: "Suchen" }).click();
   const nitratCard = sourceDialog.locator(".draft-card").filter({ hasText: "Nitratmessungen im Kanton Solothurn" }).first();
   await nitratCard.click();
@@ -90,6 +90,29 @@ test("loads a dataset from the offline source dialog", async ({ page }) => {
   await page.getByRole("link", { name: "Datenblatt-Vorschau" }).click();
   await expect(page.locator(".json-panel")).toHaveCSS("border-radius", "10px");
   await expect(page.locator(".json-panel pre")).toHaveCSS("border-radius", "10px");
+});
+
+test("creates and navigates a dataset series workspace", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Neue Datensatzserie anlegen" }).click();
+
+  await expect(page.locator(".context-bar")).toContainText("Neue Datensatzserie");
+  await expect(page.getByRole("link", { name: "Serie", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Ausgaben", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Serien-Vorschau", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "JSON exportieren" })).toBeDisabled();
+
+  await page.getByRole("link", { name: "Ausgaben", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Ausgaben" })).toBeVisible();
+  await expect(page.getByText("Serienkontext")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Ausgabe hinzufügen" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Ausgabe hinzufügen" }).click();
+  await expect(page.locator(".series-issue-card")).toHaveCount(2);
+
+  await page.getByRole("link", { name: "Serien-Vorschau", exact: true }).click();
+  await expect(page.locator(".json-panel")).toContainText("\"type\": \"DatasetSeries\"");
 });
 
 test("shows 10px radius on empty state and file import surfaces", async ({ page }) => {

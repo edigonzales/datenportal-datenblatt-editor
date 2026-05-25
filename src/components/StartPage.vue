@@ -9,6 +9,7 @@ import ConfirmDialog from "./ConfirmDialog.vue";
 import type { ImportConflictAction, ImportPreview } from "../domain/datasetTypes";
 import { useDatasetStore } from "../stores/datasetStore";
 import { downloadDataset } from "../services/exportService";
+import { validateEditableRoot } from "../domain/validation";
 
 const router = useRouter();
 const store = useDatasetStore();
@@ -19,6 +20,9 @@ const deleteId = ref("");
 const deleteAllRequested = ref(false);
 
 const drafts = computed(() => store.drafts);
+const exportableDraftIds = computed(() =>
+  drafts.value.filter((entry) => validateEditableRoot(entry.data).errorCount === 0).map((entry) => entry.id)
+);
 const deleteDialogOpen = computed(() => Boolean(deleteId.value) || deleteAllRequested.value);
 const bulkDeleteMessage = computed(() => {
   const draftCount = drafts.value.length;
@@ -50,6 +54,11 @@ async function createNew(): Promise<void> {
   void router.push(`/draft/${draft.id}`);
 }
 
+async function createNewSeries(): Promise<void> {
+  const draft = await store.createNewSeriesDraft();
+  void router.push(`/draft/${draft.id}`);
+}
+
 async function openDraft(id: string): Promise<void> {
   await store.openDraft(id, "indexeddb");
   void router.push(`/draft/${id}`);
@@ -63,7 +72,7 @@ async function duplicateDraft(id: string): Promise<void> {
 
 function exportDraft(id: string): void {
   const draft = drafts.value.find((entry) => entry.id === id);
-  if (draft) {
+  if (draft && exportableDraftIds.value.includes(id)) {
     downloadDataset(draft.data);
   }
 }
@@ -98,8 +107,8 @@ function scrollToDrafts(): void {
   <div class="section-stack">
     <section class="action-grid">
       <article class="action-card">
-        <h3>Datenblatt von Quelle laden</h3>
-        <p>Einen Katalog per URL laden, durchsuchen und in den Editor übernehmen.</p>
+        <h3>Metadaten von Quelle laden</h3>
+        <p>Einen Katalog per URL laden, durchsuchen und Datenblätter oder Datensatzserien in den Editor übernehmen.</p>
         <div class="card-actions" style="margin-top: 16px">
           <button class="button button--primary" type="button" @click="sourceDialogOpen = true">Quelle öffnen</button>
         </div>
@@ -107,7 +116,7 @@ function scrollToDrafts(): void {
 
       <article class="action-card">
         <h3>Datenblatt importieren</h3>
-        <p>Eine lokale Datei vom Computer öffnen, validieren und in den Editor laden.</p>
+        <p>Eine lokale JSON-Datei mit genau einem Datenblatt öffnen und im Editor weiterbearbeiten.</p>
         <div class="card-actions" style="margin-top: 16px">
           <button class="button button--primary" type="button" @click="fileDialogOpen = true">Datenblatt importieren</button>
         </div>
@@ -118,6 +127,22 @@ function scrollToDrafts(): void {
         <p>Mit einem leeren Datenblatt beginnen und Inhalte direkt im Editor erfassen.</p>
         <div class="card-actions" style="margin-top: 16px">
           <button class="button button--primary" type="button" @click="createNew">Neues Datenblatt anlegen</button>
+        </div>
+      </article>
+
+      <article class="action-card">
+        <h3>Datensatzserie importieren</h3>
+        <p>Eine lokale JSON-Datei mit Serienkopf und Ausgaben importieren und im Serien-Workspace bearbeiten.</p>
+        <div class="card-actions" style="margin-top: 16px">
+          <button class="button button--primary" type="button" @click="fileDialogOpen = true">Datensatzserie importieren</button>
+        </div>
+      </article>
+
+      <article class="action-card">
+        <h3>Neue Datensatzserie anlegen</h3>
+        <p>Mit einem Serienkopf und einer ersten leeren Ausgabe starten.</p>
+        <div class="card-actions" style="margin-top: 16px">
+          <button class="button button--primary" type="button" @click="createNewSeries">Neue Datensatzserie anlegen</button>
         </div>
       </article>
 
@@ -133,6 +158,7 @@ function scrollToDrafts(): void {
     <section id="drafts">
       <LocalDraftList
         :drafts="drafts"
+        :exportable-ids="exportableDraftIds"
         @open="void openDraft($event)"
         @duplicate="void duplicateDraft($event)"
         @delete="deleteId = $event"

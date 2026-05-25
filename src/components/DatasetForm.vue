@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import type { Dataset } from "../domain/datasetTypes";
+import type { Dataset, DatasetSeries } from "../domain/datasetTypes";
 import { accrualPeriodicityOptions, themeOptions } from "../config/vocabularies";
 import ContactPointForm from "./ContactPointForm.vue";
 import TemporalCoverageForm from "./TemporalCoverageForm.vue";
 
 const props = defineProps<{
-  dataset: Dataset;
+  dataset: Dataset | DatasetSeries;
+  mode?: "dataset" | "series";
 }>();
 
 function toggleTheme(theme: string, checked: boolean): void {
@@ -54,14 +55,22 @@ function normalizeKeywordsInput(): void {
 }
 
 const temporalCoverage = computed(() => props.dataset.temporalCoverage ?? (props.dataset.temporalCoverage = {}));
+const isSeries = computed(() => props.mode === "series");
 </script>
 
 <template>
   <section class="surface section-stack">
     <div class="header-line">
       <div>
-        <h2>Datensatz-Metadaten</h2>
-        <p class="muted">{{ dataset.description || "Bearbeiten Sie die Metadaten dieses Datenblatts lokal im Browser." }}</p>
+        <h2>{{ isSeries ? "Serien-Metadaten" : "Datensatz-Metadaten" }}</h2>
+        <p class="muted">
+          {{
+            dataset.description ||
+            (isSeries
+              ? "Bearbeiten Sie die gemeinsamen Metadaten dieser Datensatzserie."
+              : "Bearbeiten Sie die Metadaten dieses Datenblatts lokal im Browser.")
+          }}
+        </p>
       </div>
     </div>
 

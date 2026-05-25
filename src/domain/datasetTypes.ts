@@ -23,15 +23,10 @@ export interface DatasetAttribute extends JsonObject {
   mandatory?: boolean;
 }
 
-export interface Dataset extends JsonObject {
+export interface DatasetSharedFields extends JsonObject {
   identifier?: string;
   title?: string;
   description?: string;
-  publisherRef?: string;
-  creatorRef?: string;
-  contactPoint?: ContactPoint;
-  themes?: string[];
-  keywords?: string[];
   accrualPeriodicity?: string;
   issued?: string;
   modified?: string;
@@ -44,18 +39,45 @@ export interface Dataset extends JsonObject {
   remarks?: string;
 }
 
+export interface Dataset extends DatasetSharedFields {
+  publisherRef?: string;
+  creatorRef?: string;
+  contactPoint?: ContactPoint;
+  themes?: string[];
+  keywords?: string[];
+}
+
+export interface DatasetIssue extends DatasetSharedFields {
+  __localIssueId?: string;
+  issueLabel?: string;
+  isCurrentIssue?: boolean;
+}
+
+export interface DatasetSeries extends Dataset {
+  issues?: DatasetIssue[];
+}
+
 export interface DatasetRootJson extends JsonObject {
   type: "Dataset";
   schemaVersion: string;
   dataset: Dataset;
 }
 
+export interface DatasetSeriesRootJson extends JsonObject {
+  type: "DatasetSeries";
+  schemaVersion: string;
+  series: DatasetSeries;
+}
+
+export type EditableRootJson = DatasetRootJson | DatasetSeriesRootJson;
+export type DraftKind = "dataset" | "series";
 export type DatasetSourceType = "endpoint" | "file" | "new" | "indexeddb";
 export type AppMode =
   | "empty"
   | "loading-from-endpoint"
   | "importing-file"
   | "editing-dataset"
+  | "editing-series"
   | "validation-error";
 export type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
 export type ImportShape = "root" | "naked";
@@ -79,6 +101,7 @@ export interface MetadataSearchRecord {
 
 export interface DatasetDraftRecord {
   id: string;
+  draftKind: DraftKind;
   identifier: string;
   title: string;
   updatedAt: string;
@@ -87,7 +110,7 @@ export interface DatasetDraftRecord {
   sourceUrl?: string;
   originalFileName?: string;
   schemaVersion: string;
-  data: DatasetRootJson;
+  data: EditableRootJson;
   dirty: boolean;
 }
 
@@ -103,14 +126,37 @@ export interface ValidationIssue {
   message: string;
 }
 
-export interface ValidationResult {
+export interface ValidationGroup {
+  id: string;
+  title: string;
+  scope: "series" | "issue";
+  active?: boolean;
+  issueId?: string;
   issues: ValidationIssue[];
   errorCount: number;
   warningCount: number;
 }
 
+export interface IssueValidationSummary {
+  issueId: string;
+  label: string;
+  title: string;
+  isCurrentIssue: boolean;
+  errorCount: number;
+  warningCount: number;
+}
+
+export interface ValidationResult {
+  issues: ValidationIssue[];
+  errorCount: number;
+  warningCount: number;
+  groups?: ValidationGroup[];
+  issueSummaries?: IssueValidationSummary[];
+}
+
 export interface ImportPreview {
-  root: DatasetRootJson;
+  draftKind: DraftKind;
+  root: EditableRootJson;
   importShape: ImportShape;
   sourceType: DatasetSourceType;
   sourceLabel?: string;

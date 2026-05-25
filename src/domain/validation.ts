@@ -1,12 +1,31 @@
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
-import type { DatasetRootJson, JsonObject, ValidationIssue, ValidationResult } from "./datasetTypes";
-import { DEFAULT_SCHEMA_VERSION, isDatasetSeriesLike, isObject } from "./normalize";
+import type {
+  Dataset,
+  DatasetAttribute,
+  DatasetIssue,
+  DatasetRootJson,
+  DatasetSeries,
+  DatasetSeriesRootJson,
+  EditableRootJson,
+  IssueValidationSummary,
+  JsonObject,
+  ValidationGroup,
+  ValidationIssue,
+  ValidationResult
+} from "./datasetTypes";
+import {
+  DEFAULT_SCHEMA_VERSION,
+  isDatasetIssueLike,
+  isDatasetSeriesLike,
+  isDatasetSeriesRoot,
+  isObject
+} from "./normalize";
 
 const ajv = new Ajv({ allErrors: true, allowUnionTypes: true });
 addFormats(ajv);
 
-const rootSchema = {
+const datasetRootSchema = {
   type: "object",
   required: ["type", "dataset"],
   additionalProperties: true,
@@ -25,8 +44,40 @@ const nakedDatasetSchema = {
   additionalProperties: true
 } as const;
 
-const validateRootSchema = ajv.compile(rootSchema);
-const validateNakedSchema = ajv.compile(nakedDatasetSchema);
+const datasetSeriesRootSchema = {
+  type: "object",
+  required: ["type", "series"],
+  additionalProperties: true,
+  properties: {
+    type: { const: "DatasetSeries" },
+    schemaVersion: { type: "string" },
+    series: {
+      type: "object",
+      additionalProperties: true
+    }
+  }
+} as const;
+
+const nakedDatasetSeriesSchema = {
+  type: "object",
+  required: ["issues"],
+  additionalProperties: true,
+  properties: {
+    type: { type: "string" },
+    issues: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: true
+      }
+    }
+  }
+} as const;
+
+const validateDatasetRootSchema = ajv.compile(datasetRootSchema);
+const validateNakedDatasetSchema = ajv.compile(nakedDatasetSchema);
+const validateDatasetSeriesRootSchema = ajv.compile(datasetSeriesRootSchema);
+const validateNakedDatasetSeriesSchema = ajv.compile(nakedDatasetSeriesSchema);
 
 const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -35,26 +86,47 @@ export function validateImportedStructure(input: unknown): ValidationIssue[] {
     return [issue("error", "invalid-json", "$", "Die Datei enthält kein gültiges Datenblatt-Objekt.")];
   }
 
-  if (isDatasetSeriesLike(input)) {
+  if (isDatasetIssueLike(input) && !isDatasetSeriesLike(input)) {
     return [
       issue(
         "error",
-        "dataset-series",
+        "dataset-issue",
         "$",
-        "Diese Datei enthält eine Datensatzserie. Der MVP unterstützt nur einzelne Datenblätter."
+        "Diese Datei enthält nur eine einzelne Ausgabe. Der Editor erwartet ein ganzes Datenblatt oder eine Datensatzserie."
       )
     ];
   }
 
-  const ok = "dataset" in input ? validateRootSchema(input) : validateNakedSchema(input);
+  if (isDatasetSeriesLike(input)) {
+    const ok = "series" in input ? validateDatasetSeriesRootSchema(input) : validateNakedDatasetSeriesSchema(input);
+    if (ok) {
+      return [];
+    }
+
+    const errors = ("series" in input ? validateDatasetSeriesRootSchema.errors : validateNakedDatasetSeriesSchema.errors) ?? [];
+    return errors.map((entry) =>
+      issue(
+        "error",
+        "schema",
+        entry.instancePath || "$",
+        entry.message ?? "Die Struktur der Datensatzserie ist ungültig."
+      )
+    );
+  }
+
+  const ok = "dataset" in input ? validateDatasetRootSchema(input) : validateNakedDatasetSchema(input);
   if (ok) {
     return [];
   }
 
-  const errors = ("dataset" in input ? validateRootSchema.errors : validateNakedSchema.errors) ?? [];
+  const errors = ("dataset" in input ? validateDatasetRootSchema.errors : validateNakedDatasetSchema.errors) ?? [];
   return errors.map((entry) =>
     issue("error", "schema", entry.instancePath || "$", entry.message ?? "Die Struktur des Datenblatts ist ungültig.")
   );
+}
+
+export function validateEditableRoot(root: EditableRootJson, activeIssueId?: string): ValidationResult {
+  return isDatasetSeriesRoot(root) ? validateDatasetSeries(root, activeIssueId) : validateDataset(root);
 }
 
 export function validateDataset(root: DatasetRootJson): ValidationResult {
@@ -72,95 +144,185 @@ export function validateDataset(root: DatasetRootJson): ValidationResult {
     );
   }
 
-  pushRequired(issues, dataset.identifier, "$.dataset.identifier", "Identifier ist ein Pflichtfeld.");
-  pushRequired(issues, dataset.title, "$.dataset.title", "Titel ist ein Pflichtfeld.");
-  pushRequired(issues, dataset.description, "$.dataset.description", "Beschreibung ist ein Pflichtfeld.");
-  pushRequired(issues, dataset.publisherRef, "$.dataset.publisherRef", "PublisherRef ist ein Pflichtfeld.");
-  pushRequired(issues, dataset.creatorRef, "$.dataset.creatorRef", "CreatorRef ist ein Pflichtfeld.");
+  validateDatasetMetadata(issues, dataset, "$.dataset");
+
+  if (!hasProblems(issues)) {
+    issues.push(success("dataset-ok", "$.dataset", "Das Datenblatt ist vollständig und kann exportiert werden."));
+  }
+
+  return finalizeValidation(issues);
+}
+
+export function validateDatasetSeries(root: DatasetSeriesRootJson, activeIssueId?: string): ValidationResult {
+  const groups: ValidationGroup[] = [];
+
+  const seriesIssues: ValidationIssue[] = [];
+  if (root.schemaVersion !== DEFAULT_SCHEMA_VERSION) {
+    seriesIssues.push(
+      issue(
+        "warning",
+        "schema-version",
+        "$.schemaVersion",
+        `Schema-Version ${root.schemaVersion} weicht vom MVP-Export ${DEFAULT_SCHEMA_VERSION} ab.`
+      )
+    );
+  }
+
+  validateSeriesMetadata(seriesIssues, root.series, "$.series");
+
+  const issues = root.series.issues ?? [];
+  if (!issues.length) {
+    seriesIssues.push(
+      issue("error", "series-issues-empty", "$.series.issues", "Eine Datensatzserie benötigt mindestens eine Ausgabe.")
+    );
+  }
+
+  const currentIssueCount = issues.filter((entry) => entry.isCurrentIssue).length;
+  if (currentIssueCount !== 1) {
+    seriesIssues.push(
+      issue(
+        "error",
+        "series-current-issue",
+        "$.series.issues",
+        "Genau eine Ausgabe muss als aktuelle Ausgabe markiert sein."
+      )
+    );
+  }
+
+  if (!hasProblems(seriesIssues)) {
+    seriesIssues.push(success("series-ok", "$.series", "Die gemeinsamen Serienfelder sind vollständig."));
+  }
+
+  groups.push(finalizeGroup("series", "Serie", "series", seriesIssues));
+
+  const issueSummaries: IssueValidationSummary[] = [];
+  for (const [index, issueEntry] of issues.entries()) {
+    const entryIssues: ValidationIssue[] = [];
+    const issueId = issueEntry.__localIssueId ?? `issue-${index + 1}`;
+    const issueLabel = labelForIssue(issueEntry, index);
+    const issuePath = `$.series.issues[${index}]`;
+
+    validateIssueMetadata(entryIssues, issueEntry, issuePath);
+
+    if (!hasProblems(entryIssues)) {
+      entryIssues.push(success("issue-ok", issuePath, "Diese Ausgabe hat keine offenen Probleme."));
+    }
+
+    const group = finalizeGroup(issueId, issueLabel, "issue", entryIssues, {
+      active: issueId === activeIssueId,
+      issueId
+    });
+
+    issueSummaries.push({
+      issueId,
+      label: issueEntry.issueLabel?.trim() || `Ausgabe ${index + 1}`,
+      title: issueEntry.title?.trim() || "Unbenannte Ausgabe",
+      isCurrentIssue: issueEntry.isCurrentIssue === true,
+      errorCount: group.errorCount,
+      warningCount: group.warningCount
+    });
+    groups.push(group);
+  }
+
+  const allIssues = groups.flatMap((group) => group.issues);
+  return finalizeValidation(allIssues, groups, issueSummaries);
+}
+
+function validateDatasetMetadata(issues: ValidationIssue[], dataset: Dataset, prefix: string): void {
+  pushRequired(issues, dataset.identifier, `${prefix}.identifier`, "Identifier ist ein Pflichtfeld.");
+  pushRequired(issues, dataset.title, `${prefix}.title`, "Titel ist ein Pflichtfeld.");
+  pushRequired(issues, dataset.description, `${prefix}.description`, "Beschreibung ist ein Pflichtfeld.");
+  pushRequired(issues, dataset.publisherRef, `${prefix}.publisherRef`, "PublisherRef ist ein Pflichtfeld.");
+  pushRequired(issues, dataset.creatorRef, `${prefix}.creatorRef`, "CreatorRef ist ein Pflichtfeld.");
   pushRequired(
     issues,
     dataset.contactPoint?.email,
-    "$.dataset.contactPoint.email",
+    `${prefix}.contactPoint.email`,
     "Die Kontakt-E-Mail ist ein Pflichtfeld."
   );
 
-  if ((dataset.description ?? "").length > 1024) {
+  validateSharedDescriptiveFields(issues, dataset, prefix);
+}
+
+function validateSeriesMetadata(issues: ValidationIssue[], datasetSeries: DatasetSeries, prefix: string): void {
+  validateDatasetMetadata(issues, datasetSeries, prefix);
+}
+
+function validateIssueMetadata(issues: ValidationIssue[], datasetIssue: DatasetIssue, prefix: string): void {
+  pushRequired(issues, datasetIssue.identifier, `${prefix}.identifier`, "Identifier ist ein Pflichtfeld.");
+  pushRequired(issues, datasetIssue.issueLabel, `${prefix}.issueLabel`, "IssueLabel ist ein Pflichtfeld.");
+  validateSharedDescriptiveFields(issues, datasetIssue, prefix);
+}
+
+function validateSharedDescriptiveFields(
+  issues: ValidationIssue[],
+  entry: Pick<Dataset, "description" | "identifier" | "issued" | "modified" | "attributes" | "temporalCoverage"> &
+    Pick<DatasetIssue, "description" | "identifier" | "issued" | "modified" | "attributes" | "temporalCoverage"> &
+    JsonObject,
+  prefix: string
+): void {
+  if ((entry.description ?? "").length > 1024) {
     issues.push(
       issue(
         "error",
         "description-length",
-        "$.dataset.description",
+        `${prefix}.description`,
         "Die Beschreibung darf maximal 1024 Zeichen lang sein."
       )
     );
   }
 
-  if (dataset.identifier && dataset.identifier !== dataset.identifier.trim()) {
+  if (entry.identifier && entry.identifier !== entry.identifier.trim()) {
     issues.push(
       issue(
         "error",
         "identifier-whitespace",
-        "$.dataset.identifier",
+        `${prefix}.identifier`,
         "Der Identifier darf keine führenden oder nachgestellten Leerzeichen enthalten."
       )
     );
   }
 
-  const email = dataset.contactPoint?.email?.trim();
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    issues.push(issue("error", "email-format", "$.dataset.contactPoint.email", "Die E-Mail-Adresse ist ungültig."));
-  }
+  validateDateField(issues, toStringValue(entry.issued), `${prefix}.issued`, "Issued");
+  validateDateField(issues, toStringValue(entry.modified), `${prefix}.modified`, "Modified");
+  validateTemporalCoverage(issues, entry.temporalCoverage, `${prefix}.temporalCoverage`);
 
-  const url = dataset.contactPoint?.url?.trim();
-  if (url) {
-    try {
-      new URL(url);
-    } catch {
-      issues.push(issue("error", "url-format", "$.dataset.contactPoint.url", "Die URL ist ungültig."));
+  if (entry.issued && entry.modified && isIsoDate(entry.issued) && isIsoDate(entry.modified)) {
+    if (entry.modified < entry.issued) {
+      issues.push(issue("error", "date-order", `${prefix}.modified`, "Modified darf nicht vor Issued liegen."));
     }
   }
 
-  validateDateField(issues, dataset.issued, "$.dataset.issued", "Issued");
-  validateDateField(issues, dataset.modified, "$.dataset.modified", "Modified");
-  validateTemporalCoverage(issues, dataset.temporalCoverage);
+  validateAttributeIssues(issues, entry.attributes ?? [], `${prefix}.attributes`);
+}
 
-  if (dataset.issued && dataset.modified && isIsoDate(dataset.issued) && isIsoDate(dataset.modified)) {
-    if (dataset.modified < dataset.issued) {
-      issues.push(
-        issue("error", "date-order", "$.dataset.modified", "Modified darf nicht vor Issued liegen.")
-      );
-    }
-  }
-
+function validateAttributeIssues(issues: ValidationIssue[], attributes: DatasetAttribute[], prefix: string): void {
   const seen = new Set<string>();
   let missingDescriptionCount = 0;
-  for (const [index, attribute] of (dataset.attributes ?? []).entries()) {
+
+  for (const [index, attribute] of attributes.entries()) {
     const name = (attribute.name ?? "").trim();
     if (!name) {
       issues.push(
-        issue(
-          "error",
-          "attribute-name",
-          `$.dataset.attributes[${index}].name`,
-          "Attributnamen dürfen nicht leer sein."
-        )
+        issue("error", "attribute-name", `${prefix}[${index}].name`, "Jedes Attribut benötigt einen Namen.")
       );
-    } else {
-      const key = name.toLocaleLowerCase();
-      if (seen.has(key)) {
-        issues.push(
-          issue(
-            "error",
-            "attribute-duplicate",
-            `$.dataset.attributes[${index}].name`,
-            `Der Attributname "${name}" ist doppelt vorhanden.`
-          )
-        );
-      }
-      seen.add(key);
+      continue;
     }
 
-    if (!((attribute.description ?? "").trim())) {
+    const normalizedName = name.toLocaleLowerCase("de-CH");
+    if (seen.has(normalizedName)) {
+      issues.push(
+        issue(
+          "warning",
+          "attribute-duplicate",
+          `${prefix}[${index}].name`,
+          `Attributname "${name}" ist mehrfach vorhanden.`
+        )
+      );
+    }
+    seen.add(normalizedName);
+
+    if (!attribute.description?.trim()) {
       missingDescriptionCount += 1;
     }
   }
@@ -170,30 +332,21 @@ export function validateDataset(root: DatasetRootJson): ValidationResult {
       issue(
         "warning",
         "attribute-description",
-        "$.dataset.attributes",
-        `${missingDescriptionCount} Attribute ohne Beschreibung.`
+        prefix,
+        `${missingDescriptionCount} Attribute haben keine Beschreibung.`
       )
     );
   }
-
-  issues.push(success("required-ok", "$", "Pflichtfelder vollständig"));
-  issues.push(success("single-dataset", "$", "Genau ein Datensatz im Datenblatt"));
-
-  return {
-    issues: foldSuccesses(issues),
-    errorCount: issues.filter((entry) => entry.severity === "error").length,
-    warningCount: issues.filter((entry) => entry.severity === "warning").length
-  };
 }
 
-function validateTemporalCoverage(issues: ValidationIssue[], coverage: JsonObject | undefined): void {
-  if (!coverage) {
+function validateTemporalCoverage(issues: ValidationIssue[], coverage: JsonObject | undefined, prefix: string): void {
+  if (!coverage || !Object.keys(coverage).length) {
     return;
   }
 
-  const startDate = typeof coverage.startDate === "string" ? coverage.startDate : "";
-  const endDate = typeof coverage.endDate === "string" ? coverage.endDate : "";
-  const referenceDate = typeof coverage.referenceDate === "string" ? coverage.referenceDate : "";
+  const startDate = toStringValue(coverage.startDate);
+  const endDate = toStringValue(coverage.endDate);
+  const referenceDate = toStringValue(coverage.referenceDate);
 
   const hasRange = Boolean(startDate || endDate);
   const hasReference = Boolean(referenceDate);
@@ -202,39 +355,42 @@ function validateTemporalCoverage(issues: ValidationIssue[], coverage: JsonObjec
     issues.push(
       issue(
         "error",
-        "temporal-exclusive",
-        "$.dataset.temporalCoverage",
-        "Zeitbezug muss entweder Zeitraum oder Stichtag sein."
+        "temporal-xor",
+        prefix,
+        "TemporalCoverage darf entweder einen Zeitraum oder einen Stichtag enthalten, nicht beides."
       )
     );
   }
 
   if (hasRange) {
-    validateDateField(issues, startDate, "$.dataset.temporalCoverage.startDate", "StartDate");
-    validateDateField(issues, endDate, "$.dataset.temporalCoverage.endDate", "EndDate");
     if (!startDate || !endDate) {
       issues.push(
         issue(
           "error",
           "temporal-range-incomplete",
-          "$.dataset.temporalCoverage",
-          "Bei Zeitraum müssen Start- und Enddatum gesetzt sein."
+          prefix,
+          "Für einen Zeitraum müssen StartDate und EndDate gemeinsam gesetzt sein."
         )
       );
-    } else if (isIsoDate(startDate) && isIsoDate(endDate) && startDate > endDate) {
+    }
+
+    validateDateField(issues, startDate, `${prefix}.startDate`, "StartDate");
+    validateDateField(issues, endDate, `${prefix}.endDate`, "EndDate");
+
+    if (startDate && endDate && isIsoDate(startDate) && isIsoDate(endDate) && endDate < startDate) {
       issues.push(
         issue(
           "error",
           "temporal-range-order",
-          "$.dataset.temporalCoverage",
-          "Das Startdatum darf nicht nach dem Enddatum liegen."
+          `${prefix}.endDate`,
+          "EndDate darf nicht vor StartDate liegen."
         )
       );
     }
   }
 
   if (hasReference) {
-    validateDateField(issues, referenceDate, "$.dataset.temporalCoverage.referenceDate", "ReferenceDate");
+    validateDateField(issues, referenceDate, `${prefix}.referenceDate`, "ReferenceDate");
   }
 }
 
@@ -242,45 +398,86 @@ function validateDateField(issues: ValidationIssue[], value: string | undefined,
   if (!value) {
     return;
   }
+
   if (!isIsoDate(value)) {
     issues.push(issue("error", "date-format", path, `${label} muss das Format YYYY-MM-DD haben.`));
   }
 }
 
-function pushRequired(
-  issues: ValidationIssue[],
-  value: string | undefined,
-  path: string,
-  message: string
-): void {
+function pushRequired(issues: ValidationIssue[], value: string | undefined, path: string, message: string): void {
   if (!value?.trim()) {
     issues.push(issue("error", "required", path, message));
   }
 }
 
-function isIsoDate(value: string): boolean {
-  return isoDatePattern.test(value);
+function hasProblems(issues: ValidationIssue[]): boolean {
+  return issues.some((entry) => entry.severity === "error" || entry.severity === "warning");
+}
+
+function finalizeGroup(
+  id: string,
+  title: string,
+  scope: "series" | "issue",
+  issues: ValidationIssue[],
+  options: { active?: boolean; issueId?: string } = {}
+): ValidationGroup {
+  return {
+    id,
+    title,
+    scope,
+    active: options.active,
+    issueId: options.issueId,
+    issues,
+    errorCount: issues.filter((entry) => entry.severity === "error").length,
+    warningCount: issues.filter((entry) => entry.severity === "warning").length
+  };
+}
+
+function finalizeValidation(
+  issues: ValidationIssue[],
+  groups?: ValidationGroup[],
+  issueSummaries?: IssueValidationSummary[]
+): ValidationResult {
+  return {
+    issues,
+    errorCount: issues.filter((entry) => entry.severity === "error").length,
+    warningCount: issues.filter((entry) => entry.severity === "warning").length,
+    groups,
+    issueSummaries
+  };
 }
 
 function issue(severity: ValidationIssue["severity"], code: string, path: string, message: string): ValidationIssue {
-  return { severity, code, path, message };
+  return {
+    severity,
+    code,
+    path,
+    message
+  };
 }
 
 function success(code: string, path: string, message: string): ValidationIssue {
   return issue("success", code, path, message);
 }
 
-function foldSuccesses(issues: ValidationIssue[]): ValidationIssue[] {
-  const hasRequiredErrors = issues.some((entry) => entry.code === "required" && entry.severity === "error");
-  const hasDatasetErrors = issues.some((entry) => entry.code === "schema" && entry.severity === "error");
+function isIsoDate(value: string): boolean {
+  return isoDatePattern.test(value);
+}
 
-  return issues.filter((entry) => {
-    if (entry.code === "required-ok") {
-      return !hasRequiredErrors;
-    }
-    if (entry.code === "single-dataset") {
-      return !hasDatasetErrors;
-    }
-    return true;
-  });
+function toStringValue(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+function labelForIssue(entry: DatasetIssue, index: number): string {
+  const issueLabel = entry.issueLabel?.trim();
+  if (issueLabel) {
+    return issueLabel;
+  }
+
+  const title = entry.title?.trim();
+  if (title) {
+    return title;
+  }
+
+  return `Ausgabe ${index + 1}`;
 }

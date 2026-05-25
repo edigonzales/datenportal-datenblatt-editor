@@ -4,12 +4,14 @@ import { useRoute, useRouter } from "vue-router";
 import AttributeTable from "./AttributeTable.vue";
 import DatasetForm from "./DatasetForm.vue";
 import JsonPreview from "./JsonPreview.vue";
+import SeriesIssueWorkspace from "./SeriesIssueWorkspace.vue";
 import ValidationPanel from "./ValidationPanel.vue";
+import { isDatasetSeriesRoot } from "../domain/normalize";
 import { useDatasetStore } from "../stores/datasetStore";
-import { validateDataset } from "../domain/validation";
+import { validateEditableRoot } from "../domain/validation";
 
 const props = defineProps<{
-  tab: "dataset" | "attributes" | "json";
+  tab: "main" | "attributes" | "issues" | "json";
 }>();
 
 const route = useRoute();
@@ -17,7 +19,16 @@ const router = useRouter();
 const store = useDatasetStore();
 
 const currentDraft = computed(() => store.currentDraft);
-const validation = computed(() => (currentDraft.value ? validateDataset(currentDraft.value.data) : null));
+const activeIssueId = computed(() => (typeof route.params.issueId === "string" ? route.params.issueId : undefined));
+const currentSeriesRoot = computed(() =>
+  currentDraft.value && isDatasetSeriesRoot(currentDraft.value.data) ? currentDraft.value.data : null
+);
+const currentDatasetRoot = computed(() =>
+  currentDraft.value && !isDatasetSeriesRoot(currentDraft.value.data) ? currentDraft.value.data : null
+);
+const validation = computed(() =>
+  currentDraft.value ? validateEditableRoot(currentDraft.value.data, activeIssueId.value) : null
+);
 
 watch(
   () => route.params.id,
@@ -37,12 +48,54 @@ watch(
 );
 
 watch(
+  [currentDraft, currentSeriesRoot, activeIssueId, () => props.tab],
+  ([draft, seriesRoot, issueId, tab]) => {
+    if (!draft) {
+      return;
+    }
+
+    if (draft.draftKind === "dataset") {
+      if (tab === "issues") {
+        void router.replace(`/draft/${draft.id}`);
+      }
+      return;
+    }
+
+    if (tab === "attributes") {
+      void router.replace(`/draft/${draft.id}`);
+      return;
+    }
+
+    if (tab !== "issues") {
+      return;
+    }
+
+    const availableIssueIds = (seriesRoot?.series.issues ?? [])
+      .map((entry) => entry.__localIssueId)
+      .filter((entry): entry is string => typeof entry === "string");
+    const targetIssueId = issueId && availableIssueIds.includes(issueId) ? issueId : availableIssueIds[0];
+
+    if (targetIssueId && issueId !== targetIssueId) {
+      void router.replace(`/draft/${draft.id}/issues/${targetIssueId}`);
+    }
+  },
+  { immediate: true }
+);
+
+watch(
   () => store.currentDraft?.data,
   () => {
     store.markDirty();
   },
   { deep: true }
 );
+
+function openSeriesIssue(issueId: string): void {
+  if (!currentDraft.value) {
+    return;
+  }
+  void router.push(`/draft/${currentDraft.value.id}/issues/${issueId}`);
+}
 </script>
 
 <template>
@@ -55,9 +108,32 @@ watch(
         </div>
       </section>
 
-      <DatasetForm v-if="tab === 'dataset'" :dataset="currentDraft.data.dataset" />
-      <AttributeTable v-else-if="tab === 'attributes'" :attributes="currentDraft.data.dataset.attributes ?? []" />
-      <JsonPreview v-else :root="currentDraft.data" />
+      <template v-if="currentDatasetRoot">
+        <DatasetForm v-if="tab === 'main'" :dataset="currentDatasetRoot.dataset" />
+        <AttributeTable v-else-if="tab === 'attributes'" :attributes="currentDatasetRoot.dataset.attributes ?? []" />
+        <JsonPreview v-else :root="currentDatasetRoot" />
+      </template>
+
+      <template v-else-if="currentSeriesRoot">
+        <div v-if="tab === 'main'" class="section-stack">
+          <DatasetForm :dataset="currentSeriesRoot.series" mode="series" />
+          <AttributeTable
+            :attributes="currentSeriesRoot.series.attributes ?? (currentSeriesRoot.series.attributes = [])"
+            title="Serien-Attribute"
+            description="Gemeinsame Attribute der Datensatzserie."
+            empty-title="Noch keine Serien-Attribute"
+            empty-message="Fügen Sie hier Attribute hinzu, die für alle Ausgaben gelten."
+          />
+        </div>
+        <SeriesIssueWorkspace
+          v-else-if="tab === 'issues'"
+          :series="currentSeriesRoot.series"
+          :validation="validation"
+          :active-issue-id="activeIssueId"
+          @select="openSeriesIssue($event)"
+        />
+        <JsonPreview v-else :root="currentSeriesRoot" />
+      </template>
     </div>
 
     <ValidationPanel :validation="validation" />
@@ -65,6 +141,6 @@ watch(
 
   <div v-else class="empty-state" style="padding: 24px">
     <h2>Entwurf wird geladen</h2>
-    <p>Falls kein Entwurf gefunden wird, wechseln Sie zur Startseite und laden Sie ein Datenblatt.</p>
+    <p>Falls kein Entwurf gefunden wird, wechseln Sie zur Startseite und laden Sie ein Datenblatt oder eine Datensatzserie.</p>
   </div>
 </template>

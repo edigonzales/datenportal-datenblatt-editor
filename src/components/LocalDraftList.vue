@@ -4,6 +4,7 @@ import { formatDateTime } from "../services/dateFormat";
 
 defineProps<{
   drafts: DatasetDraftRecord[];
+  exportableIds?: string[];
 }>();
 
 const emit = defineEmits<{
@@ -31,8 +32,9 @@ const emit = defineEmits<{
       <article v-for="draft in drafts" :key="draft.id" class="draft-card">
         <div class="header-line">
           <div>
-            <h3>{{ draft.title || "Unbenanntes Datenblatt" }}</h3>
+            <h3>{{ draft.title || (draft.draftKind === "series" ? "Unbenannte Datensatzserie" : "Unbenanntes Datenblatt") }}</h3>
             <p>Identifier: <span class="mono">{{ draft.identifier || "noch nicht gesetzt" }}</span></p>
+            <p class="muted">{{ draft.draftKind === "series" ? "Datensatzserie" : "Datenblatt" }}</p>
           </div>
           <span class="status-pill" :data-state="draft.dirty ? 'dirty' : 'saved'">
             {{ draft.dirty ? "Ungesichert" : "Gespeichert" }}
@@ -45,7 +47,9 @@ const emit = defineEmits<{
         <div class="draft-actions" style="margin-top: 16px">
           <button class="button button--primary" type="button" @click="emit('open', draft.id)">Öffnen</button>
           <button class="button" type="button" @click="emit('duplicate', draft.id)">Duplizieren</button>
-          <button class="button" type="button" @click="emit('export', draft.id)">Datenblatt exportieren</button>
+          <button class="button" type="button" :disabled="exportableIds ? !exportableIds.includes(draft.id) : false" @click="emit('export', draft.id)">
+            JSON exportieren
+          </button>
           <button class="button button--danger" type="button" @click="emit('delete', draft.id)">Löschen</button>
         </div>
       </article>

@@ -10,8 +10,8 @@ export const router = createRouter({
       path: "/draft/:id",
       name: "draft",
       component: DatasetEditor,
-      props: { tab: "dataset" },
-      meta: { tab: "dataset" }
+      props: { tab: "main" },
+      meta: { tab: "main" }
     },
     {
       path: "/draft/:id/attributes",
@@ -19,6 +19,13 @@ export const router = createRouter({
       component: DatasetEditor,
       props: { tab: "attributes" },
       meta: { tab: "attributes" }
+    },
+    {
+      path: "/draft/:id/issues/:issueId?",
+      name: "draft-issues",
+      component: DatasetEditor,
+      props: { tab: "issues" },
+      meta: { tab: "issues" }
     },
     {
       path: "/draft/:id/json",

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { MetadataSearchRecord } from "../domain/datasetTypes";
+import { isDatasetRoot } from "../domain/normalize";
 import { loadDatasetFromSource, loadSourceIndex, searchSourceIndex } from "./endpointLoader";
 
 const datasetIndexPayload = [
@@ -115,6 +116,10 @@ describe("loadDatasetFromSource", () => {
     expect(preview.sourceType).toBe("endpoint");
     expect(preview.sourceLabel).toBe("Datenportal");
     expect(preview.sourceUrl).toBe("https://example.test/dataset.index.json");
+    expect(isDatasetRoot(preview.root)).toBe(true);
+    if (!isDatasetRoot(preview.root)) {
+      throw new Error("Expected dataset root");
+    }
     expect(preview.root.dataset.identifier).toBe("so.afu.nitratmessungen");
   });
 });

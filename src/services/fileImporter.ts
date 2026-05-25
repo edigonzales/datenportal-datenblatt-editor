@@ -23,6 +23,7 @@ export function parseImportedText(text: string, fileName = "dataset.json"): Impo
 
   const normalized = normalizeImportedJson(payload);
   return {
+    draftKind: normalized.draftKind,
     root: normalized.root,
     importShape: normalized.importShape,
     sourceType: "file",

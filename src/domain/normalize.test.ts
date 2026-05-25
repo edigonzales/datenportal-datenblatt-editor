@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DatasetImportError, normalizeImportedJson } from "./normalize";
+import { isDatasetRoot, isDatasetSeriesRoot, normalizeImportedJson } from "./normalize";
 
 describe("normalizeImportedJson", () => {
   it("wraps naked dataset objects", () => {
@@ -9,6 +9,10 @@ describe("normalizeImportedJson", () => {
       description: "Messwerte"
     });
 
+    expect(isDatasetRoot(result.root)).toBe(true);
+    if (!isDatasetRoot(result.root)) {
+      throw new Error("Expected dataset root");
+    }
     expect(result.importShape).toBe("naked");
     expect(result.root.type).toBe("Dataset");
     expect(result.root.dataset.identifier).toBe("so.afu.nitratmessungen");
@@ -25,17 +29,37 @@ describe("normalizeImportedJson", () => {
       }
     });
 
+    expect(isDatasetRoot(result.root)).toBe(true);
+    if (!isDatasetRoot(result.root)) {
+      throw new Error("Expected dataset root");
+    }
     expect(result.importShape).toBe("root");
     expect(result.root.schemaVersion).toBe("2026-05-23");
     expect(result.root.dataset.title).toBe("Gemeindegrenzen");
   });
 
-  it("rejects dataset series payloads", () => {
-    expect(() =>
-      normalizeImportedJson({
-        type: "DatasetSeries",
-        series: {}
-      })
-    ).toThrowError(DatasetImportError);
+  it("normalizes dataset series payloads", () => {
+    const result = normalizeImportedJson({
+      type: "DatasetSeries",
+      series: {
+        identifier: "so.astat.bevoelkerung",
+        title: "Bevölkerungsreihe",
+        description: "Statistische Ausgaben",
+        issues: [
+          {
+            identifier: "so.astat.bevoelkerung.2026",
+            issueLabel: "2026"
+          }
+        ]
+      }
+    });
+
+    expect(isDatasetSeriesRoot(result.root)).toBe(true);
+    if (!isDatasetSeriesRoot(result.root)) {
+      throw new Error("Expected series root");
+    }
+    expect(result.draftKind).toBe("series");
+    expect(result.root.type).toBe("DatasetSeries");
+    expect(result.root.series.issues).toHaveLength(1);
   });
 });

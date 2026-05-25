@@ -4,7 +4,7 @@ Diese Datei beschreibt die technische Architektur der Anwendung aus Sicht von En
 
 ## Zielbild
 
-Die Anwendung ist eine lokale SPA fuer die Bearbeitung von Metadaten eines einzelnen `Dataset`. Der Fokus liegt auf:
+Die Anwendung ist eine lokale SPA fuer die Bearbeitung von Metadaten einzelner `Dataset` und hierarchischer `DatasetSeries`. Der Fokus liegt auf:
 
 - klaren Ladepfaden
 - vollstaendigem Offline-Betrieb
@@ -53,12 +53,13 @@ flowchart TD
   - zentrale Typen fuer JSON, Drafts, Quellen und Validierung
 - `normalize.ts`
   - erzeugt das leere Default-Root
-  - erkennt Serienmuster
+  - erkennt `Dataset`- und `DatasetSeries`-Importe
   - normalisiert Root-Import und Naked-Import
   - fuellt fehlende Strukturen mit Default-Werten auf
 - `validation.ts`
   - Strukturvalidierung mit AJV
   - fachliche Validierung auf Feldebene
+  - gruppierte Serien-/Issue-Validierung
 
 ### `src/services`
 
@@ -81,36 +82,42 @@ flowchart TD
 - `datasetStore.ts`
   - zentrale App-State-Maschine des MVP
   - verwaltet Draft-Liste, aktuellen Entwurf, Save-State und Konfliktfall
+  - unterscheidet zwischen Dataset- und Series-Drafts
 
 ### `src/components`
 
 - `StartPage.vue`
-  - Einstieg in die drei Ladewege
+  - Einstieg in Quellen, Dateiimport, neue Datasets, neue Serien und lokale Entwuerfe
 - `SourceLoadDialog.vue`
   - Quellen-URL laden, suchen, Auswahl markieren, uebernehmen
 - `FileImportDialog.vue`
   - Dateiimport mit Fehlerbehandlung und Vorschau
 - `DatasetEditor.vue`
-  - Editor-Wrapper fuer Datensatz, Attribute und JSON-Vorschau
+  - Editor-Wrapper fuer Dataset- und Series-Workspaces
 - `DatasetForm.vue`
-  - Hauptformular
+  - Hauptformular fuer Dataset und Serienkopf
+- `DatasetIssueForm.vue`
+  - Formular fuer issue-spezifische Felder
+- `SeriesIssueWorkspace.vue`
+  - Master-Detail-Ansicht fuer Ausgaben
 - `AttributeTable.vue`
   - tabellarische Bearbeitung der Attribute
 - `ValidationPanel.vue`
-  - rechte Pruefspalte
+  - rechte Pruefspalte mit Gruppen fuer Serie und Ausgaben
 
 ## Routing
 
-Die Anwendung verwendet drei Editor-Routen plus Startseite:
+Die Anwendung verwendet vier Editor-Routen plus Startseite:
 
 ```text
 /                      Startseite
-/draft/:id             Datensatz
+/draft/:id             Datensatz oder Serienkopf
 /draft/:id/attributes  Attribute
+/draft/:id/issues/:issueId?  Ausgaben einer Datensatzserie
 /draft/:id/json        JSON-Vorschau
 ```
 
-Die Routen sind bewusst flach gehalten. Der aktuelle Draft wird ueber die `id` im URL-Pfad geladen.
+Die Routen sind bewusst flach gehalten. Der aktuelle Draft wird ueber die `id` im URL-Pfad geladen; bei `DatasetSeries` wird die aktive Ausgabe ueber `issueId` adressiert.
 
 ## Datenfluss
 
@@ -126,7 +133,7 @@ Die Routen sind bewusst flach gehalten. Der aktuelle Draft wird ueber die `id` i
 1. Benutzer waehlt eine lokale Datei.
 2. `fileImporter.ts` liest den Inhalt.
 3. `validation.ts` validiert die Struktur.
-4. `normalize.ts` ueberfuehrt das Ergebnis in `DatasetRootJson`.
+4. `normalize.ts` ueberfuehrt das Ergebnis in `DatasetRootJson` oder `DatasetSeriesRootJson`.
 5. `datasetStore.stageImport()` prueft Identifier-Konflikte.
 6. Der Draft wird in IndexedDB gespeichert und geoeffnet.
 
@@ -135,7 +142,7 @@ Die Routen sind bewusst flach gehalten. Der aktuelle Draft wird ueber die `id` i
 1. Benutzer oeffnet den Dialog mit einer vorbelegten Quellen-URL.
 2. `endpointLoader.ts` laedt `dataset.index.json`.
 3. Suche/Filter laufen im Browser.
-4. Bei Identifier-Auswahl oder Trefferwahl wird ein Datensatz aus dem geladenen Index selektiert.
+4. Bei Identifier-Auswahl oder Trefferwahl wird ein Eintrag aus dem geladenen Index selektiert.
 5. Strukturvalidierung und Normalisierung laufen erst bei der Uebernahme in den Editor.
 6. Der Draft wird gespeichert und geoeffnet.
 
@@ -149,13 +156,13 @@ Die Routen sind bewusst flach gehalten. Der aktuelle Draft wird ueber die `id` i
 
 ### 5. Export
 
-1. `App.vue` berechnet laufend `validateDataset(...)`.
+1. `App.vue` berechnet laufend `validateEditableRoot(...)`.
 2. Bei Fehlern bleibt der Export deaktiviert.
 3. Bei Erfolg wird das Root-JSON serialisiert und heruntergeladen.
 
 ## Root-Format und Importtoleranz
 
-Interner und exportierter Zielzustand:
+Interne und exportierte Zielzustaende:
 
 ```json
 {
@@ -165,17 +172,26 @@ Interner und exportierter Zielzustand:
 }
 ```
 
-Beim Import sind zwei Formen erlaubt:
+```json
+{
+  "type": "DatasetSeries",
+  "schemaVersion": "2026-05-23",
+  "series": {}
+}
+```
+
+Beim Import sind fuer beide Typen zwei Formen erlaubt:
 
 - Root-Wrapper
-- nacktes Dataset-Objekt
+- nacktes Objekt
 
 Wichtig:
 
 - Unbekannte Felder werden beibehalten.
 - Beim Export wird immer der Root-Wrapper verwendet.
+- Lokale `issueId`-Hilfsfelder werden vor dem Export entfernt.
 
-## DatasetSeries-Erkennung
+## DatasetSeries-Erkennung und Routing
 
 Serien werden in `normalize.ts` und `validation.ts` frueh erkannt. Typische Marker:
 
@@ -185,7 +201,7 @@ Serien werden in `normalize.ts` und `validation.ts` frueh erkannt. Typische Mark
 - `issueLabel`
 - `isCurrentIssue`
 
-Die App lehnt solche JSON-Dateien mit einer fachlich formulierten Fehlermeldung ab.
+Die App leitet solche Dateien in den Series-Workspace. Eine nackte `DatasetIssue`-Struktur ohne Serienkopf bleibt hingegen ein blockierter Importfall.
 
 ## Validierungsarchitektur
 
@@ -194,14 +210,16 @@ Die App lehnt solche JSON-Dateien mit einer fachlich formulierten Fehlermeldung 
 AJV prueft:
 
 - Root muss Objekt sein
-- bei Root-Wrapper: `type === "Dataset"` und `dataset` vorhanden
+- bei Dataset-Wrapper: `type === "Dataset"` und `dataset` vorhanden
+- bei Series-Wrapper: `type === "DatasetSeries"` und `series` vorhanden
 - `additionalProperties: true`
 
 ### Fachliche Validierung
 
 Die fachliche Validierung prueft:
 
-- Pflichtfelder
+- Pflichtfelder im Dataset oder Serienkopf
+- Pflichtfelder pro Ausgabe
 - Beschreibung max. 1024 Zeichen
 - keine fuehrenden/nachgestellten Leerzeichen im Identifier
 - E-Mail-Format
@@ -209,6 +227,8 @@ Die fachliche Validierung prueft:
 - ISO-Daten `YYYY-MM-DD`
 - `modified >= issued`
 - `temporalCoverage` als XOR-Regel
+- mindestens eine Ausgabe pro Serie
+- genau eine aktuelle Ausgabe pro Serie
 - keine doppelten Attributnamen
 - Warnung bei Attributen ohne Beschreibung
 
@@ -242,6 +262,7 @@ Wichtige Felder:
 
 - `id`
 - `identifier`
+- `draftKind`
 - `title`
 - `updatedAt`
 - `sourceType`
@@ -261,7 +282,7 @@ Wichtige Eintraege:
 
 ## Konfliktbehandlung
 
-Beim Import oder Quellenladen wird vor der Speicherung nach einem existierenden Draft mit demselben fachlichen `identifier` gesucht.
+Beim Import oder Quellenladen wird vor der Speicherung nach einem existierenden Draft mit demselben fachlichen `identifier` und demselben `draftKind` gesucht.
 
 Moegliche Benutzerentscheidungen:
 
@@ -326,10 +347,13 @@ Die Grundidee:
 ### Komponenten-Test
 
 - `ValidationPanel`
+- `DatasetForm`
+- `LocalDraftList`
 
 ### E2E
 
 - Offline-Quellenfluss vom Suchdialog bis zur Editor-Uebernahme
+- Serien-Workspace mit Serienkopf, Ausgaben und JSON-Vorschau
 
 ## Erweiterungspunkte
 
@@ -353,7 +377,7 @@ Neue Felder muessen in mehreren Schichten nachgezogen werden:
 2. Default in `createEmptyDatasetRoot()`
 3. ggf. Hydration in `normalize.ts`
 4. fachliche Regel in `validation.ts`
-5. UI in `DatasetForm.vue` oder `AttributeTable.vue`
+5. UI in `DatasetForm.vue`, `DatasetIssueForm.vue` oder `AttributeTable.vue`
 
 ### Staerkere Routing-Segmentierung
 

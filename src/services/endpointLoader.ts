@@ -1,5 +1,5 @@
 import type { ImportPreview, MetadataSearchRecord } from "../domain/datasetTypes";
-import { normalizeImportedJson } from "../domain/normalize";
+import { isDatasetSeriesRoot, normalizeImportedJson } from "../domain/normalize";
 import { validateImportedStructure } from "../domain/validation";
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
@@ -27,16 +27,17 @@ export async function loadSourceIndex(indexUrl: string): Promise<MetadataSearchR
 
   return payload.map((document) => {
     const root = isObjectRecord(document) ? document : {};
-    const dataset = isObjectRecord(root.dataset) ? root.dataset : {};
-    const contactPoint = isObjectRecord(dataset.contactPoint) ? dataset.contactPoint : {};
+    const draftRoot = normalizeImportedJson(root).root;
+    const entry = isDatasetSeriesRoot(draftRoot) ? draftRoot.series : draftRoot.dataset;
+    const contactPoint = isObjectRecord(entry.contactPoint) ? entry.contactPoint : {};
 
     return {
-      identifier: toStringValue(dataset.identifier),
-      title: toStringValue(dataset.title),
-      description: toStringValue(dataset.description),
-      modified: toStringValue(dataset.modified),
+      identifier: toStringValue(entry.identifier),
+      title: toStringValue(entry.title),
+      description: toStringValue(entry.description),
+      modified: toStringValue(entry.modified),
       organizationUnit: toStringValue(contactPoint.organizationUnit),
-      keywords: toStringArray(dataset.keywords),
+      keywords: toStringArray(entry.keywords),
       document
     };
   });
@@ -86,6 +87,7 @@ export async function loadDatasetFromSource(
 
   const normalized = normalizeImportedJson(payload);
   return {
+    draftKind: normalized.draftKind,
     root: normalized.root,
     importShape: normalized.importShape,
     sourceType: "endpoint",

@@ -4,13 +4,19 @@ import type {
   AppMode,
   ConflictResolutionContext,
   DatasetDraftRecord,
-  DatasetRootJson,
   DatasetSourceType,
+  EditableRootJson,
   ImportConflictAction,
   ImportPreview,
   SaveState
 } from "../domain/datasetTypes";
-import { createEmptyDatasetRoot, cloneDatasetRoot } from "../domain/normalize";
+import {
+  cloneRoot,
+  createEmptyDatasetRoot,
+  createEmptyDatasetSeriesRoot,
+  getRootIdentifier,
+  getRootTitle
+} from "../domain/normalize";
 import { DatasetRepository } from "../services/datasetRepository";
 
 const repository = new DatasetRepository();
@@ -20,7 +26,7 @@ function timestamp(): string {
   return new Date().toISOString();
 }
 
-function snapshot(root: DatasetRootJson | null): string {
+function snapshot(root: EditableRootJson | null): string {
   return JSON.stringify(root ?? null);
 }
 
@@ -44,14 +50,15 @@ export const useDatasetStore = defineStore("dataset", {
       if (!state.currentDraft) {
         return "";
       }
+      const entityLabel = state.currentDraft.draftKind === "series" ? "Datensatzserie" : "Datenblatt";
       if (state.sessionSourceType === "file") {
-        return "Importierte Datei";
+        return `Importierte ${entityLabel}`;
       }
       if (state.sessionSourceType === "endpoint") {
         return "Von Quelle geladen";
       }
       if (state.sessionSourceType === "new") {
-        return "Neues Datenblatt";
+        return state.currentDraft.draftKind === "series" ? "Neue Datensatzserie" : "Neues Datenblatt";
       }
       return "Lokaler Entwurf";
     },
@@ -115,7 +122,7 @@ export const useDatasetStore = defineStore("dataset", {
       this.currentDraft = draft;
       this.sessionSourceType = sourceType;
       this.sessionSourceLabel = draft.sourceLabel ?? "";
-      this.appMode = "editing-dataset";
+      this.appMode = draft.draftKind === "series" ? "editing-series" : "editing-dataset";
       this.saveState = "saved";
       this.saveError = "";
       this.lastPersistedSnapshot = snapshot(draft.data);
@@ -125,6 +132,7 @@ export const useDatasetStore = defineStore("dataset", {
     async createNewDraft(): Promise<DatasetDraftRecord> {
       const draft = await repository.saveDraft({
         id: crypto.randomUUID(),
+        draftKind: "dataset",
         identifier: "",
         title: "",
         updatedAt: timestamp(),
@@ -138,9 +146,27 @@ export const useDatasetStore = defineStore("dataset", {
       return draft;
     },
 
+    async createNewSeriesDraft(): Promise<DatasetDraftRecord> {
+      const root = createEmptyDatasetSeriesRoot();
+      const draft = await repository.saveDraft({
+        id: crypto.randomUUID(),
+        draftKind: "series",
+        identifier: "",
+        title: "",
+        updatedAt: timestamp(),
+        sourceType: "new",
+        schemaVersion: root.schemaVersion,
+        data: root,
+        dirty: false
+      });
+      await this.refreshDrafts();
+      await this.openDraft(draft.id, "new");
+      return draft;
+    },
+
     async stageImport(preview: ImportPreview): Promise<DatasetDraftRecord | null> {
-      const identifier = preview.root.dataset.identifier?.trim() ?? "";
-      const existingDraft = identifier ? await repository.findByIdentifier(identifier) : undefined;
+      const identifier = getRootIdentifier(preview.root).trim();
+      const existingDraft = identifier ? await repository.findByIdentifier(identifier, preview.draftKind) : undefined;
 
       if (existingDraft) {
         this.pendingConflict = { existingDraft, preview };
@@ -228,12 +254,12 @@ export const useDatasetStore = defineStore("dataset", {
       try {
         const persisted = await repository.saveDraft({
           ...this.currentDraft,
-          identifier: this.currentDraft.data.dataset.identifier?.trim() ?? "",
-          title: this.currentDraft.data.dataset.title?.trim() ?? "",
+          identifier: getRootIdentifier(this.currentDraft.data).trim(),
+          title: getRootTitle(this.currentDraft.data).trim(),
           schemaVersion: this.currentDraft.data.schemaVersion,
           updatedAt: timestamp(),
           dirty: false,
-          data: cloneDatasetRoot(this.currentDraft.data)
+          data: cloneRoot(this.currentDraft.data)
         });
         this.currentDraft = persisted;
         this.lastPersistedSnapshot = snapshot(persisted.data);
@@ -245,7 +271,7 @@ export const useDatasetStore = defineStore("dataset", {
       }
     },
 
-    setCurrentDraftData(root: DatasetRootJson): void {
+    setCurrentDraftData(root: EditableRootJson): void {
       if (!this.currentDraft) {
         return;
       }
@@ -275,11 +301,12 @@ export const useDatasetStore = defineStore("dataset", {
 
     async persistPreview(preview: ImportPreview, overrideId?: string): Promise<DatasetDraftRecord> {
       const now = timestamp();
-      const root = cloneDatasetRoot(preview.root);
+      const root = cloneRoot(preview.root);
       const draft = await repository.saveDraft({
         id: overrideId ?? crypto.randomUUID(),
-        identifier: root.dataset.identifier?.trim() ?? "",
-        title: root.dataset.title?.trim() ?? "",
+        draftKind: preview.draftKind,
+        identifier: getRootIdentifier(root).trim(),
+        title: getRootTitle(root).trim(),
         updatedAt: now,
         sourceType: preview.sourceType,
         sourceLabel: preview.sourceLabel,

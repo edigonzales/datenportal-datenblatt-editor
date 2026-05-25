@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import type { DatasetRootJson } from "../domain/datasetTypes";
+import type { EditableRootJson } from "../domain/datasetTypes";
 import { serializeDataset } from "../services/exportService";
 
 const props = defineProps<{
-  root: DatasetRootJson;
+  root: EditableRootJson;
 }>();
 
 const preview = computed(() => serializeDataset(props.root));
@@ -14,8 +14,8 @@ const preview = computed(() => serializeDataset(props.root));
   <section class="json-panel">
     <div class="header-line">
       <div>
-        <h2>Datenblatt-Vorschau</h2>
-        <p class="muted">Readonly-Vorschau des Exportformats, das beim Datenblatt-Export geschrieben wird.</p>
+        <h2>JSON-Vorschau</h2>
+        <p class="muted">Readonly-Vorschau des Exportformats, das beim Export geschrieben wird.</p>
       </div>
     </div>
     <pre class="mono">{{ preview }}</pre>

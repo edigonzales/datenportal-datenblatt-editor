@@ -112,13 +112,13 @@ async function importSelected(): Promise<void> {
 <template>
   <div class="dialog-backdrop" @click.self="emit('close')">
     <div class="dialog">
-      <div class="dialog-header">
-        <div>
-          <h2>Datenblatt von Quelle laden</h2>
-          <p class="muted">Eine dataset.index.json laden, durchsuchen und den gewählten Datensatz in den Editor übernehmen.</p>
+        <div class="dialog-header">
+          <div>
+            <h2>Metadaten von Quelle laden</h2>
+            <p class="muted">Eine dataset.index.json laden, durchsuchen und den gewählten Eintrag in den Editor übernehmen.</p>
+          </div>
+          <button class="button" type="button" @click="emit('close')">Schließen</button>
         </div>
-        <button class="button" type="button" @click="emit('close')">Schließen</button>
-      </div>
 
       <div class="section-stack">
         <div class="inline-grid">
@@ -149,7 +149,7 @@ async function importSelected(): Promise<void> {
         </div>
 
         <div class="field-row">
-          <label for="source-query">Datenblatt suchen oder Identifier eingeben</label>
+          <label for="source-query">Eintrag suchen oder Identifier eingeben</label>
           <input id="source-query" v-model="query" class="text-input" type="text" placeholder="z. B. so.afu.nitratmessungen" />
         </div>
 
@@ -166,7 +166,7 @@ async function importSelected(): Promise<void> {
           <div class="header-line">
             <div>
               <h3>Treffer</h3>
-              <p class="muted">{{ loading ? "Lade..." : `${results.length} Datenblätter gefunden` }}</p>
+              <p class="muted">{{ loading ? "Lade..." : `${results.length} Einträge gefunden` }}</p>
             </div>
           </div>
 
