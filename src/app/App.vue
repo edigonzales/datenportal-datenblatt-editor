@@ -1,56 +1,25 @@
 <script setup lang="ts">
 import { computed, onMounted } from "vue";
-import { RouterLink, RouterView, useRoute, useRouter } from "vue-router";
+import { RouterLink, RouterView, useRoute } from "vue-router";
 import { useDatasetStore } from "../stores/datasetStore";
-import { downloadDataset } from "../services/exportService";
-import { validateDataset } from "../domain/validation";
 
 const store = useDatasetStore();
 const route = useRoute();
-const router = useRouter();
 
 const currentDraftId = computed(() => store.currentDraft?.id ?? "");
 const activeTab = computed(() => String(route.meta.tab ?? "start"));
-const validation = computed(() => (store.currentDraft ? validateDataset(store.currentDraft.data) : null));
-const downloadDisabled = computed(() => !store.currentDraft || (validation.value?.errorCount ?? 0) > 0);
 const currentDraftTitle = computed(() => store.currentDraft?.data.dataset.title?.trim() || "Unbenanntes Datenblatt");
 const currentDraftIdentifier = computed(() => store.currentDraft?.data.dataset.identifier?.trim() || "Identifier noch nicht gesetzt");
 
 onMounted(async () => {
   await store.initialize();
 });
-
-function goToStart(): void {
-  void router.push("/");
-}
-
-function downloadCurrent(): void {
-  if (!store.currentDraft || (validation.value?.errorCount ?? 0) > 0) {
-    return;
-  }
-  downloadDataset(store.currentDraft.data);
-}
 </script>
 
 <template>
   <div class="app-shell">
     <header class="topbar">
-      <div class="topbar__identity">
-        <p class="eyebrow">Kanton Solothurn <span class="eyebrow__dot">•</span> Datenportal</p>
-        <h1>Metadaten und Daten lokal bearbeiten</h1>
-      </div>
-      <div class="toolbar-actions">
-        <button class="button button--subtle" type="button" @click="goToStart">Datenblatt laden</button>
-        <button
-          class="button button--primary"
-          type="button"
-          :disabled="downloadDisabled"
-          title="Export ist nur ohne Validierungsfehler möglich."
-          @click="downloadCurrent"
-        >
-          Datenblatt exportieren
-        </button>
-      </div>
+      <h1>Metadaten lokal bearbeiten</h1>
     </header>
 
     <nav class="tabs">

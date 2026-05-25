@@ -10,32 +10,13 @@
   gap: 20px;
   align-items: flex-start;
   padding: 10px 0 18px;
-  border-bottom: 1px solid var(--jenkins-border);
+  border-bottom: 0px solid var(--jenkins-border);
 }
 
 .topbar h1 {
-  margin: 4px 0 0;
+  margin: 0;
   font-size: clamp(1.8rem, 2.8vw, 2.45rem);
   line-height: 1.05;
-}
-
-.eyebrow {
-  font-weight: 700;
-  color: var(--text-color);
-  font-size: 1rem;
-  margin: 0;
-}
-
-.eyebrow__dot {
-  color: var(--accent-color);
-  margin: 0 8px;
-}
-
-.toolbar-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
 }
 
 .button,
@@ -45,9 +26,9 @@
   justify-content: center;
   min-height: 38px;
   padding: 0 14px;
-  border: 1px solid var(--jenkins-border);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
+  border: 1px solid #eaedf1;
+  border-radius: 10px;
+  background: #f3f6f9;
   color: var(--text-color);
   font-weight: 600;
   line-height: 1;
@@ -71,7 +52,7 @@
 .tab--active {
   background: var(--accent-color);
   color: #fff;
-  border-color: #b44639;
+  border-color: var(--accent-color-hover);
 }
 
 .button--primary:hover,
@@ -306,13 +287,14 @@
 
 .action-grid {
   display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .action-card,
 .draft-card {
   padding: 16px;
+  border-radius: 10px;
 }
 
 .action-card h3,
@@ -460,7 +442,7 @@
 
 .drop-zone[data-active="true"] {
   border-color: var(--accent-color);
-  background: rgba(197, 79, 66, 0.04);
+  background: rgba(3, 103, 243, 0.04);
 }
 
 .json-panel pre {

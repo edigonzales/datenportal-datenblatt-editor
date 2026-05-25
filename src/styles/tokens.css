@@ -1,14 +1,14 @@
 :root {
   color-scheme: light;
-  --background: #ebeef2;
+  --background: #fdfdfd;
   --background-muted: #e2e7ed;
   --surface: #ffffff;
   --surface-muted: #f5f7fa;
   --text-color: #242b34;
   --text-color-secondary: #5d6673;
   --text-color-muted: #7a8491;
-  --accent-color: #c54f42;
-  --accent-color-hover: #b44639;
+  --accent-color: #0367f3;
+  --accent-color-hover: #0259d6;
   --success-color: #1f883d;
   --warning-color: #b57a00;
   --danger-color: #cf222e;
@@ -17,7 +17,7 @@
   --jenkins-border-subtle: #d9e0e8;
   --shadow-sm: 0 1px 1px rgba(31, 35, 40, 0.04);
   --shadow-md: 0 8px 18px rgba(31, 35, 40, 0.07);
-  --focus-ring: 0 0 0 3px rgba(197, 79, 66, 0.14);
+  --focus-ring: 0 0 0 3px rgba(3, 103, 243, 0.14);
   --radius-sm: 4px;
   --radius-md: 4px;
   --form-input-border-radius: 4px;

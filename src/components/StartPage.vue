@@ -114,11 +114,18 @@ function scrollToDrafts(): void {
       </article>
 
       <article class="action-card">
+        <h3>Neues Datenblatt anlegen</h3>
+        <p>Mit einem leeren Datenblatt beginnen und Inhalte direkt im Editor erfassen.</p>
+        <div class="card-actions" style="margin-top: 16px">
+          <button class="button button--primary" type="button" @click="createNew">Neues Datenblatt anlegen</button>
+        </div>
+      </article>
+
+      <article class="action-card">
         <h3>Lokalen Entwurf öffnen</h3>
         <p>In diesem Browser gespeicherte Bearbeitungsstände fortsetzen oder exportieren.</p>
         <div class="card-actions" style="margin-top: 16px">
           <button class="button button--primary" type="button" @click="scrollToDrafts">Zu den Entwürfen</button>
-          <button class="button" type="button" @click="createNew">Neues Datenblatt anlegen</button>
         </div>
       </article>
     </section>
