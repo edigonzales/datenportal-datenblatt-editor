@@ -99,7 +99,7 @@ function scrollToDrafts(): void {
     <section class="action-grid">
       <article class="action-card">
         <h3>Datenblatt von Quelle laden</h3>
-        <p>Eine dataset.index.json per URL laden, durchsuchen und in den Editor übernehmen.</p>
+        <p>Einen Katalog per URL laden, durchsuchen und in den Editor übernehmen.</p>
         <div class="card-actions" style="margin-top: 16px">
           <button class="button button--primary" type="button" @click="sourceDialogOpen = true">Quelle öffnen</button>
         </div>

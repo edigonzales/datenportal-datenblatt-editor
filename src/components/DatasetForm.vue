@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 import type { Dataset } from "../domain/datasetTypes";
 import { accrualPeriodicityOptions, themeOptions } from "../config/vocabularies";
 import ContactPointForm from "./ContactPointForm.vue";
@@ -19,15 +19,41 @@ function toggleTheme(theme: string, checked: boolean): void {
   props.dataset.themes = [...current];
 }
 
-const keywordsText = computed({
-  get: () => (props.dataset.keywords ?? []).join(", "),
-  set: (value: string) => {
-    props.dataset.keywords = value
-      .split(",")
-      .map((entry) => entry.trim())
-      .filter(Boolean);
-  }
-});
+function formatKeywords(keywords: string[] | undefined): string {
+  return (keywords ?? []).join(", ");
+}
+
+function parseKeywords(value: string): string[] {
+  return value
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+}
+
+const keywordsText = ref(formatKeywords(props.dataset.keywords));
+
+watch(
+  () => props.dataset.keywords,
+  (keywords) => {
+    const formattedKeywords = formatKeywords(keywords);
+    const normalizedInput = formatKeywords(parseKeywords(keywordsText.value));
+    if (formattedKeywords !== normalizedInput) {
+      keywordsText.value = formattedKeywords;
+    }
+  },
+  { deep: true }
+);
+
+function updateKeywords(value: string): void {
+  keywordsText.value = value;
+  props.dataset.keywords = parseKeywords(value);
+}
+
+function normalizeKeywordsInput(): void {
+  keywordsText.value = formatKeywords(props.dataset.keywords);
+}
+
+const temporalCoverage = computed(() => props.dataset.temporalCoverage ?? (props.dataset.temporalCoverage = {}));
 </script>
 
 <template>
@@ -98,7 +124,15 @@ const keywordsText = computed({
         </div>
         <div class="field-row">
           <label for="keywords">Keywords</label>
-          <input id="keywords" v-model="keywordsText" class="text-input" type="text" placeholder="Komma-getrennte Liste" />
+          <input
+            id="keywords"
+            :value="keywordsText"
+            class="text-input"
+            type="text"
+            placeholder="Komma-getrennte Liste"
+            @input="updateKeywords(($event.target as HTMLInputElement).value)"
+            @blur="normalizeKeywordsInput"
+          />
           <div class="chip-row">
             <span v-for="keyword in dataset.keywords" :key="keyword" class="chip">{{ keyword }}</span>
           </div>
@@ -129,7 +163,7 @@ const keywordsText = computed({
             <input id="modified" v-model="dataset.modified" class="text-input" type="date" />
           </div>
         </div>
-        <TemporalCoverageForm :coverage="dataset.temporalCoverage ?? {}" />
+        <TemporalCoverageForm :coverage="temporalCoverage" />
       </div>
     </section>
 

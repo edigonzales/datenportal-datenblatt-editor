@@ -1,39 +1,53 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { ref, watch } from "vue";
 import type { TemporalCoverage } from "../domain/datasetTypes";
 
 const props = defineProps<{
   coverage: TemporalCoverage;
 }>();
 
-const mode = computed({
-  get: () => {
-    if (props.coverage.referenceDate) {
-      return "reference";
-    }
-    if (props.coverage.startDate || props.coverage.endDate) {
-      return "range";
-    }
-    return "none";
-  },
-  set: (value: string) => {
-    if (value === "range") {
-      props.coverage.referenceDate = "";
-      props.coverage.startDate ??= "";
-      props.coverage.endDate ??= "";
-      return;
-    }
-    if (value === "reference") {
-      props.coverage.startDate = "";
-      props.coverage.endDate = "";
-      props.coverage.referenceDate ??= "";
-      return;
-    }
+type TemporalCoverageMode = "range" | "reference" | "none";
+
+function deriveMode(coverage: TemporalCoverage): TemporalCoverageMode {
+  if (coverage.referenceDate) {
+    return "reference";
+  }
+  if (coverage.startDate || coverage.endDate) {
+    return "range";
+  }
+  return "none";
+}
+
+const mode = ref<TemporalCoverageMode>(deriveMode(props.coverage));
+
+watch(
+  () => props.coverage,
+  (coverage) => {
+    mode.value = deriveMode(coverage);
+  }
+);
+
+function setMode(nextMode: TemporalCoverageMode): void {
+  mode.value = nextMode;
+
+  if (nextMode === "range") {
+    props.coverage.referenceDate = "";
+    props.coverage.startDate ??= "";
+    props.coverage.endDate ??= "";
+    return;
+  }
+
+  if (nextMode === "reference") {
     props.coverage.startDate = "";
     props.coverage.endDate = "";
-    props.coverage.referenceDate = "";
+    props.coverage.referenceDate ??= "";
+    return;
   }
-});
+
+  props.coverage.startDate = "";
+  props.coverage.endDate = "";
+  props.coverage.referenceDate = "";
+}
 </script>
 
 <template>
@@ -42,15 +56,30 @@ const mode = computed({
       <span class="fieldset-label">Zeitbezug der Daten</span>
       <div class="checkbox-list">
         <label class="radio-item">
-          <input v-model="mode" type="radio" value="range" />
+          <input
+            :checked="mode === 'range'"
+            name="temporal-coverage-mode"
+            type="radio"
+            @change="setMode('range')"
+          />
           <span>Zeitraum</span>
         </label>
         <label class="radio-item">
-          <input v-model="mode" type="radio" value="reference" />
+          <input
+            :checked="mode === 'reference'"
+            name="temporal-coverage-mode"
+            type="radio"
+            @change="setMode('reference')"
+          />
           <span>Stichtag</span>
         </label>
         <label class="radio-item">
-          <input v-model="mode" type="radio" value="none" />
+          <input
+            :checked="mode === 'none'"
+            name="temporal-coverage-mode"
+            type="radio"
+            @change="setMode('none')"
+          />
           <span>Kein Zeitbezug</span>
         </label>
       </div>
