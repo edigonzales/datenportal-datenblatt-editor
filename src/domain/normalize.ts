@@ -10,8 +10,14 @@ import type {
   EditableRootJson,
   ImportShape,
   JsonObject,
+  LocalIssueState,
   TemporalCoverage
 } from "./datasetTypes";
+import {
+  createLocalIssueState,
+  deriveImportedIssueState,
+  syncIssueFromSeriesDefaults
+} from "./seriesIssues";
 
 export const DEFAULT_SCHEMA_VERSION = "2026-05-23";
 
@@ -34,35 +40,37 @@ export function createEmptyDatasetRoot(): DatasetRootJson {
 }
 
 export function createEmptyDatasetSeriesRoot(): DatasetSeriesRootJson {
+  const series: DatasetSeries = {
+    ...createEmptyDataset(),
+    issues: []
+  };
+
+  series.issues = [createEmptyDatasetIssue(series, { isCurrentIssue: true })];
+
   return {
     type: "DatasetSeries",
     schemaVersion: DEFAULT_SCHEMA_VERSION,
-    series: {
-      ...createEmptyDataset(),
-      issues: [createEmptyDatasetIssue({ isCurrentIssue: true })]
-    }
+    series
   };
 }
 
-export function createEmptyDatasetIssue(options: { isCurrentIssue?: boolean } = {}): DatasetIssue {
-  return {
+export function createEmptyDatasetIssue(
+  series?: DatasetSeries,
+  options: { isCurrentIssue?: boolean } = {}
+): DatasetIssue {
+  const issue: DatasetIssue = {
+    ...createEmptyDataset(),
     __localIssueId: crypto.randomUUID(),
-    identifier: "",
-    title: "",
-    description: "",
+    __localIssueState: createLocalIssueState(),
     issueLabel: "",
-    isCurrentIssue: options.isCurrentIssue ?? false,
-    accrualPeriodicity: "",
-    issued: "",
-    modified: "",
-    temporalCoverage: {},
-    surveyMethod: "",
-    attributes: [],
-    dataAvailableFrom: "",
-    furtherUses: "",
-    auxiliaryData: "",
-    remarks: ""
+    isCurrentIssue: options.isCurrentIssue ?? false
   };
+
+  if (series) {
+    syncIssueFromSeriesDefaults(series, issue);
+  }
+
+  return issue;
 }
 
 export function isObject(value: unknown): value is JsonObject {
@@ -202,7 +210,7 @@ export function toExportRoot(root: EditableRootJson): EditableRootJson {
   }
 
   cloned.series.issues = (cloned.series.issues ?? []).map((issue) => {
-    const { __localIssueId, ...rest } = issue;
+    const { __localIssueId, __localIssueState, ...rest } = issue;
     return rest;
   });
 
@@ -261,7 +269,7 @@ function hydrateDataset(dataset: JsonObject): Dataset {
 }
 
 function hydrateSeries(series: JsonObject): DatasetSeries {
-  const base = createEmptyDatasetSeriesRoot().series;
+  const base = createEmptyDataset();
   const {
     contactPoint,
     themes,
@@ -272,7 +280,7 @@ function hydrateSeries(series: JsonObject): DatasetSeries {
     ...rest
   } = series;
 
-  return {
+  const hydratedSeries: DatasetSeries = {
     ...base,
     ...rest,
     contactPoint: hydrateContactPoint(contactPoint),
@@ -280,21 +288,45 @@ function hydrateSeries(series: JsonObject): DatasetSeries {
     keywords: Array.isArray(keywords) ? keywords.filter(isString) : [],
     attributes: Array.isArray(attributes) ? attributes.filter(isObject).map(hydrateAttribute) : [],
     temporalCoverage: hydrateTemporalCoverage(temporalCoverage),
-    issues: Array.isArray(issues) ? issues.filter(isObject).map(hydrateIssue) : []
+    issues: []
   };
+
+  hydratedSeries.issues = Array.isArray(issues) ? issues.filter(isObject).map((entry) => hydrateIssue(entry, hydratedSeries)) : [];
+
+  return hydratedSeries;
 }
 
-function hydrateIssue(issue: JsonObject): DatasetIssue {
-  const base = createEmptyDatasetIssue();
-  const { attributes, temporalCoverage, ...rest } = issue;
+function hydrateIssue(issue: JsonObject, series?: DatasetSeries): DatasetIssue {
+  const base = createEmptyDatasetIssue(series);
+  const {
+    contactPoint,
+    themes,
+    keywords,
+    attributes,
+    temporalCoverage,
+    __localIssueState,
+    ...rest
+  } = issue;
 
-  return {
+  const hydratedIssue: DatasetIssue = {
     ...base,
     ...rest,
     __localIssueId: typeof issue.__localIssueId === "string" ? issue.__localIssueId : crypto.randomUUID(),
+    __localIssueState: hydrateLocalIssueState(__localIssueState, issue),
+    contactPoint: hasOwn(issue, "contactPoint") ? hydrateContactPoint(contactPoint) : base.contactPoint,
+    themes: Array.isArray(themes) ? themes.filter(isString) : base.themes,
+    keywords: Array.isArray(keywords) ? keywords.filter(isString) : base.keywords,
     attributes: Array.isArray(attributes) ? attributes.filter(isObject).map(hydrateAttribute) : [],
-    temporalCoverage: hydrateTemporalCoverage(temporalCoverage)
+    temporalCoverage: hasOwn(issue, "temporalCoverage")
+      ? hydrateTemporalCoverage(temporalCoverage)
+      : base.temporalCoverage
   };
+
+  if (series) {
+    syncIssueFromSeriesDefaults(series, hydratedIssue);
+  }
+
+  return hydratedIssue;
 }
 
 function hydrateContactPoint(value: unknown): ContactPoint {
@@ -318,6 +350,14 @@ function hydrateTemporalCoverage(value: unknown): TemporalCoverage {
   return isObject(value) ? { ...value } : {};
 }
 
+function hydrateLocalIssueState(value: unknown, source: JsonObject): LocalIssueState {
+  return isObject(value) ? createLocalIssueState(value as Partial<LocalIssueState>) : deriveImportedIssueState(source);
+}
+
 function isString(value: unknown): value is string {
   return typeof value === "string";
+}
+
+function hasOwn(value: JsonObject, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(value, key);
 }

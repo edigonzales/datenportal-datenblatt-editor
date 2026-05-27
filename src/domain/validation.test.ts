@@ -93,4 +93,30 @@ describe("validateDatasetSeries", () => {
     expect(result.groups?.find((entry) => entry.issueId === "issue-a")?.issues.some((entry) => entry.code === "identifier-whitespace")).toBe(true);
     expect(result.groups?.find((entry) => entry.issueId === "issue-a")?.issues.some((entry) => entry.code === "date-order")).toBe(true);
   });
+
+  it("accepts inherited issue defaults without duplicating series-level required errors", () => {
+    const root = createEmptyDatasetSeriesRoot();
+    root.series.identifier = "ch.foo";
+    root.series.title = "Ch Foo";
+    root.series.description = "Serienbeschreibung";
+    root.series.publisherRef = "";
+    root.series.creatorRef = "creator";
+    root.series.contactPoint!.email = "mail@example.org";
+
+    const issue = root.series.issues?.[0];
+    if (!issue) {
+      throw new Error("Expected initial issue");
+    }
+
+    issue.issueLabel = "2026";
+
+    const result = validateDatasetSeries(root, issue.__localIssueId);
+    const seriesGroup = result.groups?.find((entry) => entry.scope === "series");
+    const issueGroup = result.groups?.find((entry) => entry.issueId === issue.__localIssueId);
+
+    expect(seriesGroup?.issues.some((entry) => entry.path === "$.series.publisherRef")).toBe(true);
+    expect(issueGroup?.issues.some((entry) => entry.path === "$.series.issues[0].publisherRef")).toBe(false);
+    expect(issueGroup?.errorCount).toBe(0);
+    expect(result.issueSummaries?.[0]?.title).toBe("Ch Foo 2026");
+  });
 });

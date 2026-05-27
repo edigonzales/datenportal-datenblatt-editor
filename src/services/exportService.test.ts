@@ -18,12 +18,19 @@ describe("exportService", () => {
     expect(json).toContain('"identifier": "so.afu.test"');
   });
 
-  it("strips local issue ids from series exports", () => {
+  it("strips local issue editor metadata from series exports", () => {
     const root = createEmptyDatasetSeriesRoot();
     root.series.identifier = "so.astat.bevoelkerung";
     root.series.issues = [
       {
         __localIssueId: "local-1",
+        __localIssueState: {
+          autoIdentifier: true,
+          autoTitle: true,
+          inheritedGroups: {
+            description: true
+          }
+        },
         identifier: "so.astat.bevoelkerung.2026",
         issueLabel: "2026"
       }
@@ -33,5 +40,6 @@ describe("exportService", () => {
 
     expect(json).toContain('"type": "DatasetSeries"');
     expect(json).not.toContain("__localIssueId");
+    expect(json).not.toContain("__localIssueState");
   });
 });

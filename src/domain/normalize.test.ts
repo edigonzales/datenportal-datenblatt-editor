@@ -62,4 +62,43 @@ describe("normalizeImportedJson", () => {
     expect(result.root.type).toBe("DatasetSeries");
     expect(result.root.series.issues).toHaveLength(1);
   });
+
+  it("prefills imported issues from the series and derives identifier and title", () => {
+    const result = normalizeImportedJson({
+      type: "DatasetSeries",
+      series: {
+        identifier: "ch.foo",
+        title: "Ch Foo",
+        description: "Serienbeschreibung",
+        publisherRef: "pub",
+        creatorRef: "creator",
+        contactPoint: {
+          email: "kontakt@example.org"
+        },
+        themes: ["Geografie"],
+        keywords: ["foo"],
+        surveyMethod: "Vermessung",
+        issues: [
+          {
+            issueLabel: "2026"
+          }
+        ]
+      }
+    });
+
+    expect(isDatasetSeriesRoot(result.root)).toBe(true);
+    if (!isDatasetSeriesRoot(result.root)) {
+      throw new Error("Expected series root");
+    }
+
+    const issue = result.root.series.issues?.[0];
+
+    expect(issue?.identifier).toBe("ch.foo_2026");
+    expect(issue?.title).toBe("Ch Foo 2026");
+    expect(issue?.publisherRef).toBe("pub");
+    expect(issue?.contactPoint?.email).toBe("kontakt@example.org");
+    expect(issue?.__localIssueState?.inheritedGroups?.publisherRef).toBe(true);
+    expect(issue?.__localIssueState?.autoIdentifier).toBe(true);
+    expect(issue?.__localIssueState?.autoTitle).toBe(true);
+  });
 });

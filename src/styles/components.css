@@ -523,19 +523,21 @@
 .series-workspace {
   display: grid;
   gap: 18px;
-  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr) minmax(240px, 280px);
-  align-items: start;
 }
 
-.series-issue-list,
-.series-context-panel {
-  position: sticky;
-  top: 16px;
+.series-issue-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .series-issue-card {
   display: grid;
   gap: 12px;
+}
+
+.series-workspace__editor {
+  min-width: 0;
 }
 
 .context-summary {
@@ -608,15 +610,6 @@
   }
 
   .sidebar-panel {
-    position: static;
-  }
-
-  .series-workspace {
-    grid-template-columns: 1fr;
-  }
-
-  .series-issue-list,
-  .series-context-panel {
     position: static;
   }
 

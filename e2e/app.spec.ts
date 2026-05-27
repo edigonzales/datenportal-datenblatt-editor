@@ -103,13 +103,35 @@ test("creates and navigates a dataset series workspace", async ({ page }) => {
   await expect(page.getByRole("link", { name: "Serien-Vorschau", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "JSON exportieren" })).toBeDisabled();
 
+  await page.getByLabel("Identifier *").fill("ch.foo");
+  await page.getByLabel("Titel *").fill("Ch Foo");
+  await page.getByLabel("Beschreibung *").fill("Serienbeschreibung");
+  await page.getByLabel("PublisherRef *").fill("pub");
+  await page.getByLabel("CreatorRef *").fill("creator");
+  await page.getByLabel("E-Mail *").fill("kontakt@example.org");
+
   await page.getByRole("link", { name: "Ausgaben", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Ausgaben" })).toBeVisible();
-  await expect(page.getByText("Serienkontext")).toBeVisible();
+  await expect(page.getByText("Serienkontext")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Ausgabe hinzufügen" })).toBeVisible();
+  await expect(page.getByLabel("PublisherRef")).toHaveValue("pub");
+  await expect(page.getByLabel("E-Mail *")).toHaveValue("kontakt@example.org");
+
+  const issueListBox = await page.locator(".series-issue-list").boundingBox();
+  const issueEditorBox = await page.locator(".series-workspace__editor").boundingBox();
+  expect(issueListBox?.y ?? 0).toBeLessThan(issueEditorBox?.y ?? 0);
+
+  await page.getByLabel("IssueLabel *").fill("2026");
+  await expect(page.getByLabel("Identifier *")).toHaveValue("ch.foo_2026");
+  await expect(page.getByLabel("Titel *")).toHaveValue("Ch Foo 2026");
 
   await page.getByRole("button", { name: "Ausgabe hinzufügen" }).click();
   await expect(page.locator(".series-issue-card")).toHaveCount(2);
+
+  await page.getByRole("link", { name: "Serie", exact: true }).click();
+  await page.getByLabel("Titel *").fill("Ch Bar");
+  await page.getByRole("link", { name: "Ausgaben", exact: true }).click();
+  await expect(page.getByLabel("Titel *")).toHaveValue("Ch Bar 2026");
 
   await page.getByRole("link", { name: "Serien-Vorschau", exact: true }).click();
   await expect(page.locator(".json-panel")).toContainText("\"type\": \"DatasetSeries\"");

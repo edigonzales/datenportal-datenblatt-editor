@@ -21,6 +21,7 @@ import {
   isDatasetSeriesRoot,
   isObject
 } from "./normalize";
+import { createEffectiveIssue, isIssueGroupInherited } from "./seriesIssues";
 
 const ajv = new Ajv({ allErrors: true, allowUnionTypes: true });
 addFormats(ajv);
@@ -201,8 +202,9 @@ export function validateDatasetSeries(root: DatasetSeriesRootJson, activeIssueId
     const issueId = issueEntry.__localIssueId ?? `issue-${index + 1}`;
     const issueLabel = labelForIssue(issueEntry, index);
     const issuePath = `$.series.issues[${index}]`;
+    const effectiveIssue = createEffectiveIssue(root.series, issueEntry);
 
-    validateIssueMetadata(entryIssues, issueEntry, issuePath);
+    validateIssueMetadata(entryIssues, root.series, issueEntry, effectiveIssue, issuePath);
 
     if (!hasProblems(entryIssues)) {
       entryIssues.push(success("issue-ok", issuePath, "Diese Ausgabe hat keine offenen Probleme."));
@@ -216,7 +218,7 @@ export function validateDatasetSeries(root: DatasetSeriesRootJson, activeIssueId
     issueSummaries.push({
       issueId,
       label: issueEntry.issueLabel?.trim() || `Ausgabe ${index + 1}`,
-      title: issueEntry.title?.trim() || "Unbenannte Ausgabe",
+      title: effectiveIssue.title?.trim() || "Unbenannte Ausgabe",
       isCurrentIssue: issueEntry.isCurrentIssue === true,
       errorCount: group.errorCount,
       warningCount: group.warningCount
@@ -248,10 +250,49 @@ function validateSeriesMetadata(issues: ValidationIssue[], datasetSeries: Datase
   validateDatasetMetadata(issues, datasetSeries, prefix);
 }
 
-function validateIssueMetadata(issues: ValidationIssue[], datasetIssue: DatasetIssue, prefix: string): void {
-  pushRequired(issues, datasetIssue.identifier, `${prefix}.identifier`, "Identifier ist ein Pflichtfeld.");
+function validateIssueMetadata(
+  issues: ValidationIssue[],
+  _series: DatasetSeries,
+  datasetIssue: DatasetIssue,
+  effectiveIssue: DatasetIssue,
+  prefix: string
+): void {
+  pushRequired(issues, effectiveIssue.identifier, `${prefix}.identifier`, "Identifier ist ein Pflichtfeld.");
+  pushRequired(issues, effectiveIssue.title, `${prefix}.title`, "Titel ist ein Pflichtfeld.");
+  pushIssueRequired(
+    issues,
+    datasetIssue,
+    "description",
+    effectiveIssue.description,
+    `${prefix}.description`,
+    "Beschreibung ist ein Pflichtfeld."
+  );
+  pushIssueRequired(
+    issues,
+    datasetIssue,
+    "publisherRef",
+    effectiveIssue.publisherRef,
+    `${prefix}.publisherRef`,
+    "PublisherRef ist ein Pflichtfeld."
+  );
+  pushIssueRequired(
+    issues,
+    datasetIssue,
+    "creatorRef",
+    effectiveIssue.creatorRef,
+    `${prefix}.creatorRef`,
+    "CreatorRef ist ein Pflichtfeld."
+  );
+  pushIssueRequired(
+    issues,
+    datasetIssue,
+    "contactPoint",
+    effectiveIssue.contactPoint?.email,
+    `${prefix}.contactPoint.email`,
+    "Die Kontakt-E-Mail ist ein Pflichtfeld."
+  );
   pushRequired(issues, datasetIssue.issueLabel, `${prefix}.issueLabel`, "IssueLabel ist ein Pflichtfeld.");
-  validateSharedDescriptiveFields(issues, datasetIssue, prefix);
+  validateIssueSharedFields(issues, datasetIssue, effectiveIssue, prefix);
 }
 
 function validateSharedDescriptiveFields(
@@ -261,16 +302,7 @@ function validateSharedDescriptiveFields(
     JsonObject,
   prefix: string
 ): void {
-  if ((entry.description ?? "").length > 1024) {
-    issues.push(
-      issue(
-        "error",
-        "description-length",
-        `${prefix}.description`,
-        "Die Beschreibung darf maximal 1024 Zeichen lang sein."
-      )
-    );
-  }
+  validateDescriptionLength(issues, entry.description, `${prefix}.description`);
 
   if (entry.identifier && entry.identifier !== entry.identifier.trim()) {
     issues.push(
@@ -294,6 +326,53 @@ function validateSharedDescriptiveFields(
   }
 
   validateAttributeIssues(issues, entry.attributes ?? [], `${prefix}.attributes`);
+}
+
+function validateIssueSharedFields(
+  issues: ValidationIssue[],
+  datasetIssue: DatasetIssue,
+  effectiveIssue: DatasetIssue,
+  prefix: string
+): void {
+  if (!isIssueGroupInherited(datasetIssue, "description")) {
+    validateDescriptionLength(issues, effectiveIssue.description, `${prefix}.description`);
+  }
+
+  if (effectiveIssue.identifier && effectiveIssue.identifier !== effectiveIssue.identifier.trim()) {
+    issues.push(
+      issue(
+        "error",
+        "identifier-whitespace",
+        `${prefix}.identifier`,
+        "Der Identifier darf keine führenden oder nachgestellten Leerzeichen enthalten."
+      )
+    );
+  }
+
+  if (!isIssueGroupInherited(datasetIssue, "issued")) {
+    validateDateField(issues, toStringValue(effectiveIssue.issued), `${prefix}.issued`, "Issued");
+  }
+
+  if (!isIssueGroupInherited(datasetIssue, "modified")) {
+    validateDateField(issues, toStringValue(effectiveIssue.modified), `${prefix}.modified`, "Modified");
+  }
+
+  if (!isIssueGroupInherited(datasetIssue, "temporalCoverage")) {
+    validateTemporalCoverage(issues, effectiveIssue.temporalCoverage, `${prefix}.temporalCoverage`);
+  }
+
+  if (
+    (effectiveIssue.issued || effectiveIssue.modified) &&
+    (isIssueGroupInherited(datasetIssue, "issued") === false || isIssueGroupInherited(datasetIssue, "modified") === false) &&
+    isIsoDate(effectiveIssue.issued ?? "") &&
+    isIsoDate(effectiveIssue.modified ?? "")
+  ) {
+    if ((effectiveIssue.modified ?? "") < (effectiveIssue.issued ?? "")) {
+      issues.push(issue("error", "date-order", `${prefix}.modified`, "Modified darf nicht vor Issued liegen."));
+    }
+  }
+
+  validateAttributeIssues(issues, effectiveIssue.attributes ?? [], `${prefix}.attributes`);
 }
 
 function validateAttributeIssues(issues: ValidationIssue[], attributes: DatasetAttribute[], prefix: string): void {
@@ -407,6 +486,27 @@ function validateDateField(issues: ValidationIssue[], value: string | undefined,
 function pushRequired(issues: ValidationIssue[], value: string | undefined, path: string, message: string): void {
   if (!value?.trim()) {
     issues.push(issue("error", "required", path, message));
+  }
+}
+
+function pushIssueRequired(
+  issues: ValidationIssue[],
+  datasetIssue: DatasetIssue,
+  group: "description" | "publisherRef" | "creatorRef" | "contactPoint",
+  value: string | undefined,
+  path: string,
+  message: string
+): void {
+  if (isIssueGroupInherited(datasetIssue, group)) {
+    return;
+  }
+
+  pushRequired(issues, value, path, message);
+}
+
+function validateDescriptionLength(issues: ValidationIssue[], description: string | undefined, path: string): void {
+  if ((description ?? "").length > 1024) {
+    issues.push(issue("error", "description-length", path, "Die Beschreibung darf maximal 1024 Zeichen lang sein."));
   }
 }
 

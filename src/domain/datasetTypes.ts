@@ -47,8 +47,32 @@ export interface Dataset extends DatasetSharedFields {
   keywords?: string[];
 }
 
-export interface DatasetIssue extends DatasetSharedFields {
+export type IssueInheritedGroup =
+  | "description"
+  | "publisherRef"
+  | "creatorRef"
+  | "contactPoint"
+  | "themes"
+  | "keywords"
+  | "accrualPeriodicity"
+  | "issued"
+  | "modified"
+  | "temporalCoverage"
+  | "surveyMethod"
+  | "dataAvailableFrom"
+  | "furtherUses"
+  | "auxiliaryData"
+  | "remarks";
+
+export interface LocalIssueState extends JsonObject {
+  inheritedGroups?: Partial<Record<IssueInheritedGroup, boolean>>;
+  autoIdentifier?: boolean;
+  autoTitle?: boolean;
+}
+
+export interface DatasetIssue extends Dataset {
   __localIssueId?: string;
+  __localIssueState?: LocalIssueState;
   issueLabel?: string;
   isCurrentIssue?: boolean;
 }
