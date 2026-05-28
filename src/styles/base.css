@@ -1,3 +1,35 @@
+@font-face {
+  font-family: "Frutiger LT Com";
+  src: url("/fonts/FrutigerLTCom-Roman.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Frutiger LT Com";
+  src: url("/fonts/FrutigerLTCom-Light.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Frutiger LT Com";
+  src: url("/fonts/FrutigerLTCom-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Frutiger LT Com";
+  src: url("/fonts/FrutigerLTCom-Black.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 *,
 *::before,
 *::after {
@@ -12,9 +44,11 @@ body,
 
 body {
   margin: 0;
-  font-family: var(--font-family);
-  color: var(--text-color);
-  background: var(--background);
+  font-family: var(--dp-font-sans);
+  color: var(--dp-color-text);
+  background: var(--dp-color-bg);
+  font-size: var(--dp-font-size-md);
+  line-height: var(--dp-line-height-normal);
 }
 
 button,
@@ -38,7 +72,7 @@ textarea:focus,
 select:focus,
 button:focus-visible {
   outline: none;
-  box-shadow: var(--focus-ring);
+  box-shadow: var(--dp-focus-ring);
 }
 
 pre {

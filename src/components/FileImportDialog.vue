@@ -66,7 +66,7 @@ async function handleFiles(files: FileList | null): Promise<void> {
           <div>
             <h3>Vorschau</h3>
             <p class="muted">
-              {{ preview.draftKind === "series" ? "Datensatzserie" : "Datenblatt" }} •
+              {{ preview.draftKind === "series" ? "Datensatzserie" : "Datenblatt" }} |
               {{ preview.importShape === "root" ? "Root-Format" : "Nacktes Objekt" }}
             </p>
           </div>

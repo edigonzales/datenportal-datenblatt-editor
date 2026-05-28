@@ -3,10 +3,10 @@ import { expect, test, type Page } from "@playwright/test";
 async function createLocalDraft(page: Page, expectedCount: number): Promise<void> {
   await page.getByRole("button", { name: "Neues Datenblatt anlegen" }).click();
   await expect(page.locator(".context-bar")).toContainText("Neues Datenblatt");
-  await expect(page.locator(".context-bar")).toHaveCSS("border-radius", "10px");
+  await expect(page.locator(".context-bar")).toHaveCSS("border-radius", "6px");
   await page.getByRole("link", { name: "Start" }).click();
   await expect(page.locator(".draft-card")).toHaveCount(expectedCount);
-  await expect(page.locator(".draft-card").first()).toHaveCSS("border-radius", "10px");
+  await expect(page.locator(".draft-card").first()).toHaveCSS("border-radius", "6px");
   await page.locator(".draft-card").first().getByRole("button", { name: "Öffnen", exact: true }).click();
   await expect(page.locator(".context-bar")).toContainText("Lokaler Entwurf");
   await page.getByRole("link", { name: "Start" }).click();
@@ -24,19 +24,17 @@ test("shows the simplified start screen", async ({ page }) => {
 
   await expect(page.getByRole("heading", { name: "Metadaten lokal bearbeiten" })).toBeVisible();
   await expect(page.locator(".action-card")).toHaveCount(6);
-  await expect(newDatasetCard).toHaveCSS("border-radius", "10px");
+  await expect(newDatasetCard).toHaveCSS("border-radius", "6px");
   await expect(primaryButton).toBeVisible();
   await expect(draftCard.getByRole("button", { name: "Zu den Entwürfen" })).toBeVisible();
   await expect(draftCard.getByRole("button", { name: "Neues Datenblatt anlegen" })).toHaveCount(0);
   await expect(page.locator(".eyebrow")).toHaveCount(0);
   await expect(page.locator(".toolbar-actions")).toHaveCount(0);
-  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(253, 253, 253)");
-  await expect(primaryButton).toHaveCSS("background-color", "rgb(3, 103, 243)");
-  await expect(primaryButton).toHaveCSS("border-radius", "10px");
-  await expect(activeTab).toHaveCSS("background-color", "rgb(3, 103, 243)");
-  await expect(activeTab).toHaveCSS("border-radius", "10px");
-  await expect(inactiveTab).toHaveCSS("background-color", "rgb(243, 246, 249)");
-  await expect(inactiveTab).toHaveCSS("border-color", "rgb(234, 237, 241)");
+  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(250, 248, 245)");
+  await expect(primaryButton).toHaveCSS("background-color", "rgb(211, 18, 27)");
+  await expect(primaryButton).toHaveCSS("border-radius", "5px");
+  await expect(activeTab).toHaveCSS("border-bottom-color", "rgb(211, 18, 27)");
+  await expect(inactiveTab).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
 });
 
 test("loads a dataset from the offline source dialog", async ({ page }) => {
@@ -45,13 +43,13 @@ test("loads a dataset from the offline source dialog", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Metadaten lokal bearbeiten" })).toBeVisible();
   await page.getByRole("button", { name: "Quelle öffnen" }).click();
   const sourceDialog = page.locator(".dialog");
-  await expect(sourceDialog).toHaveCSS("border-radius", "10px");
+  await expect(sourceDialog).toHaveCSS("border-radius", "6px");
   const closeButton = page.getByRole("button", { name: "Schließen" });
-  await expect(closeButton).toHaveCSS("background-color", "rgb(243, 246, 249)");
-  await expect(closeButton).toHaveCSS("border-color", "rgb(234, 237, 241)");
+  await expect(closeButton).toHaveCSS("background-color", "rgb(255, 255, 255)");
+  await expect(closeButton).toHaveCSS("border-color", "rgb(214, 210, 204)");
   await expect(page.getByLabel("Quelle")).toHaveValue("/mock-sources/dataset.index.json");
-  await expect(page.getByLabel("Quelle")).toHaveCSS("height", "38px");
-  await expect(page.getByLabel("Organisationseinheit")).toHaveCSS("height", "38px");
+  await expect(page.getByLabel("Quelle")).toHaveCSS("height", "40px");
+  await expect(page.getByLabel("Organisationseinheit")).toHaveCSS("height", "40px");
   await expect(page.getByRole("heading", { name: "Vorschau" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Identifier auswählen" })).toHaveCount(0);
   const importButton = page.getByRole("button", { name: "In Editor übernehmen" });
@@ -61,7 +59,7 @@ test("loads a dataset from the offline source dialog", async ({ page }) => {
   await page.getByRole("button", { name: "Quelle laden" }).click();
   const errorNotice = page.locator(".notice");
   await expect(errorNotice).toBeVisible();
-  await expect(errorNotice).toHaveCSS("border-radius", "10px");
+  await expect(errorNotice).toHaveCSS("border-radius", "5px");
   await expect(errorNotice).toContainText("Die Quelle konnte nicht geladen werden.");
 
   await page.getByLabel("Quelle").fill("/mock-sources/dataset.index.json");
@@ -81,15 +79,15 @@ test("loads a dataset from the offline source dialog", async ({ page }) => {
   await expect(page.locator(".context-bar")).toContainText("Nitratmessungen im Kanton Solothurn");
   await expect(page.getByText("Von Quelle geladen")).toBeVisible();
   await expect(page.locator(".status-pill", { hasText: "Gespeichert lokal" }).first()).toBeVisible();
-  await expect(page.locator(".surface").first()).toHaveCSS("border-radius", "10px");
-  await expect(page.locator(".sidebar-panel")).toHaveCSS("border-radius", "10px");
+  await expect(page.locator(".surface").first()).toHaveCSS("border-radius", "6px");
+  await expect(page.locator(".sidebar-panel")).toHaveCSS("border-radius", "6px");
 
   await page.getByRole("link", { name: "Attribute" }).click();
-  await expect(page.locator(".table-wrap")).toHaveCSS("border-radius", "10px");
+  await expect(page.locator(".table-wrap")).toHaveCSS("border-radius", "6px");
 
   await page.getByRole("link", { name: "Datenblatt-Vorschau" }).click();
-  await expect(page.locator(".json-panel")).toHaveCSS("border-radius", "10px");
-  await expect(page.locator(".json-panel pre")).toHaveCSS("border-radius", "10px");
+  await expect(page.locator(".json-panel")).toHaveCSS("border-radius", "6px");
+  await expect(page.locator(".json-panel pre")).toHaveCSS("border-radius", "5px");
 });
 
 test("creates and navigates a dataset series workspace", async ({ page }) => {
@@ -137,19 +135,19 @@ test("creates and navigates a dataset series workspace", async ({ page }) => {
   await expect(page.locator(".json-panel")).toContainText("\"type\": \"DatasetSeries\"");
 });
 
-test("shows 10px radius on empty state and file import surfaces", async ({ page }) => {
+test("shows 6px radius on empty state and file import surfaces", async ({ page }) => {
   await page.goto("/");
 
   await page.getByRole("button", { name: "Datenblatt importieren" }).click();
-  await expect(page.locator(".dialog")).toHaveCSS("border-radius", "10px");
-  await expect(page.locator(".drop-zone")).toHaveCSS("border-radius", "10px");
+  await expect(page.locator(".dialog")).toHaveCSS("border-radius", "6px");
+  await expect(page.locator(".drop-zone")).toHaveCSS("border-radius", "6px");
   await page.getByRole("button", { name: "Schließen" }).click();
 
   await createLocalDraft(page, 1);
   await page.getByRole("link", { name: "Attribute" }).click();
   const emptyState = page.locator(".empty-state");
   await expect(emptyState).toContainText("Noch keine Attribute");
-  await expect(emptyState).toHaveCSS("border-radius", "10px");
+  await expect(emptyState).toHaveCSS("border-radius", "6px");
 });
 
 test("deletes all local drafts at once", async ({ page }) => {

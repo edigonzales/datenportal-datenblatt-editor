@@ -1,27 +1,140 @@
+/*
+  Datenportal Design Tokens v0.1
+  Orientiert an so.ch, angepasst für den lokalen Metadaten-Editor.
+  Verwendet Frutiger als Hausschrift.
+*/
+
 :root {
   color-scheme: light;
-  --background: #fdfdfd;
-  --background-muted: #e2e7ed;
-  --surface: #ffffff;
-  --surface-muted: #f5f7fa;
-  --text-color: #242b34;
-  --text-color-secondary: #5d6673;
-  --text-color-muted: #7a8491;
-  --accent-color: #0367f3;
-  --accent-color-hover: #0259d6;
-  --success-color: #1f883d;
-  --warning-color: #b57a00;
-  --danger-color: #cf222e;
-  --info-color: #0969da;
-  --jenkins-border: #c7cfd8;
-  --jenkins-border-subtle: #d9e0e8;
-  --shadow-sm: 0 1px 1px rgba(31, 35, 40, 0.04);
-  --shadow-md: 0 8px 18px rgba(31, 35, 40, 0.07);
-  --focus-ring: 0 0 0 3px rgba(3, 103, 243, 0.14);
-  --radius-sm: 4px;
-  --radius-md: 4px;
-  --radius-lg: 10px;
-  --form-input-border-radius: 4px;
-  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  --page-width: 1360px;
+
+  /* Farben */
+  --dp-color-ink: #2D3E4F;
+  --dp-color-text: #2D3E4F;
+  --dp-color-text-muted: #5A6773;
+  --dp-color-text-soft: #7A848D;
+  --dp-color-text-inverse: #FFFFFF;
+
+  --dp-color-bg: #FAF8F5;
+  --dp-color-surface: #FFFFFF;
+  --dp-color-surface-alt: #F3F1EE;
+  --dp-color-surface-subtle: #F7F5F1;
+
+  --dp-color-line: #E1DED9;
+  --dp-color-border: #D6D2CC;
+  --dp-color-border-strong: #BFB8AF;
+
+  --dp-color-accent: #D3121B;
+  --dp-color-accent-hover: #B80F17;
+  --dp-color-accent-soft: #FDEBEC;
+
+  --dp-color-info-bg: #E8F2FB;
+  --dp-color-info-text: #2D5F87;
+  --dp-color-info-border: #B9D7EF;
+
+  --dp-color-success-bg: #E7F6EC;
+  --dp-color-success-text: #2F7D4E;
+  --dp-color-success-border: #B8E0C4;
+
+  --dp-color-warning-bg: #FFF3E0;
+  --dp-color-warning-text: #8A5A00;
+  --dp-color-warning-border: #F1D39B;
+
+  --dp-color-danger-bg: #FDEBEC;
+  --dp-color-danger-text: #B80F17;
+  --dp-color-danger-border: #F0B8BD;
+
+  /* Typografie */
+  --dp-font-sans: "Frutiger LT Com", Frutiger, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --dp-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+  --dp-font-size-xs: 0.75rem;    /* 12px */
+  --dp-font-size-sm: 0.875rem;   /* 14px */
+  --dp-font-size-md: 1rem;       /* 16px */
+  --dp-font-size-lg: 1.125rem;   /* 18px */
+  --dp-font-size-xl: 1.25rem;    /* 20px */
+  --dp-font-size-2xl: 1.75rem;   /* 28px */
+  --dp-font-size-3xl: 2.25rem;   /* 36px */
+  --dp-font-size-4xl: 3rem;      /* 48px */
+
+  --dp-font-weight-regular: 400;
+  --dp-font-weight-medium: 500;
+  --dp-font-weight-semibold: 600;
+  --dp-font-weight-bold: 700;
+
+  --dp-line-height-tight: 1.15;
+  --dp-line-height-normal: 1.5;
+  --dp-line-height-relaxed: 1.65;
+
+  --dp-letter-spacing-tight: -0.015em;
+  --dp-letter-spacing-normal: 0;
+  --dp-letter-spacing-wide: 0.02em;
+
+  /* Spacing: 8pt-System */
+  --dp-space-0: 0;
+  --dp-space-1: 4px;
+  --dp-space-2: 8px;
+  --dp-space-3: 12px;
+  --dp-space-4: 16px;
+  --dp-space-5: 20px;
+  --dp-space-6: 24px;
+  --dp-space-8: 32px;
+  --dp-space-10: 40px;
+  --dp-space-12: 48px;
+  --dp-space-16: 64px;
+  --dp-space-20: 80px;
+  --dp-space-24: 96px;
+
+  /* Layout */
+  --dp-page-max-width: 1440px;
+  --dp-content-max-width: 1180px;
+  --dp-readable-width: 72ch;
+  --dp-grid-gap-sm: var(--dp-space-4);
+  --dp-grid-gap-md: var(--dp-space-6);
+  --dp-grid-gap-lg: var(--dp-space-8);
+
+  /* Radius: bewusst dezent */
+  --dp-radius-none: 0;
+  --dp-radius-xs: 2px;
+  --dp-radius-sm: 3px;
+  --dp-radius-md: 5px;
+  --dp-radius-lg: 6px;
+  --dp-radius-pill: 999px;
+
+  /* Borders und Schatten */
+  --dp-border-light: 1px solid var(--dp-color-line);
+  --dp-border-default: 1px solid var(--dp-color-border);
+  --dp-border-strong: 1px solid var(--dp-color-border-strong);
+  --dp-shadow-none: none;
+
+  /* Fokus und Bewegung */
+  --dp-focus-ring-color: rgba(211, 18, 27, 0.35);
+  --dp-focus-ring: 0 0 0 3px var(--dp-focus-ring-color);
+  --dp-transition-fast: 120ms ease;
+  --dp-transition-default: 180ms ease;
+
+  /* Legacy compatibility aliases */
+  --background: var(--dp-color-bg);
+  --background-muted: var(--dp-color-surface-alt);
+  --surface: var(--dp-color-surface);
+  --surface-muted: var(--dp-color-surface-subtle);
+  --text-color: var(--dp-color-text);
+  --text-color-secondary: var(--dp-color-text-muted);
+  --text-color-muted: var(--dp-color-text-soft);
+  --accent-color: var(--dp-color-accent);
+  --accent-color-hover: var(--dp-color-accent-hover);
+  --success-color: var(--dp-color-success-text);
+  --warning-color: var(--dp-color-warning-text);
+  --danger-color: var(--dp-color-danger-text);
+  --info-color: var(--dp-color-info-text);
+  --jenkins-border: var(--dp-color-border);
+  --jenkins-border-subtle: var(--dp-color-line);
+  --shadow-sm: none;
+  --shadow-md: none;
+  --focus-ring: var(--dp-focus-ring);
+  --radius-sm: var(--dp-radius-sm);
+  --radius-md: var(--dp-radius-md);
+  --radius-lg: var(--dp-radius-lg);
+  --form-input-border-radius: var(--dp-radius-md);
+  --font-family: var(--dp-font-sans);
+  --page-width: var(--dp-page-max-width);
 }

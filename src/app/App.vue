@@ -81,9 +81,9 @@ onMounted(async () => {
       <div class="context-bar__text">
         <div class="context-bar__group">
           <span>{{ store.contextLabel }}</span>
-          <span class="context-bar__dot">•</span>
+          <span class="context-bar__dot">|</span>
           <span>{{ currentDraftKind === "series" ? "Datensatzserie" : "Datenblatt" }}</span>
-          <span class="context-bar__dot">•</span>
+          <span class="context-bar__dot">|</span>
           <span>{{ store.contextMeta }}</span>
         </div>
         <div class="context-bar__detail">
@@ -92,7 +92,9 @@ onMounted(async () => {
         </div>
       </div>
       <div class="context-bar__actions">
-        <button class="button" type="button" :disabled="exportDisabled" @click="exportCurrentDraft">JSON exportieren</button>
+        <button class="button" type="button" :disabled="exportDisabled" @click="exportCurrentDraft">
+          <i class="bi bi-download"></i> JSON exportieren
+        </button>
         <span class="status-pill" :data-state="store.saveState">{{ store.saveStatusLabel }}</span>
       </div>
     </div>

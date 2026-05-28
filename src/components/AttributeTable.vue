@@ -100,7 +100,7 @@ function move(index: number, direction: -1 | 1): void {
                   :disabled="index === 0"
                   @click="move(index, -1)"
                 >
-                  <span aria-hidden="true">↑</span>
+                  <i class="bi bi-arrow-up" aria-hidden="true"></i>
                 </button>
                 <button
                   class="button button--icon"
@@ -110,7 +110,7 @@ function move(index: number, direction: -1 | 1): void {
                   :disabled="index === attributes.length - 1"
                   @click="move(index, 1)"
                 >
-                  <span aria-hidden="true">↓</span>
+                  <i class="bi bi-arrow-down" aria-hidden="true"></i>
                 </button>
                 <button
                   class="button button--icon"
@@ -119,7 +119,7 @@ function move(index: number, direction: -1 | 1): void {
                   title="Duplizieren"
                   @click="duplicateAttribute(index)"
                 >
-                  <span aria-hidden="true">⧉</span>
+                  <i class="bi bi-files" aria-hidden="true"></i>
                 </button>
                 <button
                   class="button button--icon button--danger"
@@ -128,7 +128,7 @@ function move(index: number, direction: -1 | 1): void {
                   title="Löschen"
                   @click="deleteAttribute(index)"
                 >
-                  <span aria-hidden="true">×</span>
+                  <i class="bi bi-trash" aria-hidden="true"></i>
                 </button>
               </div>
             </td>
