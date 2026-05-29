@@ -9,12 +9,12 @@
 
   /* Farben */
   --dp-color-ink: #2D3E4F;
-  --dp-color-text: #2D3E4F;
+  --dp-color-text: #2F4858;
   --dp-color-text-muted: #5A6773;
   --dp-color-text-soft: #7A848D;
   --dp-color-text-inverse: #FFFFFF;
 
-  --dp-color-bg: #FAF8F5;
+  --dp-color-bg: #FFFFFF;
   --dp-color-surface: #FFFFFF;
   --dp-color-surface-alt: #F3F1EE;
   --dp-color-surface-subtle: #F7F5F1;
@@ -57,8 +57,8 @@
   --dp-font-size-4xl: 3rem;      /* 48px */
 
   --dp-font-weight-regular: 400;
-  --dp-font-weight-medium: 500;
-  --dp-font-weight-semibold: 600;
+  --dp-font-weight-medium: 400;
+  --dp-font-weight-semibold: 700;
   --dp-font-weight-bold: 700;
 
   --dp-line-height-tight: 1.15;

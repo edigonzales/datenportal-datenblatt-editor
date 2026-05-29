@@ -14,7 +14,7 @@ const preview = computed(() => serializeDataset(props.root));
   <section class="json-panel">
     <div class="header-line">
       <div>
-        <h2>JSON-Vorschau</h2>
+        <h2>Datenblatt-Vorschau</h2>
         <p class="muted">Readonly-Vorschau des Exportformats, das beim Export geschrieben wird.</p>
       </div>
     </div>

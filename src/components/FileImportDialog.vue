@@ -34,8 +34,8 @@ async function handleFiles(files: FileList | null): Promise<void> {
     <div class="dialog">
         <div class="dialog-header">
           <div>
-          <h2>JSON importieren</h2>
-          <p class="muted">Lokale Datei lesen, validieren und als Datenblatt oder Datensatzserie in den Editor übernehmen.</p>
+          <h2>Datenblatt importieren</h2>
+          <p class="muted">Lokale Datei lesen, validieren und als Datenblatt in den Editor übernehmen.</p>
           </div>
           <button class="button" type="button" @click="emit('close')">Schließen</button>
         </div>
@@ -52,8 +52,8 @@ async function handleFiles(files: FileList | null): Promise<void> {
             void handleFiles($event.dataTransfer?.files ?? null);
           "
         >
-          <strong>JSON hier ablegen oder Datei wählen</strong>
-          <p class="muted">Akzeptiert werden lokale Dateien mit genau einem Datenblatt oder einer Datensatzserie.</p>
+          <strong>Datenblatt-Datei hier ablegen oder Datei wählen</strong>
+          <p class="muted">Akzeptiert werden lokale Dateien mit genau einem Datenblatt oder einem Datenblatt (Serie).</p>
           <input class="sr-only" type="file" accept="application/json,.json" @change="void handleFiles(($event.target as HTMLInputElement).files)" />
         </label>
 

@@ -32,7 +32,7 @@ const editorTabs = computed(() => {
     return [
       { key: "main", label: "Serie", to: currentDraftId.value ? `/draft/${currentDraftId.value}` : "/" },
       { key: "issues", label: "Ausgaben", to: currentDraftId.value ? `/draft/${currentDraftId.value}/issues` : "/" },
-      { key: "json", label: "Serien-Vorschau", to: currentDraftId.value ? `/draft/${currentDraftId.value}/json` : "/" }
+      { key: "json", label: "Datenblatt-Vorschau", to: currentDraftId.value ? `/draft/${currentDraftId.value}/json` : "/" }
     ];
   }
 
@@ -93,7 +93,7 @@ onMounted(async () => {
       </div>
       <div class="context-bar__actions">
         <button class="button" type="button" :disabled="exportDisabled" @click="exportCurrentDraft">
-          <i class="bi bi-download"></i> JSON exportieren
+          <i class="bi bi-download"></i> Datenblatt exportieren
         </button>
         <span class="status-pill" :data-state="store.saveState">{{ store.saveStatusLabel }}</span>
       </div>

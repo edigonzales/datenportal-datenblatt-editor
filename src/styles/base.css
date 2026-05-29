@@ -8,24 +8,8 @@
 
 @font-face {
   font-family: "Frutiger LT Com";
-  src: url("/fonts/FrutigerLTCom-Light.woff2") format("woff2");
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Frutiger LT Com";
-  src: url("/fonts/FrutigerLTCom-Bold.woff2") format("woff2");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Frutiger LT Com";
   src: url("/fonts/FrutigerLTCom-Black.woff2") format("woff2");
-  font-weight: 900;
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
@@ -47,7 +31,7 @@ body {
   font-family: var(--dp-font-sans);
   color: var(--dp-color-text);
   background: var(--dp-color-bg);
-  font-size: var(--dp-font-size-md);
+  font-size: var(--dp-font-size-lg);
   line-height: var(--dp-line-height-normal);
 }
 

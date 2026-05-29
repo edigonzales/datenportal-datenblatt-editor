@@ -116,7 +116,7 @@ function scrollToDrafts(): void {
 
       <article class="action-card">
         <h3>Datenblatt importieren</h3>
-        <p>Eine lokale JSON-Datei mit genau einem Datenblatt öffnen und im Editor weiterbearbeiten.</p>
+        <p>Eine lokale Datenblatt-Datei mit genau einem Datenblatt öffnen und im Editor weiterbearbeiten.</p>
         <div class="card-actions" style="margin-top: 16px">
           <button class="button button--primary" type="button" @click="fileDialogOpen = true">Datenblatt importieren</button>
         </div>
@@ -131,18 +131,18 @@ function scrollToDrafts(): void {
       </article>
 
       <article class="action-card">
-        <h3>Datensatzserie importieren</h3>
-        <p>Eine lokale JSON-Datei mit Serienkopf und Ausgaben importieren und im Serien-Workspace bearbeiten.</p>
+        <h3>Datenblatt (Serie) importieren</h3>
+        <p>Eine lokale Datenblatt-Datei mit Serienkopf und Ausgaben importieren und im Serien-Workspace bearbeiten.</p>
         <div class="card-actions" style="margin-top: 16px">
-          <button class="button button--primary" type="button" @click="fileDialogOpen = true">Datensatzserie importieren</button>
+          <button class="button button--primary" type="button" @click="fileDialogOpen = true">Datenblatt (Serie) importieren</button>
         </div>
       </article>
 
       <article class="action-card">
-        <h3>Neue Datensatzserie anlegen</h3>
+        <h3>Neues Datenblatt (Serie) anlegen</h3>
         <p>Mit einem Serienkopf und einer ersten leeren Ausgabe starten.</p>
         <div class="card-actions" style="margin-top: 16px">
-          <button class="button button--primary" type="button" @click="createNewSeries">Neue Datensatzserie anlegen</button>
+          <button class="button button--primary" type="button" @click="createNewSeries">Neues Datenblatt (Serie) anlegen</button>
         </div>
       </article>
 
