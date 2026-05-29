@@ -12,7 +12,7 @@ const isSeries = computed(() => props.mode === "series");
 </script>
 
 <template>
-  <section class="surface section-stack">
+  <section class="surface surface--editor section-stack">
     <div class="header-line">
       <div>
         <h2>{{ isSeries ? "Serien-Metadaten" : "Datensatz-Metadaten" }}</h2>

@@ -29,6 +29,7 @@ const currentDatasetRoot = computed(() =>
 const validation = computed(() =>
   currentDraft.value ? validateEditableRoot(currentDraft.value.data, activeIssueId.value) : null
 );
+const isFramelessEditorView = computed(() => props.tab === "main" || props.tab === "issues");
 
 watch(
   () => route.params.id,
@@ -99,7 +100,7 @@ function openSeriesIssue(issueId: string): void {
 </script>
 
 <template>
-  <div v-if="currentDraft && validation" class="grid-main">
+  <div v-if="currentDraft && validation" class="grid-main" :class="{ 'grid-main--frameless': isFramelessEditorView }">
     <div class="section-stack">
       <section v-if="store.saveState === 'error'" class="surface surface--alert section-stack">
         <div>
@@ -136,7 +137,9 @@ function openSeriesIssue(issueId: string): void {
       </template>
     </div>
 
-    <ValidationPanel :validation="validation" />
+    <div class="validation-column">
+      <ValidationPanel :validation="validation" />
+    </div>
   </div>
 
   <div v-else class="empty-state" style="padding: 24px">

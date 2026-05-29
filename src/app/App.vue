@@ -85,6 +85,8 @@ onMounted(async () => {
           <span>{{ currentDraftKind === "series" ? "Datensatzserie" : "Datenblatt" }}</span>
           <span class="context-bar__dot">|</span>
           <span>{{ store.contextMeta }}</span>
+          <span class="context-bar__dot">|</span>
+          <span class="status-pill" :data-state="store.saveState">{{ store.saveStatusLabel }}</span>
         </div>
         <div class="context-bar__detail">
           <strong>{{ currentDraftTitle }}</strong>
@@ -95,7 +97,6 @@ onMounted(async () => {
         <button class="button" type="button" :disabled="exportDisabled" @click="exportCurrentDraft">
           <i class="bi bi-download"></i> Datenblatt exportieren
         </button>
-        <span class="status-pill" :data-state="store.saveState">{{ store.saveStatusLabel }}</span>
       </div>
     </div>
 

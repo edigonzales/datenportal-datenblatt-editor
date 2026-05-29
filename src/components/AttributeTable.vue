@@ -41,7 +41,7 @@ function move(index: number, direction: -1 | 1): void {
 </script>
 
 <template>
-  <section class="surface section-stack">
+  <section class="surface surface--editor section-stack">
     <div class="header-line">
       <div>
         <h2>{{ title || "Attribute" }}</h2>

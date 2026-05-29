@@ -35,6 +35,12 @@ test("shows the simplified start screen", async ({ page }) => {
   await expect(primaryButton).toHaveCSS("border-radius", "5px");
   await expect(activeTab).toHaveCSS("border-bottom-color", "rgb(211, 18, 27)");
   await expect(inactiveTab).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  const inactiveTabIdleColor = await inactiveTab.evaluate((element) => window.getComputedStyle(element).color);
+  await inactiveTab.hover();
+  await expect(inactiveTab).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  await expect(inactiveTab).toHaveCSS("color", "rgb(47, 72, 88)");
+  const inactiveTabHoverColor = await inactiveTab.evaluate((element) => window.getComputedStyle(element).color);
+  expect(inactiveTabHoverColor).not.toBe(inactiveTabIdleColor);
 });
 
 test("loads a dataset from the offline source dialog", async ({ page }) => {

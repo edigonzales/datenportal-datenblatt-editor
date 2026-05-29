@@ -31,7 +31,7 @@ function markOverridden(group: IssueInheritedGroup): void {
 </script>
 
 <template>
-  <section class="surface section-stack">
+  <section class="surface surface--editor section-stack">
     <div class="header-line">
       <div>
         <h2>Ausgabe bearbeiten</h2>
