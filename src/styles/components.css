@@ -183,8 +183,13 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--dp-space-4);
   align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 20;
   padding: 0;
-  margin-bottom: var(--dp-space-5);
+  margin-top: 36px;
+  margin-bottom: 32px;
+  background: var(--dp-color-surface-subtle);
   box-shadow: none;
 }
 
@@ -224,10 +229,6 @@
 
 .context-bar__dot {
   color: var(--dp-color-text-soft);
-}
-
-.context-bar__group .status-pill {
-  margin-left: var(--dp-space-1);
 }
 
 .status-pill {
@@ -325,12 +326,10 @@
 }
 
 .form-section {
-  border-top: 1px solid var(--dp-color-line);
   padding-top: var(--dp-space-5);
 }
 
 .form-section:first-child {
-  border-top: 0;
   padding-top: 0;
 }
 

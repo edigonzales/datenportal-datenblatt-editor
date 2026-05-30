@@ -2,8 +2,12 @@ import { expect, test, type Page } from "@playwright/test";
 
 async function createLocalDraft(page: Page, expectedCount: number): Promise<void> {
   await page.getByRole("button", { name: "Neues Datenblatt anlegen" }).click();
-  await expect(page.locator(".context-bar")).toContainText("Neues Datenblatt");
-  await expect(page.locator(".context-bar")).toHaveCSS("border-radius", "6px");
+  const contextBar = page.locator(".context-bar");
+  await expect(contextBar).toContainText("Neues Datenblatt");
+  await expect(contextBar).toHaveCSS("position", "sticky");
+  await expect(contextBar).toHaveCSS("top", "0px");
+  await expect(contextBar).toHaveCSS("background-color", "rgb(247, 245, 241)");
+  await expect(contextBar.locator(".status-pill")).toHaveCount(0);
   await page.getByRole("link", { name: "Start" }).click();
   await expect(page.locator(".draft-card")).toHaveCount(expectedCount);
   await expect(page.locator(".draft-card").first()).toHaveCSS("border-radius", "6px");
@@ -82,9 +86,13 @@ test("loads a dataset from the offline source dialog", async ({ page }) => {
 
   await importButton.click();
 
-  await expect(page.locator(".context-bar")).toContainText("Nitratmessungen im Kanton Solothurn");
+  const contextBar = page.locator(".context-bar");
+  await expect(contextBar).toContainText("Nitratmessungen im Kanton Solothurn");
   await expect(page.getByText("Von Quelle geladen")).toBeVisible();
-  await expect(page.locator(".status-pill", { hasText: "Gespeichert lokal" }).first()).toBeVisible();
+  await expect(contextBar).toHaveCSS("position", "sticky");
+  await expect(contextBar).toHaveCSS("top", "0px");
+  await expect(contextBar).toHaveCSS("background-color", "rgb(247, 245, 241)");
+  await expect(contextBar.locator(".status-pill")).toHaveCount(0);
   await expect(page.locator(".surface").first()).toHaveCSS("border-radius", "6px");
   await expect(page.locator(".sidebar-panel")).toHaveCSS("border-radius", "6px");
 

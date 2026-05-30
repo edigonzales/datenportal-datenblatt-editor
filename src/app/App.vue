@@ -85,8 +85,6 @@ onMounted(async () => {
           <span>{{ currentDraftKind === "series" ? "Datensatzserie" : "Datenblatt" }}</span>
           <span class="context-bar__dot">|</span>
           <span>{{ store.contextMeta }}</span>
-          <span class="context-bar__dot">|</span>
-          <span class="status-pill" :data-state="store.saveState">{{ store.saveStatusLabel }}</span>
         </div>
         <div class="context-bar__detail">
           <strong>{{ currentDraftTitle }}</strong>

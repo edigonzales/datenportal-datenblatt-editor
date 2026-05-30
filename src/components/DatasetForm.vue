@@ -16,14 +16,6 @@ const isSeries = computed(() => props.mode === "series");
     <div class="header-line">
       <div>
         <h2>{{ isSeries ? "Serien-Metadaten" : "Datensatz-Metadaten" }}</h2>
-        <p class="muted">
-          {{
-            dataset.description ||
-            (isSeries
-              ? "Bearbeiten Sie die gemeinsamen Metadaten dieser Datensatzserie."
-              : "Bearbeiten Sie die Metadaten dieses Datenblatts lokal im Browser.")
-          }}
-        </p>
       </div>
     </div>
 
