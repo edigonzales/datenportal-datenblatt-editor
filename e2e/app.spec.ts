@@ -1,7 +1,16 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 function actionCard(page: Page, heading: string) {
   return page.locator(".action-card").filter({ has: page.getByRole("heading", { name: heading }) });
+}
+
+async function expectVerticalGap(first: Locator, second: Locator, expectedPx: number): Promise<void> {
+  const [firstBox, secondBox] = await Promise.all([first.boundingBox(), second.boundingBox()]);
+  expect(firstBox).not.toBeNull();
+  expect(secondBox).not.toBeNull();
+
+  const gap = (secondBox?.y ?? 0) - ((firstBox?.y ?? 0) + (firstBox?.height ?? 0));
+  expect(Math.round(gap)).toBe(expectedPx);
 }
 
 async function createLocalDraft(page: Page, expectedCount: number): Promise<void> {
@@ -103,14 +112,35 @@ test("loads a dataset from the offline source dialog", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Datenblatt exportieren" })).toHaveCSS("border-radius", "4px");
   await expect(page.getByLabel("Identifier *")).toHaveCSS("border-radius", "4px");
 
+  await expectVerticalGap(
+    page.getByRole("heading", { name: "Datensatz-Metadaten" }),
+    page.getByRole("heading", { name: "Grundangaben" }),
+    20
+  );
+  await expectVerticalGap(
+    page.getByRole("heading", { name: "Grundangaben" }),
+    page.getByText("Identifier und Titel sind Pflichtfelder. Weitere gemeinsame Pflichtfelder folgen darunter.", {
+      exact: true,
+    }),
+    8
+  );
+
   const checkboxMarginTop = await page.locator('.checkbox-item input[type="checkbox"]').first().evaluate((element) => {
     return window.getComputedStyle(element).marginTop;
   });
   const radioMarginTop = await page.locator('.radio-item input[type="radio"]').first().evaluate((element) => {
     return window.getComputedStyle(element).marginTop;
   });
+  const checkboxAlignItems = await page.locator(".checkbox-item").first().evaluate((element) => {
+    return window.getComputedStyle(element).alignItems;
+  });
+  const radioAlignItems = await page.locator(".radio-item").first().evaluate((element) => {
+    return window.getComputedStyle(element).alignItems;
+  });
   expect(checkboxMarginTop).toBe("0px");
   expect(radioMarginTop).toBe("0px");
+  expect(checkboxAlignItems).toBe("baseline");
+  expect(radioAlignItems).toBe("baseline");
 
   await page.evaluate(() => {
     document.querySelector(".context-bar")?.setAttribute("data-save-state", "dirty");

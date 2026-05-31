@@ -356,6 +356,10 @@
   padding-top: 0;
 }
 
+.surface--editor.section-stack > .header-line + .form-section {
+  padding-top: 0;
+}
+
 .form-section h3,
 .sidebar-panel h3,
 .surface h2 {
@@ -468,12 +472,13 @@
   row-gap: var(--dp-space-3);
 }
 
-.checkbox-item,
-.radio-item {
+label.checkbox-item,
+label.radio-item {
   display: inline-flex;
-  align-items: center;
+  align-items: baseline;
   gap: var(--dp-space-2);
   font-size: var(--dp-font-size-sm);
+  font-weight: var(--dp-font-weight-regular);
   line-height: 1.25;
 }
 
@@ -481,7 +486,6 @@
 .radio-item input[type="radio"] {
   margin: 0;
   flex: 0 0 auto;
-  align-self: center;
 }
 
 .action-grid {
@@ -687,6 +691,22 @@
   flex-wrap: wrap;
   align-items: center;
   margin-bottom: var(--dp-space-3);
+}
+
+.section-stack > .header-line {
+  margin-bottom: 0;
+}
+
+.header-line > div,
+.form-section > div:first-child {
+  display: grid;
+  gap: var(--dp-space-2);
+}
+
+.header-line h2,
+.header-line p,
+.form-section > div:first-child > h3 {
+  margin: 0;
 }
 
 .surface--alert {

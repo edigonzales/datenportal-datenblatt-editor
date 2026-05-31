@@ -22,7 +22,6 @@ const isSeries = computed(() => props.mode === "series");
     <section class="form-section section-stack">
       <div>
         <h3>Grundangaben</h3>
-        <p class="field-help">Identifier und Titel sind Pflichtfelder. Weitere gemeinsame Pflichtfelder folgen darunter.</p>
       </div>
       <div class="field-grid">
         <div class="field-row">
