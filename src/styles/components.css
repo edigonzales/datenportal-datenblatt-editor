@@ -281,7 +281,7 @@
 }
 
 .page {
-  padding-inline: 6px;
+  padding-inline: 0px;
   padding-bottom: var(--dp-space-12);
 }
 
