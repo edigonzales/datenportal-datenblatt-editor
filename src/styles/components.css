@@ -516,6 +516,10 @@ label.radio-item {
   margin: 0 0 var(--dp-space-2);
 }
 
+.empty-state h3 {
+  margin: 0 0 var(--dp-space-2);
+}
+
 .action-card p,
 .draft-card p,
 .empty-state p {

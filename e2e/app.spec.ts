@@ -27,6 +27,7 @@ async function createLocalDraft(page: Page, expectedCount: number): Promise<void
   await expect(page.locator(".context-bar")).toHaveCount(0);
   await expect(page.locator(".draft-card")).toHaveCount(expectedCount);
   await expect(page.locator(".draft-card").first()).toHaveCSS("border-radius", "6px");
+  await expect(page.locator(".draft-card").first()).not.toContainText("Quelle:");
   await page.locator(".draft-card").first().getByRole("button", { name: "Öffnen", exact: true }).click();
   await expect(page.locator(".context-bar")).toContainText("Lokaler Entwurf");
   await page.getByRole("link", { name: "Start" }).click();
@@ -43,7 +44,7 @@ test("shows the simplified start screen", async ({ page }) => {
   const activeTab = page.getByRole("link", { name: "Start" });
   const inactiveTab = page.getByRole("link", { name: "Datensatz" });
 
-  await expect(page.getByRole("heading", { name: "Metadaten lokal bearbeiten" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Datenportal: Datenblatt-Editor" })).toBeVisible();
   await expect(page.locator(".action-card")).toHaveCount(6);
   await expect(newDatasetCard).toHaveCSS("border-radius", "6px");
   await expect(primaryButton).toBeVisible();
@@ -57,12 +58,13 @@ test("shows the simplified start screen", async ({ page }) => {
   await expect(activeTab).toHaveCSS("border-bottom-color", "rgb(211, 18, 27)");
   await expect(inactiveTab).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
   await expect(inactiveTab).toHaveAttribute("aria-disabled", "true");
+  await expect(page.locator(".empty-state h3")).toHaveCSS("margin-top", "0px");
 });
 
 test("loads a dataset from the offline source dialog", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { name: "Metadaten lokal bearbeiten" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Datenportal: Datenblatt-Editor" })).toBeVisible();
   await page.getByRole("button", { name: "Quelle öffnen" }).click();
   const sourceDialog = page.locator(".dialog");
   await expect(sourceDialog).toHaveCSS("border-radius", "6px");

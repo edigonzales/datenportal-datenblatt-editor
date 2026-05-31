@@ -61,7 +61,7 @@ onMounted(async () => {
 <template>
   <div class="app-shell">
     <header class="topbar">
-      <h1>Metadaten lokal bearbeiten</h1>
+      <h1>Datenportal: Datenblatt-Editor</h1>
     </header>
 
     <nav class="tabs">

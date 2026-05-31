@@ -42,7 +42,6 @@ const emit = defineEmits<{
         </div>
         <div class="section-stack">
           <p class="muted">Zuletzt bearbeitet: {{ formatDateTime(draft.updatedAt) }}</p>
-          <p class="muted">Quelle: {{ draft.sourceLabel || draft.sourceType }}</p>
         </div>
         <div class="draft-actions" style="margin-top: 16px">
           <button class="button button--primary" type="button" @click="emit('open', draft.id)">Öffnen</button>
