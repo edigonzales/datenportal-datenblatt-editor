@@ -38,16 +38,21 @@ async function createLocalDraft(page: Page, expectedCount: number): Promise<void
 test("shows the simplified start screen", async ({ page }) => {
   await page.goto("/");
 
+  const sourceCard = actionCard(page, "Metadaten von Quelle laden");
   const newDatasetCard = actionCard(page, "Neues Datenblatt (einzelner Datensatz) anlegen");
   const draftCard = actionCard(page, "Lokalen Entwurf öffnen");
-  const primaryButton = newDatasetCard.getByRole("button", { name: "Neues Datenblatt anlegen" });
+  const primaryButton = sourceCard.getByRole("button", { name: "Quelle öffnen" });
+  const secondaryButton = newDatasetCard.getByRole("button", { name: "Neues Datenblatt anlegen" });
   const activeTab = page.getByRole("link", { name: "Start" });
   const inactiveTab = page.getByRole("link", { name: "Datensatz" });
 
   await expect(page.getByRole("heading", { name: "Datenportal: Datenblatt-Editor" })).toBeVisible();
   await expect(page.locator(".action-card")).toHaveCount(6);
   await expect(newDatasetCard).toHaveCSS("border-radius", "6px");
+  await expect(page.locator(".action-grid .button--primary")).toHaveCount(1);
   await expect(primaryButton).toBeVisible();
+  await expect(sourceCard.locator(".button--primary")).toHaveCount(1);
+  await expect(newDatasetCard.locator(".button--primary")).toHaveCount(0);
   await expect(draftCard.getByRole("button", { name: "Zu den Entwürfen" })).toBeVisible();
   await expect(draftCard.getByRole("button", { name: "Neues Datenblatt anlegen" })).toHaveCount(0);
   await expect(page.locator(".eyebrow")).toHaveCount(0);
@@ -55,9 +60,30 @@ test("shows the simplified start screen", async ({ page }) => {
   await expect(page.locator("body")).toHaveCSS("background-color", "rgb(255, 255, 255)");
   await expect(primaryButton).toHaveCSS("background-color", "rgb(211, 18, 27)");
   await expect(primaryButton).toHaveCSS("border-radius", "4px");
+  await expect(secondaryButton).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  await expect(secondaryButton).toHaveCSS("border-color", "rgb(211, 18, 27)");
+  await expect(secondaryButton).toHaveCSS("color", "rgb(211, 18, 27)");
+  await secondaryButton.hover();
+  await expect(secondaryButton).toHaveCSS("text-decoration-line", "none");
+  await expect(secondaryButton).toHaveCSS("border-color", "rgb(184, 15, 23)");
+  await expect(secondaryButton).toHaveCSS("color", "rgb(184, 15, 23)");
   await expect(activeTab).toHaveCSS("border-bottom-color", "rgb(211, 18, 27)");
+  await expect(activeTab).toHaveCSS("text-decoration-line", "none");
   await expect(inactiveTab).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
   await expect(inactiveTab).toHaveAttribute("aria-disabled", "true");
+  await expect(inactiveTab).toHaveCSS("text-decoration-line", "none");
+  await page.evaluate(() => {
+    const fixture = document.createElement("p");
+    fixture.id = "inline-link-fixture";
+    fixture.innerHTML = '<a id="inline-link" href="#inline-link-fixture">Mehr erfahren</a>';
+    document.body.appendChild(fixture);
+  });
+  const inlineLink = page.locator("#inline-link");
+  await expect(inlineLink).toHaveCSS("text-decoration-line", "underline");
+  await expect(inlineLink).toHaveCSS("color", "rgb(47, 72, 88)");
+  await inlineLink.hover();
+  await expect(inlineLink).toHaveCSS("text-decoration-line", "underline");
+  await expect(inlineLink).toHaveCSS("color", "rgb(211, 18, 27)");
   await expect(page.locator(".empty-state h3")).toHaveCSS("margin-top", "0px");
 });
 

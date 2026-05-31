@@ -82,7 +82,7 @@
   background: transparent;
   color: var(--dp-color-accent-hover);
   border-color: var(--dp-color-accent-hover);
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .button--ghost {

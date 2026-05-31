@@ -118,7 +118,7 @@ function scrollToDrafts(): void {
         <h3>Datenblatt (einzelner Datensatz) importieren</h3>
         <p>Eine lokale Datenblatt-Datei mit genau einem Datensatz öffnen und im Editor weiterbearbeiten.</p>
         <div class="card-actions" style="margin-top: 16px">
-          <button class="button button--primary" type="button" @click="fileDialogOpen = true">Datenblatt importieren</button>
+          <button class="button button--secondary" type="button" @click="fileDialogOpen = true">Datenblatt importieren</button>
         </div>
       </article>
 
@@ -126,7 +126,7 @@ function scrollToDrafts(): void {
         <h3>Neues Datenblatt (einzelner Datensatz) anlegen</h3>
         <p>Mit einem leeren Datenblatt beginnen und Inhalte direkt im Editor erfassen.</p>
         <div class="card-actions" style="margin-top: 16px">
-          <button class="button button--primary" type="button" @click="createNew">Neues Datenblatt anlegen</button>
+          <button class="button button--secondary" type="button" @click="createNew">Neues Datenblatt anlegen</button>
         </div>
       </article>
 
@@ -134,7 +134,7 @@ function scrollToDrafts(): void {
         <h3>Datenblatt (Serie) importieren</h3>
         <p>Eine lokale Datenblatt-Datei mit Serienkopf und Ausgaben importieren und im Serien-Workspace bearbeiten.</p>
         <div class="card-actions" style="margin-top: 16px">
-          <button class="button button--primary" type="button" @click="fileDialogOpen = true">Datenblatt importieren</button>
+          <button class="button button--secondary" type="button" @click="fileDialogOpen = true">Datenblatt importieren</button>
         </div>
       </article>
 
@@ -142,7 +142,7 @@ function scrollToDrafts(): void {
         <h3>Neues Datenblatt (Serie) anlegen</h3>
         <p>Mit einem Serienkopf und einer ersten leeren Ausgabe starten.</p>
         <div class="card-actions" style="margin-top: 16px">
-          <button class="button button--primary" type="button" @click="createNewSeries">Neues Datenblatt anlegen</button>
+          <button class="button button--secondary" type="button" @click="createNewSeries">Neues Datenblatt anlegen</button>
         </div>
       </article>
 
@@ -150,7 +150,7 @@ function scrollToDrafts(): void {
         <h3>Lokalen Entwurf öffnen</h3>
         <p>In diesem Browser gespeicherte Bearbeitungsstände fortsetzen oder exportieren.</p>
         <div class="card-actions" style="margin-top: 16px">
-          <button class="button button--primary" type="button" @click="scrollToDrafts">Zu den Entwürfen</button>
+          <button class="button button--secondary" type="button" @click="scrollToDrafts">Zu den Entwürfen</button>
         </div>
       </article>
     </section>
