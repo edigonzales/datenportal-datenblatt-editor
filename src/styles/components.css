@@ -458,7 +458,7 @@
   color: var(--dp-color-text-muted);
   font-size: var(--dp-font-size-sm);
   font-weight: 400;
-  border: 1px solid var(--dp-color-line);
+  /*border: 1px solid var(--dp-color-line);*/
 }
 
 .checkbox-list {
