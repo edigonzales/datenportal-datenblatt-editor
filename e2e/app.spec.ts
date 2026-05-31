@@ -1,27 +1,37 @@
 import { expect, test, type Page } from "@playwright/test";
 
+function actionCard(page: Page, heading: string) {
+  return page.locator(".action-card").filter({ has: page.getByRole("heading", { name: heading }) });
+}
+
 async function createLocalDraft(page: Page, expectedCount: number): Promise<void> {
-  await page.getByRole("button", { name: "Neues Datenblatt anlegen" }).click();
+  await actionCard(page, "Neues Datenblatt (einzelner Datensatz) anlegen")
+    .getByRole("button", { name: "Neues Datenblatt anlegen" })
+    .click();
   const contextBar = page.locator(".context-bar");
   await expect(contextBar).toContainText("Neues Datenblatt");
   await expect(contextBar).toHaveCSS("position", "sticky");
-  await expect(contextBar).toHaveCSS("top", "0px");
-  await expect(contextBar).toHaveCSS("background-color", "rgb(247, 245, 241)");
+  await expect(contextBar).toHaveCSS("top", "20px");
+  await expect(contextBar).toHaveCSS("padding-top", "16px");
+  await expect(contextBar).toHaveCSS("padding-left", "20px");
+  await expect(contextBar).toHaveCSS("background-color", "rgb(231, 246, 236)");
   await expect(contextBar.locator(".status-pill")).toHaveCount(0);
   await page.getByRole("link", { name: "Start" }).click();
+  await expect(page.locator(".context-bar")).toHaveCount(0);
   await expect(page.locator(".draft-card")).toHaveCount(expectedCount);
   await expect(page.locator(".draft-card").first()).toHaveCSS("border-radius", "6px");
   await page.locator(".draft-card").first().getByRole("button", { name: "Öffnen", exact: true }).click();
   await expect(page.locator(".context-bar")).toContainText("Lokaler Entwurf");
   await page.getByRole("link", { name: "Start" }).click();
+  await expect(page.locator(".context-bar")).toHaveCount(0);
   await expect(page.locator(".draft-card")).toHaveCount(expectedCount);
 }
 
 test("shows the simplified start screen", async ({ page }) => {
   await page.goto("/");
 
-  const newDatasetCard = page.locator(".action-card").filter({ has: page.getByRole("heading", { name: "Neues Datenblatt anlegen" }) });
-  const draftCard = page.locator(".action-card").filter({ has: page.getByRole("heading", { name: "Lokalen Entwurf öffnen" }) });
+  const newDatasetCard = actionCard(page, "Neues Datenblatt (einzelner Datensatz) anlegen");
+  const draftCard = actionCard(page, "Lokalen Entwurf öffnen");
   const primaryButton = newDatasetCard.getByRole("button", { name: "Neues Datenblatt anlegen" });
   const activeTab = page.getByRole("link", { name: "Start" });
   const inactiveTab = page.getByRole("link", { name: "Datensatz" });
@@ -34,17 +44,12 @@ test("shows the simplified start screen", async ({ page }) => {
   await expect(draftCard.getByRole("button", { name: "Neues Datenblatt anlegen" })).toHaveCount(0);
   await expect(page.locator(".eyebrow")).toHaveCount(0);
   await expect(page.locator(".toolbar-actions")).toHaveCount(0);
-  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(250, 248, 245)");
+  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(255, 255, 255)");
   await expect(primaryButton).toHaveCSS("background-color", "rgb(211, 18, 27)");
-  await expect(primaryButton).toHaveCSS("border-radius", "5px");
+  await expect(primaryButton).toHaveCSS("border-radius", "4px");
   await expect(activeTab).toHaveCSS("border-bottom-color", "rgb(211, 18, 27)");
   await expect(inactiveTab).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
-  const inactiveTabIdleColor = await inactiveTab.evaluate((element) => window.getComputedStyle(element).color);
-  await inactiveTab.hover();
-  await expect(inactiveTab).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
-  await expect(inactiveTab).toHaveCSS("color", "rgb(47, 72, 88)");
-  const inactiveTabHoverColor = await inactiveTab.evaluate((element) => window.getComputedStyle(element).color);
-  expect(inactiveTabHoverColor).not.toBe(inactiveTabIdleColor);
+  await expect(inactiveTab).toHaveAttribute("aria-disabled", "true");
 });
 
 test("loads a dataset from the offline source dialog", async ({ page }) => {
@@ -90,11 +95,43 @@ test("loads a dataset from the offline source dialog", async ({ page }) => {
   await expect(contextBar).toContainText("Nitratmessungen im Kanton Solothurn");
   await expect(page.getByText("Von Quelle geladen")).toBeVisible();
   await expect(contextBar).toHaveCSS("position", "sticky");
-  await expect(contextBar).toHaveCSS("top", "0px");
-  await expect(contextBar).toHaveCSS("background-color", "rgb(247, 245, 241)");
+  await expect(contextBar).toHaveCSS("top", "20px");
+  await expect(contextBar).toHaveCSS("padding-top", "16px");
+  await expect(contextBar).toHaveCSS("padding-left", "20px");
+  await expect(contextBar).toHaveCSS("background-color", "rgb(231, 246, 236)");
   await expect(contextBar.locator(".status-pill")).toHaveCount(0);
-  await expect(page.locator(".surface").first()).toHaveCSS("border-radius", "6px");
-  await expect(page.locator(".sidebar-panel")).toHaveCSS("border-radius", "6px");
+  await expect(page.getByRole("button", { name: "Datenblatt exportieren" })).toHaveCSS("border-radius", "4px");
+  await expect(page.getByLabel("Identifier *")).toHaveCSS("border-radius", "4px");
+
+  const checkboxMarginTop = await page.locator('.checkbox-item input[type="checkbox"]').first().evaluate((element) => {
+    return window.getComputedStyle(element).marginTop;
+  });
+  const radioMarginTop = await page.locator('.radio-item input[type="radio"]').first().evaluate((element) => {
+    return window.getComputedStyle(element).marginTop;
+  });
+  expect(checkboxMarginTop).toBe("0px");
+  expect(radioMarginTop).toBe("0px");
+
+  await page.evaluate(() => {
+    document.querySelector(".context-bar")?.setAttribute("data-save-state", "dirty");
+  });
+  await expect(contextBar).toHaveCSS("background-color", "rgb(255, 243, 224)");
+  await page.evaluate(() => {
+    document.querySelector(".context-bar")?.setAttribute("data-save-state", "saved");
+  });
+  await expect(contextBar).toHaveCSS("background-color", "rgb(231, 246, 236)");
+
+  await page.evaluate(() => window.scrollTo({ top: 1200, behavior: "auto" }));
+  const contextBarBox = await contextBar.boundingBox();
+  const validationHeadingBox = await page.getByRole("heading", { name: "Prüfstatus" }).boundingBox();
+  expect(validationHeadingBox).not.toBeNull();
+  expect(contextBarBox).not.toBeNull();
+  expect((validationHeadingBox?.y ?? 0) + 1).toBeGreaterThanOrEqual(
+    (contextBarBox?.y ?? 0) + (contextBarBox?.height ?? 0)
+  );
+
+  await expect(page.locator(".surface").first()).toHaveCSS("border-radius", "0px");
+  await expect(page.locator(".sidebar-panel")).toHaveCSS("border-radius", "0px");
 
   await page.getByRole("link", { name: "Attribute" }).click();
   await expect(page.locator(".table-wrap")).toHaveCSS("border-radius", "6px");
@@ -107,13 +144,15 @@ test("loads a dataset from the offline source dialog", async ({ page }) => {
 test("creates and navigates a dataset series workspace", async ({ page }) => {
   await page.goto("/");
 
-  await page.getByRole("button", { name: "Neue Datensatzserie anlegen" }).click();
+  await actionCard(page, "Neues Datenblatt (Serie) anlegen")
+    .getByRole("button", { name: "Neues Datenblatt anlegen" })
+    .click();
 
   await expect(page.locator(".context-bar")).toContainText("Neue Datensatzserie");
   await expect(page.getByRole("link", { name: "Serie", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Ausgaben", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Serien-Vorschau", exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "JSON exportieren" })).toBeDisabled();
+  await expect(page.getByRole("link", { name: "Datenblatt-Vorschau", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Datenblatt exportieren" })).toBeDisabled();
 
   await page.getByLabel("Identifier *").fill("ch.foo");
   await page.getByLabel("Titel *").fill("Ch Foo");
@@ -145,14 +184,16 @@ test("creates and navigates a dataset series workspace", async ({ page }) => {
   await page.getByRole("link", { name: "Ausgaben", exact: true }).click();
   await expect(page.getByLabel("Titel *")).toHaveValue("Ch Bar 2026");
 
-  await page.getByRole("link", { name: "Serien-Vorschau", exact: true }).click();
+  await page.getByRole("link", { name: "Datenblatt-Vorschau", exact: true }).click();
   await expect(page.locator(".json-panel")).toContainText("\"type\": \"DatasetSeries\"");
 });
 
 test("shows 6px radius on empty state and file import surfaces", async ({ page }) => {
   await page.goto("/");
 
-  await page.getByRole("button", { name: "Datenblatt importieren" }).click();
+  await actionCard(page, "Datenblatt (einzelner Datensatz) importieren")
+    .getByRole("button", { name: "Datenblatt importieren" })
+    .click();
   await expect(page.locator(".dialog")).toHaveCSS("border-radius", "6px");
   await expect(page.locator(".drop-zone")).toHaveCSS("border-radius", "6px");
   await page.getByRole("button", { name: "Schließen" }).click();
@@ -197,6 +238,6 @@ test("cancels bulk deletion without changing drafts", async ({ page }) => {
 
   await expect(page.getByRole("heading", { name: "Lokale Entwürfe" })).toBeVisible();
   await expect(page.locator(".draft-card")).toHaveCount(2);
-  await expect(page.locator(".context-bar")).toContainText("Lokaler Entwurf");
+  await expect(page.locator(".context-bar")).toHaveCount(0);
   await expect(page.locator(".dialog--narrow")).toHaveCount(0);
 });
