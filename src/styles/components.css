@@ -1,9 +1,5 @@
 .app-shell {
-  --context-bar-sticky-gap: 20px;
-  --context-bar-height: 0px;
-  --context-bar-sidebar-gap: var(--dp-space-3);
-  --context-bar-clearance: calc(var(--context-bar-sticky-gap) + var(--context-bar-height));
-  --sidebar-sticky-top: calc(var(--context-bar-clearance) + var(--context-bar-sidebar-gap));
+  --sidebar-sticky-top: var(--dp-space-5);
   --form-control-radius: 4px;
   max-width: var(--dp-page-max-width);
   margin: 0 auto;
@@ -193,9 +189,6 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--dp-space-4);
   align-items: center;
-  position: sticky;
-  top: var(--context-bar-sticky-gap);
-  z-index: 20;
   padding: var(--dp-space-4) var(--dp-space-5);
   margin-top: 0;
   margin-bottom: 0;
@@ -475,7 +468,7 @@
 label.checkbox-item,
 label.radio-item {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--dp-space-2);
   font-size: var(--dp-font-size-sm);
   font-weight: var(--dp-font-weight-regular);

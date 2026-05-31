@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, onMounted } from "vue";
 import { RouterLink, RouterView, useRoute } from "vue-router";
 import { downloadDataset } from "../services/exportService";
 import { getRootIdentifier, getRootTitle } from "../domain/normalize";
@@ -8,10 +8,6 @@ import { useDatasetStore } from "../stores/datasetStore";
 
 const store = useDatasetStore();
 const route = useRoute();
-const contextBarElement = ref<HTMLElement | null>(null);
-const contextBarHeight = ref(0);
-const stickyGapPx = 20;
-let contextBarResizeObserver: ResizeObserver | null = null;
 
 const currentDraftId = computed(() => store.currentDraft?.id ?? "");
 const activeTab = computed(() => String(route.meta.tab ?? "start"));
@@ -48,14 +44,6 @@ const editorTabs = computed(() => {
 });
 const exportDisabled = computed(() => !store.currentDraft || (currentValidation.value?.errorCount ?? 0) > 0);
 const showContextBar = computed(() => Boolean(store.currentDraft) && activeTab.value !== "start");
-const appShellStyle = computed(() => ({
-  "--context-bar-sticky-gap": `${stickyGapPx}px`,
-  "--context-bar-height": `${contextBarHeight.value}px`
-}));
-
-function updateContextBarHeight(): void {
-  contextBarHeight.value = contextBarElement.value?.offsetHeight ?? 0;
-}
 
 function exportCurrentDraft(): void {
   if (!store.currentDraft || exportDisabled.value) {
@@ -66,38 +54,12 @@ function exportCurrentDraft(): void {
 }
 
 onMounted(async () => {
-  if (typeof ResizeObserver !== "undefined") {
-    contextBarResizeObserver = new ResizeObserver(() => {
-      updateContextBarHeight();
-    });
-  }
-
   await store.initialize();
-  await nextTick();
-  updateContextBarHeight();
-});
-
-watch(contextBarElement, (nextElement, previousElement) => {
-  if (previousElement && contextBarResizeObserver) {
-    contextBarResizeObserver.unobserve(previousElement);
-  }
-  if (nextElement && contextBarResizeObserver) {
-    contextBarResizeObserver.observe(nextElement);
-  }
-  updateContextBarHeight();
-});
-
-onBeforeUnmount(() => {
-  if (!contextBarResizeObserver) {
-    return;
-  }
-  contextBarResizeObserver.disconnect();
-  contextBarResizeObserver = null;
 });
 </script>
 
 <template>
-  <div class="app-shell" :style="appShellStyle">
+  <div class="app-shell">
     <header class="topbar">
       <h1>Metadaten lokal bearbeiten</h1>
     </header>
@@ -116,12 +78,7 @@ onBeforeUnmount(() => {
       </RouterLink>
     </nav>
 
-    <div
-      v-if="showContextBar"
-      ref="contextBarElement"
-      class="context-bar"
-      :data-save-state="store.saveState"
-    >
+    <div v-if="showContextBar" class="context-bar" :data-save-state="store.saveState">
       <div class="context-bar__text">
         <div class="context-bar__group">
           <span>{{ store.contextLabel }}</span>

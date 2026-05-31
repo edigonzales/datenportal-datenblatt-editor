@@ -19,8 +19,6 @@ async function createLocalDraft(page: Page, expectedCount: number): Promise<void
     .click();
   const contextBar = page.locator(".context-bar");
   await expect(contextBar).toContainText("Neues Datenblatt");
-  await expect(contextBar).toHaveCSS("position", "sticky");
-  await expect(contextBar).toHaveCSS("top", "20px");
   await expect(contextBar).toHaveCSS("padding-top", "16px");
   await expect(contextBar).toHaveCSS("padding-left", "20px");
   await expect(contextBar).toHaveCSS("background-color", "rgb(231, 246, 236)");
@@ -103,8 +101,6 @@ test("loads a dataset from the offline source dialog", async ({ page }) => {
   const contextBar = page.locator(".context-bar");
   await expect(contextBar).toContainText("Nitratmessungen im Kanton Solothurn");
   await expect(page.getByText("Von Quelle geladen")).toBeVisible();
-  await expect(contextBar).toHaveCSS("position", "sticky");
-  await expect(contextBar).toHaveCSS("top", "20px");
   await expect(contextBar).toHaveCSS("padding-top", "16px");
   await expect(contextBar).toHaveCSS("padding-left", "20px");
   await expect(contextBar).toHaveCSS("background-color", "rgb(231, 246, 236)");
@@ -116,13 +112,6 @@ test("loads a dataset from the offline source dialog", async ({ page }) => {
     page.getByRole("heading", { name: "Datensatz-Metadaten" }),
     page.getByRole("heading", { name: "Grundangaben" }),
     20
-  );
-  await expectVerticalGap(
-    page.getByRole("heading", { name: "Grundangaben" }),
-    page.getByText("Identifier und Titel sind Pflichtfelder. Weitere gemeinsame Pflichtfelder folgen darunter.", {
-      exact: true,
-    }),
-    8
   );
 
   const checkboxMarginTop = await page.locator('.checkbox-item input[type="checkbox"]').first().evaluate((element) => {
@@ -139,8 +128,8 @@ test("loads a dataset from the offline source dialog", async ({ page }) => {
   });
   expect(checkboxMarginTop).toBe("0px");
   expect(radioMarginTop).toBe("0px");
-  expect(checkboxAlignItems).toBe("baseline");
-  expect(radioAlignItems).toBe("baseline");
+  expect(checkboxAlignItems).toBe("center");
+  expect(radioAlignItems).toBe("center");
 
   await page.evaluate(() => {
     document.querySelector(".context-bar")?.setAttribute("data-save-state", "dirty");
@@ -152,13 +141,15 @@ test("loads a dataset from the offline source dialog", async ({ page }) => {
   await expect(contextBar).toHaveCSS("background-color", "rgb(231, 246, 236)");
 
   await page.evaluate(() => window.scrollTo({ top: 1200, behavior: "auto" }));
+  const sidebarPanelBox = await page.locator(".sidebar-panel").boundingBox();
   const contextBarBox = await contextBar.boundingBox();
   const validationHeadingBox = await page.getByRole("heading", { name: "Prüfstatus" }).boundingBox();
+  expect(sidebarPanelBox).not.toBeNull();
   expect(validationHeadingBox).not.toBeNull();
   expect(contextBarBox).not.toBeNull();
-  expect((validationHeadingBox?.y ?? 0) + 1).toBeGreaterThanOrEqual(
-    (contextBarBox?.y ?? 0) + (contextBarBox?.height ?? 0)
-  );
+  expect((sidebarPanelBox?.y ?? 0) >= 18 && (sidebarPanelBox?.y ?? 0) <= 22).toBe(true);
+  expect((validationHeadingBox?.y ?? 0) >= (sidebarPanelBox?.y ?? 0)).toBe(true);
+  expect((contextBarBox?.y ?? 0) + (contextBarBox?.height ?? 0)).toBeLessThan(0);
 
   await expect(page.locator(".surface").first()).toHaveCSS("border-radius", "0px");
   await expect(page.locator(".sidebar-panel")).toHaveCSS("border-radius", "0px");
