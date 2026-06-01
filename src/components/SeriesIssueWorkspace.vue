@@ -116,19 +116,14 @@ const seriesDefaultsSignature = computed(() =>
     identifier: props.series.identifier ?? "",
     title: props.series.title ?? "",
     description: props.series.description ?? "",
-    publisherRef: props.series.publisherRef ?? "",
-    creatorRef: props.series.creatorRef ?? "",
-    contactPoint: props.series.contactPoint ?? {},
-    themes: props.series.themes ?? [],
-    keywords: props.series.keywords ?? [],
+    accessLevel: props.series.accessLevel ?? "",
+    publicationStatus: props.series.publicationStatus ?? "",
     accrualPeriodicity: props.series.accrualPeriodicity ?? "",
-    issued: props.series.issued ?? "",
     modified: props.series.modified ?? "",
     temporalCoverage: props.series.temporalCoverage ?? {},
     surveyMethod: props.series.surveyMethod ?? "",
     dataAvailableFrom: props.series.dataAvailableFrom ?? "",
     furtherUses: props.series.furtherUses ?? "",
-    auxiliaryData: props.series.auxiliaryData ?? "",
     remarks: props.series.remarks ?? ""
   })
 );

@@ -33,4 +33,16 @@ describe("DatasetForm", () => {
 
     expect(keywordsInput).toHaveValue("Wasser, Nitrat");
   });
+
+  it("marks the contact url as required and renders the multi-column theme list", () => {
+    const dataset = createEmptyDatasetRoot().dataset;
+    const { container } = render(DatasetForm, {
+      props: {
+        dataset
+      }
+    });
+
+    expect(screen.getByLabelText("URL")).toBeInTheDocument();
+    expect(container.querySelector(".checkbox-list--themes")).not.toBeNull();
+  });
 });

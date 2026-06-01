@@ -132,8 +132,8 @@ Minimaler Pfad:
 ### Neue Quelle oder Snapshot aufnehmen
 
 1. Default-URL in `src/config/metadataSources.ts` anpassen
-2. `dataset.index.json` unter `public/mock-sources/` aktualisieren oder ersetzen
-3. Vollstaendige Dataset-JSONs im Index konsistent halten
+2. `dataset.index.xtf` unter `public/mock-sources/` aktualisieren oder ersetzen
+3. Vollstaendige Dataset-/DatasetSeries-XTFs im Index konsistent halten
 4. Such- und Ladefluss im Browser pruefen
 
 ### Neue Validierungsregel einfuehren
@@ -158,15 +158,15 @@ Regel:
 
 ## Snapshot-Daten pflegen
 
-Die "externe Quelle" des MVP ist eine lokale `dataset.index.json`. Das ist bewusst so, damit die App komplett offline laeuft.
+Die "externe Quelle" des MVP ist eine lokale `dataset.index.xtf`. Das ist bewusst so, damit die App komplett offline laeuft.
 
 Format:
 
 ```text
-public/mock-sources/dataset.index.json
+public/mock-sources/dataset.index.xtf
 ```
 
-Die Datei enthaelt ein JSON-Array vollstaendiger Dataset-Root-Dokumente.
+Die Datei enthaelt einen XTF-Transfer mit allen `Dataset`- und `DatasetSeries`-Objekten im Basket `Metadata`.
 
 Empfehlung bei Aenderungen:
 
@@ -258,9 +258,9 @@ Pruefen:
 
 Pruefen:
 
-- ist das JSON wirklich gueltig?
-- enthaelt es `type: "Dataset"` oder ein nacktes Dataset?
-- ist versehentlich ein Serienmuster vorhanden?
+- ist das XTF/XML wirklich gueltig?
+- enthaelt der Transfer genau ein `Dataset` oder genau eine `DatasetSeries`?
+- ist versehentlich mehr als ein Objekt im Transfer enthalten?
 
 ### Export-Button bleibt deaktiviert
 

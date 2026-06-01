@@ -15,7 +15,7 @@ Die Anwendung ist eine lokale SPA fuer die Bearbeitung von Metadaten einzelner `
 ## Architekturprinzipien
 
 - Kein Backend im MVP
-- Root-JSON als kanonisches Speicher- und Exportformat
+- Internes Objektmodell als kanonisches Speicherformat, XTF als externes Austauschformat
 - Toleranter Import, strenger Export
 - Lokale Persistenz als Default, nicht als Sonderfall
 - UI-Zustaende werden zentral ueber den Store koordiniert
@@ -30,7 +30,7 @@ flowchart TD
   Store --> Domain[Domain Logic]
   Store --> Services[Services]
   Services --> IndexedDB[Dexie / IndexedDB]
-  Services --> Snapshots[Offline Snapshot JSON]
+  Services --> Snapshots[Offline Snapshot XTF]
   Domain --> Validation[AJV + fachliche Regeln]
 ```
 
@@ -50,7 +50,7 @@ flowchart TD
 ### `src/domain`
 
 - `datasetTypes.ts`
-  - zentrale Typen fuer JSON, Drafts, Quellen und Validierung
+  - zentrale Typen fuer Drafts, Quellen und Validierung
 - `normalize.ts`
   - erzeugt das leere Default-Root
   - erkennt `Dataset`- und `DatasetSeries`-Importe
@@ -68,13 +68,13 @@ flowchart TD
   - listet, speichert, loescht und dupliziert Drafts
   - verwaltet Settings
 - `endpointLoader.ts`
-  - laedt eine `dataset.index.json` aus einer konfigurierten URL
+  - laedt eine `dataset.index.xtf` aus einer konfigurierten URL
   - leitet daraus Suchtreffer ab und importiert den gewaehlten Datensatz
 - `fileImporter.ts`
   - liest lokale Dateien
-  - parse + Strukturpruefung + Normalisierung
+  - XTF/XML-Parse + Strukturpruefung + Normalisierung
 - `exportService.ts`
-  - Root-JSON serialisieren
+  - XTF serialisieren
   - Download ausloesen
 
 ### `src/stores`
@@ -114,7 +114,7 @@ Die Anwendung verwendet vier Editor-Routen plus Startseite:
 /draft/:id             Datensatz oder Serienkopf
 /draft/:id/attributes  Attribute
 /draft/:id/issues/:issueId?  Ausgaben einer Datensatzserie
-/draft/:id/json        JSON-Vorschau
+/draft/:id/xtf         XTF-Vorschau
 ```
 
 Die Routen sind bewusst flach gehalten. Der aktuelle Draft wird ueber die `id` im URL-Pfad geladen; bei `DatasetSeries` wird die aktive Ausgabe ueber `issueId` adressiert.
@@ -140,7 +140,7 @@ Die Routen sind bewusst flach gehalten. Der aktuelle Draft wird ueber die `id` i
 ### 3. Quellen-Import
 
 1. Benutzer oeffnet den Dialog mit einer vorbelegten Quellen-URL.
-2. `endpointLoader.ts` laedt `dataset.index.json`.
+2. `endpointLoader.ts` laedt `dataset.index.xtf`.
 3. Suche/Filter laufen im Browser.
 4. Bei Identifier-Auswahl oder Trefferwahl wird ein Eintrag aus dem geladenen Index selektiert.
 5. Strukturvalidierung und Normalisierung laufen erst bei der Uebernahme in den Editor.
@@ -158,7 +158,7 @@ Die Routen sind bewusst flach gehalten. Der aktuelle Draft wird ueber die `id` i
 
 1. `App.vue` berechnet laufend `validateEditableRoot(...)`.
 2. Bei Fehlern bleibt der Export deaktiviert.
-3. Bei Erfolg wird das Root-JSON serialisiert und heruntergeladen.
+3. Bei Erfolg wird XTF serialisiert und heruntergeladen.
 
 ## Root-Format und Importtoleranz
 
@@ -303,6 +303,8 @@ Der interne Primarschluessel bleibt immer eine UUID und ist bewusst vom fachlich
 - CSS
 - SVG
 - JSON
+- XML
+- XTF
 - PNG
 - WOFF2
 
@@ -353,7 +355,7 @@ Die Grundidee:
 ### E2E
 
 - Offline-Quellenfluss vom Suchdialog bis zur Editor-Uebernahme
-- Serien-Workspace mit Serienkopf, Ausgaben und JSON-Vorschau
+- Serien-Workspace mit Serienkopf, Ausgaben und XTF-Vorschau
 
 ## Erweiterungspunkte
 

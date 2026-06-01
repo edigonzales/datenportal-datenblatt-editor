@@ -23,15 +23,17 @@ const otherIssueGroups = computed(() =>
 </script>
 
 <template>
-  <aside class="sidebar-panel">
-    <h3>Prüfstatus</h3>
-    <p class="muted">
-      {{ validation.errorCount }} Fehler, {{ validation.warningCount }} Warnungen
-    </p>
+  <aside class="sidebar-panel validation-panel">
+    <div class="validation-panel__intro">
+      <h3>Prüfstatus</h3>
+      <p class="muted">
+        {{ validation.errorCount }} Fehler, {{ validation.warningCount }} Warnungen
+      </p>
+    </div>
 
     <div v-if="groups.length" class="section-stack">
       <section v-if="seriesGroup" class="status-section">
-        <div class="header-line" style="margin-bottom: 0">
+        <div class="status-section__header">
           <h4>Serie</h4>
           <span class="status-pill" :data-state="seriesGroup.errorCount ? 'error' : seriesGroup.warningCount ? 'dirty' : 'saved'">
             {{ seriesGroup.errorCount ? `${seriesGroup.errorCount} Fehler` : seriesGroup.warningCount ? `${seriesGroup.warningCount} Warnungen` : "OK" }}
@@ -51,7 +53,7 @@ const otherIssueGroups = computed(() =>
       </section>
 
       <section v-if="activeIssueGroup" class="status-section">
-        <div class="header-line" style="margin-bottom: 0">
+        <div class="status-section__header">
           <h4>Aktuelle Ausgabe</h4>
           <span class="status-pill" :data-state="activeIssueGroup.errorCount ? 'error' : activeIssueGroup.warningCount ? 'dirty' : 'saved'">
             {{
@@ -63,7 +65,7 @@ const otherIssueGroups = computed(() =>
             }}
           </span>
         </div>
-        <p class="muted">{{ activeIssueGroup.title }}</p>
+        <p class="status-section__summary muted">{{ activeIssueGroup.title }}</p>
         <div class="status-list">
           <article
             v-for="entry in sortIssues(activeIssueGroup)"

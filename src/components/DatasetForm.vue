@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { Dataset, DatasetSeries } from "../domain/datasetTypes";
+import { accessLevelOptions, publicationStatusOptions } from "../config/vocabularies";
 import SharedMetadataSections from "./SharedMetadataSections.vue";
 
 const props = defineProps<{
@@ -37,20 +38,31 @@ const isSeries = computed(() => props.mode === "series");
           <textarea id="description" v-model="dataset.description" class="textarea" rows="5" />
           <p class="field-help">{{ (dataset.description ?? "").length }} / 1024 Zeichen</p>
         </div>
-        <div class="field-row">
-          <div class="inline-grid">
-            <div class="field-row">
-              <label for="publisherRef">PublisherRef *</label>
-              <input id="publisherRef" v-model="dataset.publisherRef" class="text-input" type="text" />
-            </div>
-            <div class="field-row">
-              <label for="creatorRef">CreatorRef *</label>
-              <input id="creatorRef" v-model="dataset.creatorRef" class="text-input" type="text" />
-            </div>
+        <div class="inline-grid">
+          <div class="field-row">
+            <label for="access-level">Zugänglichkeit *</label>
+            <select id="access-level" v-model="dataset.accessLevel" class="select">
+              <option v-for="option in accessLevelOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
           </div>
+          <div class="field-row">
+            <label for="publication-status">Publikationsstatus *</label>
+            <select id="publication-status" v-model="dataset.publicationStatus" class="select">
+              <option v-for="option in publicationStatusOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <label for="creatorRef">CreatorRef *</label>
+          <input id="creatorRef" v-model="dataset.creatorRef" class="text-input" type="text" />
         </div>
       </div>
     </section>
-    <SharedMetadataSections :entry="dataset" id-prefix="dataset" />
+
+    <SharedMetadataSections :entry="dataset" kind="dataset" id-prefix="dataset" />
   </section>
 </template>

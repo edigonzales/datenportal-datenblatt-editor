@@ -4,23 +4,39 @@ import { getExportFileName, serializeDataset } from "./exportService";
 
 describe("exportService", () => {
   it("creates a dataset filename from the identifier", () => {
-    expect(getExportFileName("so.afu.nitratmessungen")).toBe("so.afu.nitratmessungen.json");
-    expect(getExportFileName("")).toBe("dataset.json");
+    expect(getExportFileName("so.afu.nitratmessungen")).toBe("so.afu.nitratmessungen.xtf");
+    expect(getExportFileName("")).toBe("dataset.xtf");
   });
 
-  it("serializes the root wrapper", () => {
+  it("serializes the dataset as xtf", () => {
     const root = createEmptyDatasetRoot();
     root.dataset.identifier = "so.afu.test";
+    root.dataset.title = "Test";
+    root.dataset.description = "Beschreibung";
+    root.dataset.accessLevel = "open";
+    root.dataset.publicationStatus = "published";
+    root.dataset.creatorRef = "ch.so.afu";
+    root.dataset.contactPoint!.email = "mailto:afu@bd.so.ch";
+    root.dataset.themes = ["Raum_und_Umwelt"];
+    root.dataset.modified = "2026-05-12";
 
-    const json = serializeDataset(root);
+    const xml = serializeDataset(root);
 
-    expect(json).toContain('"type": "Dataset"');
-    expect(json).toContain('"identifier": "so.afu.test"');
+    expect(xml).toContain("<Dataset");
+    expect(xml).toContain("<identifier>so.afu.test</identifier>");
   });
 
   it("strips local issue editor metadata from series exports", () => {
     const root = createEmptyDatasetSeriesRoot();
     root.series.identifier = "so.astat.bevoelkerung";
+    root.series.title = "Serie";
+    root.series.description = "Beschreibung";
+    root.series.accessLevel = "open";
+    root.series.publicationStatus = "published";
+    root.series.creatorRef = "ch.so.astat";
+    root.series.contactPoint!.email = "mailto:astat@bd.so.ch";
+    root.series.themes = ["Bevoelkerung"];
+    root.series.modified = "2026-05-12";
     root.series.issues = [
       {
         __localIssueId: "local-1",
@@ -32,14 +48,17 @@ describe("exportService", () => {
           }
         },
         identifier: "so.astat.bevoelkerung.2026",
-        issueLabel: "2026"
+        issueLabel: "2026",
+        isCurrentIssue: true,
+        accessLevel: "open",
+        publicationStatus: "published"
       }
     ];
 
-    const json = serializeDataset(root);
+    const xml = serializeDataset(root);
 
-    expect(json).toContain('"type": "DatasetSeries"');
-    expect(json).not.toContain("__localIssueId");
-    expect(json).not.toContain("__localIssueState");
+    expect(xml).toContain("<DatasetSeries");
+    expect(xml).not.toContain("__localIssueId");
+    expect(xml).not.toContain("__localIssueState");
   });
 });

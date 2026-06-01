@@ -28,11 +28,15 @@ export const router = createRouter({
       meta: { tab: "issues" }
     },
     {
-      path: "/draft/:id/json",
-      name: "draft-json",
+      path: "/draft/:id/xtf",
+      name: "draft-xtf",
       component: DatasetEditor,
-      props: { tab: "json" },
-      meta: { tab: "json" }
+      props: { tab: "xtf" },
+      meta: { tab: "xtf" }
+    },
+    {
+      path: "/draft/:id/json",
+      redirect: (to) => `/draft/${String(to.params.id)}/xtf`
     }
   ]
 });

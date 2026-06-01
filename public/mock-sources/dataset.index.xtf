@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ili:transfer xmlns="http://www.interlis.ch/xtf/2.4/SO_AGI_DataCatalog_Datasheet_20260523" xmlns:base="http://www.interlis.ch/xtf/2.4/SO_AGI_DataCatalog_Base_20260529" xmlns:ili="http://www.interlis.ch/xtf/2.4/INTERLIS">
+  <ili:headersection>
+    <ili:models>
+      <ili:model>SO_AGI_DataCatalog_Datasheet_20260523</ili:model>
+      <ili:model>SO_AGI_DataCatalog_Base_20260529</ili:model>
+    </ili:models>
+    <ili:sender>datenblatt-editor</ili:sender>
+  </ili:headersection>
+  <ili:datasection>
+    <Metadata ili:bid="x1">
+      <Dataset ili:tid="ch.so.grundwasser.qualitaet">
+        <identifier>ch.so.grundwasser.qualitaet</identifier>
+        <title>Wasserqualität Grundwasser Kanton Solothurn</title>
+        <description>Messdaten der Grundwasserqualitätsuntersuchungen im Kanton Solothurn.</description>
+        <accessLevel>open</accessLevel>
+        <publicationStatus>published</publicationStatus>
+        <publisherRef>ch.so.agi</publisherRef>
+        <creatorRef>ch.so.afu</creatorRef>
+        <contactPoint>
+          <base:ContactPoint>
+            <base:name>Evgenia Rohner</base:name>
+            <base:organizationUnit>AfU Abteilung Wasser</base:organizationUnit>
+            <base:email>mailto:afu@bd.so.ch</base:email>
+          </base:ContactPoint>
+        </contactPoint>
+        <themes>Raum_und_Umwelt</themes>
+        <keywords>Wasserqualität</keywords>
+        <keywords>Grundwasser</keywords>
+        <accrualPeriodicity>annually</accrualPeriodicity>
+        <modified>2025-05-19</modified>
+        <temporalCoverage>
+          <base:TemporalCoverage>
+            <base:startDate>2024-01-01</base:startDate>
+            <base:endDate>2024-12-31</base:endDate>
+          </base:TemporalCoverage>
+        </temporalCoverage>
+        <surveyMethod>Vor-Ort und Laboranalyse.</surveyMethod>
+        <attributes>
+          <base:DatasetAttribute>
+            <base:name>Jahr</base:name>
+            <base:dataType>INTEGER</base:dataType>
+            <base:mandatory>false</base:mandatory>
+          </base:DatasetAttribute>
+        </attributes>
+        <dataAvailableFrom>ab 1998</dataAvailableFrom>
+        <furtherUses>Monitoring und Gewässerschutz.</furtherUses>
+        <remarks>Beispiel-Dataset für den Editor.</remarks>
+      </Dataset>
+      <DatasetSeries ili:tid="ch.so.bevoelkerung.altersstruktur">
+        <identifier>ch.so.bevoelkerung.altersstruktur</identifier>
+        <title>Altersstruktur der Wohnbevölkerung</title>
+        <description>Altersstruktur der Wohnbevölkerung im Kanton Solothurn.</description>
+        <accessLevel>open</accessLevel>
+        <publicationStatus>published</publicationStatus>
+        <publisherRef>ch.so.agi</publisherRef>
+        <creatorRef>ch.so.afin</creatorRef>
+        <contactPoint>
+          <base:ContactPoint>
+            <base:name>Amt für Finanzen, Statistik (AFIN)</base:name>
+            <base:organizationUnit>Statistik</base:organizationUnit>
+            <base:email>mailto:statistik@fd.so.ch</base:email>
+          </base:ContactPoint>
+        </contactPoint>
+        <themes>Bevoelkerung</themes>
+        <keywords>Altersstruktur</keywords>
+        <keywords>Wohnbevölkerung</keywords>
+        <accrualPeriodicity>annually</accrualPeriodicity>
+        <modified>2025-12-31</modified>
+        <temporalCoverage>
+          <base:TemporalCoverage>
+            <base:referenceDate>2025-12-31</base:referenceDate>
+          </base:TemporalCoverage>
+        </temporalCoverage>
+        <surveyMethod>Quelle: Einwohnerregister Kanton Solothurn.</surveyMethod>
+        <attributes>
+          <base:DatasetAttribute>
+            <base:name>Jahrgang</base:name>
+            <base:dataType>INTEGER</base:dataType>
+            <base:description>Geburtsjahr</base:description>
+            <base:unit>Jahr</base:unit>
+            <base:mandatory>true</base:mandatory>
+          </base:DatasetAttribute>
+        </attributes>
+        <dataAvailableFrom>2025</dataAvailableFrom>
+        <furtherUses>Planungsgrundlage und Statistik.</furtherUses>
+        <remarks>Beispiel-Serie für den Editor.</remarks>
+        <issues>
+          <DatasetIssue>
+            <identifier>ch.so.bevoelkerung.altersstruktur_2025</identifier>
+            <title>Altersstruktur der Wohnbevölkerung 2025</title>
+            <description>Ausgabe 2025 der DatasetSeries.</description>
+            <issueLabel>2025</issueLabel>
+            <isCurrentIssue>true</isCurrentIssue>
+            <accessLevel>open</accessLevel>
+            <publicationStatus>published</publicationStatus>
+            <accrualPeriodicity>annually</accrualPeriodicity>
+            <issued>2026-01-01</issued>
+            <modified>2025-12-31</modified>
+            <temporalCoverage>
+              <base:TemporalCoverage>
+                <base:referenceDate>2025-12-31</base:referenceDate>
+              </base:TemporalCoverage>
+            </temporalCoverage>
+            <surveyMethod>Quelle: Einwohnerregister Kanton Solothurn.</surveyMethod>
+            <dataAvailableFrom>1920</dataAvailableFrom>
+            <auxiliaryData>Einwohnerregister Kanton Solothurn</auxiliaryData>
+            <remarks>Issue 2025.</remarks>
+          </DatasetIssue>
+        </issues>
+      </DatasetSeries>
+    </Metadata>
+  </ili:datasection>
+</ili:transfer>

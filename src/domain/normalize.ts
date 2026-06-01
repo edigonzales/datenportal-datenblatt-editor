@@ -59,10 +59,9 @@ export function createEmptyDatasetIssue(
   options: { isCurrentIssue?: boolean } = {}
 ): DatasetIssue {
   const issue: DatasetIssue = {
-    ...createEmptyDataset(),
+    ...createEmptyDatasetIssueFields(),
     __localIssueId: crypto.randomUUID(),
     __localIssueState: createLocalIssueState(),
-    issueLabel: "",
     isCurrentIssue: options.isCurrentIssue ?? false
   };
 
@@ -136,7 +135,7 @@ export function normalizeImportedJson(
     const { schemaVersion, series, type, ...rest } = input;
     return {
       draftKind: "series",
-      importShape: "root",
+      importShape: "xtf",
       root: {
         ...rest,
         type: "DatasetSeries",
@@ -158,7 +157,7 @@ export function normalizeImportedJson(
     const { dataset, schemaVersion, type, ...rest } = input;
     return {
       draftKind: "dataset",
-      importShape: "root",
+      importShape: "xtf",
       root: {
         ...rest,
         type: "Dataset",
@@ -171,7 +170,7 @@ export function normalizeImportedJson(
   if (isDatasetSeriesLike(input)) {
     return {
       draftKind: "series",
-      importShape: "naked",
+      importShape: "xtf",
       root: {
         type: "DatasetSeries",
         schemaVersion: DEFAULT_SCHEMA_VERSION,
@@ -189,7 +188,7 @@ export function normalizeImportedJson(
 
   return {
     draftKind: "dataset",
-    importShape: "naked",
+    importShape: "xtf",
     root: {
       type: "Dataset",
       schemaVersion: DEFAULT_SCHEMA_VERSION,
@@ -222,7 +221,8 @@ function createEmptyDataset(): Dataset {
     identifier: "",
     title: "",
     description: "",
-    publisherRef: "",
+    accessLevel: "",
+    publicationStatus: "",
     creatorRef: "",
     contactPoint: {
       name: "",
@@ -233,6 +233,26 @@ function createEmptyDataset(): Dataset {
     },
     themes: [],
     keywords: [],
+    accrualPeriodicity: "",
+    modified: "",
+    temporalCoverage: {},
+    surveyMethod: "",
+    attributes: [],
+    dataAvailableFrom: "",
+    furtherUses: "",
+    remarks: ""
+  };
+}
+
+function createEmptyDatasetIssueFields(): DatasetIssue {
+  return {
+    identifier: "",
+    title: "",
+    description: "",
+    issueLabel: "",
+    isCurrentIssue: false,
+    accessLevel: "",
+    publicationStatus: "",
     accrualPeriodicity: "",
     issued: "",
     modified: "",
@@ -297,11 +317,8 @@ function hydrateSeries(series: JsonObject): DatasetSeries {
 }
 
 function hydrateIssue(issue: JsonObject, series?: DatasetSeries): DatasetIssue {
-  const base = createEmptyDatasetIssue(series);
+  const base = createEmptyDatasetIssueFields();
   const {
-    contactPoint,
-    themes,
-    keywords,
     attributes,
     temporalCoverage,
     __localIssueState,
@@ -313,9 +330,6 @@ function hydrateIssue(issue: JsonObject, series?: DatasetSeries): DatasetIssue {
     ...rest,
     __localIssueId: typeof issue.__localIssueId === "string" ? issue.__localIssueId : crypto.randomUUID(),
     __localIssueState: hydrateLocalIssueState(__localIssueState, issue),
-    contactPoint: hasOwn(issue, "contactPoint") ? hydrateContactPoint(contactPoint) : base.contactPoint,
-    themes: Array.isArray(themes) ? themes.filter(isString) : base.themes,
-    keywords: Array.isArray(keywords) ? keywords.filter(isString) : base.keywords,
     attributes: Array.isArray(attributes) ? attributes.filter(isObject).map(hydrateAttribute) : [],
     temporalCoverage: hasOwn(issue, "temporalCoverage")
       ? hydrateTemporalCoverage(temporalCoverage)

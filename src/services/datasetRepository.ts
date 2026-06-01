@@ -1,6 +1,6 @@
 import Dexie, { type Table } from "dexie";
 import type { DatasetDraftRecord, SettingRecord } from "../domain/datasetTypes";
-import { cloneRoot, getDraftKindFromRoot } from "../domain/normalize";
+import { cloneRoot, getDraftKindFromRoot, normalizeImportedJson } from "../domain/normalize";
 
 class DatasetEditorDatabase extends Dexie {
   datasets!: Table<DatasetDraftRecord, string>;
@@ -25,6 +25,25 @@ class DatasetEditorDatabase extends Dexie {
             if (draft.data) {
               draft.draftKind = getDraftKindFromRoot(draft.data);
             }
+          })
+      );
+    this.version(3)
+      .stores({
+        datasets: "id,identifier,title,updatedAt,sourceType,draftKind,[draftKind+identifier]",
+        settings: "key"
+      })
+      .upgrade((tx) =>
+        tx
+          .table("datasets")
+          .toCollection()
+          .modify((draft: Partial<DatasetDraftRecord>) => {
+            if (!draft.data) {
+              return;
+            }
+
+            draft.data = normalizeImportedJson(draft.data).root;
+            draft.draftKind = getDraftKindFromRoot(draft.data);
+            draft.schemaVersion = draft.data.schemaVersion;
           })
       );
   }

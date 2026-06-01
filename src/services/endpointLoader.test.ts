@@ -1,38 +1,77 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { MetadataSearchRecord } from "../domain/datasetTypes";
+import type { EditableRootJson, MetadataSearchRecord } from "../domain/datasetTypes";
 import { isDatasetRoot } from "../domain/normalize";
 import { loadDatasetFromSource, loadSourceIndex, searchSourceIndex } from "./endpointLoader";
 
-const datasetIndexPayload = [
-  {
+const datasetIndexPayload = `<?xml version="1.0" encoding="UTF-8"?>
+<ili:transfer xmlns="http://www.interlis.ch/xtf/2.4/SO_AGI_DataCatalog_Datasheet_20260523" xmlns:base="http://www.interlis.ch/xtf/2.4/SO_AGI_DataCatalog_Base_20260529" xmlns:ili="http://www.interlis.ch/xtf/2.4/INTERLIS">
+  <ili:headersection>
+    <ili:models>
+      <ili:model>SO_AGI_DataCatalog_Datasheet_20260523</ili:model>
+      <ili:model>SO_AGI_DataCatalog_Base_20260529</ili:model>
+    </ili:models>
+  </ili:headersection>
+  <ili:datasection>
+    <Metadata ili:bid="x1">
+      <Dataset ili:tid="so.afu.nitratmessungen">
+        <identifier>so.afu.nitratmessungen</identifier>
+        <title>Nitratmessungen</title>
+        <description>Messwerte zur Wasserqualität</description>
+        <accessLevel>open</accessLevel>
+        <publicationStatus>published</publicationStatus>
+        <creatorRef>ch.so.afu</creatorRef>
+        <contactPoint>
+          <base:ContactPoint>
+            <base:organizationUnit>Amt für Umwelt</base:organizationUnit>
+            <base:email>mailto:afu@bd.so.ch</base:email>
+          </base:ContactPoint>
+        </contactPoint>
+        <themes>Raum_und_Umwelt</themes>
+        <keywords>Nitrat</keywords>
+        <modified>2026-05-12</modified>
+      </Dataset>
+      <Dataset ili:tid="so.agi.gemeindegrenzen">
+        <identifier>so.agi.gemeindegrenzen</identifier>
+        <title>Gemeindegrenzen</title>
+        <description>Amtliche Grenzen</description>
+        <accessLevel>open</accessLevel>
+        <publicationStatus>published</publicationStatus>
+        <creatorRef>ch.so.agi</creatorRef>
+        <contactPoint>
+          <base:ContactPoint>
+            <base:organizationUnit>Amt für Geoinformation</base:organizationUnit>
+            <base:email>mailto:agi@bd.so.ch</base:email>
+          </base:ContactPoint>
+        </contactPoint>
+        <themes>Geografie</themes>
+        <keywords>Grenzen</keywords>
+        <modified>2026-05-10</modified>
+      </Dataset>
+    </Metadata>
+  </ili:datasection>
+</ili:transfer>`;
+
+function createDocument(identifier = "so.afu.nitratmessungen"): EditableRootJson {
+  return {
     type: "Dataset",
     schemaVersion: "2026-05-23",
     dataset: {
-      identifier: "so.afu.nitratmessungen",
-      title: "Nitratmessungen",
-      description: "Messwerte zur Wasserqualität",
-      modified: "2026-05-12",
-      keywords: ["Nitrat"],
+      identifier,
+      title: identifier === "so.afu.nitratmessungen" ? "Nitratmessungen" : "Gemeindegrenzen",
+      description: identifier === "so.afu.nitratmessungen" ? "Messwerte zur Wasserqualität" : "Amtliche Grenzen",
+      accessLevel: "open",
+      publicationStatus: "published",
+      creatorRef: identifier === "so.afu.nitratmessungen" ? "ch.so.afu" : "ch.so.agi",
       contactPoint: {
-        organizationUnit: "Amt für Umwelt"
-      }
+        organizationUnit: identifier === "so.afu.nitratmessungen" ? "Amt für Umwelt" : "Amt für Geoinformation",
+        email: identifier === "so.afu.nitratmessungen" ? "mailto:afu@bd.so.ch" : "mailto:agi@bd.so.ch"
+      },
+      themes: [identifier === "so.afu.nitratmessungen" ? "Raum_und_Umwelt" : "Geografie"],
+      keywords: [identifier === "so.afu.nitratmessungen" ? "Nitrat" : "Grenzen"],
+      modified: identifier === "so.afu.nitratmessungen" ? "2026-05-12" : "2026-05-10"
     }
-  },
-  {
-    type: "Dataset",
-    schemaVersion: "2026-05-23",
-    dataset: {
-      identifier: "so.agi.gemeindegrenzen",
-      title: "Gemeindegrenzen",
-      description: "Amtliche Grenzen",
-      modified: "2026-05-10",
-      keywords: ["Grenzen"],
-      contactPoint: {
-        organizationUnit: "Amt für Geoinformation"
-      }
-    }
-  }
-];
+  };
+}
 
 function createIndexEntry(overrides: Partial<MetadataSearchRecord> = {}): MetadataSearchRecord {
   return {
@@ -40,9 +79,10 @@ function createIndexEntry(overrides: Partial<MetadataSearchRecord> = {}): Metada
     title: "Nitratmessungen",
     description: "Messwerte zur Wasserqualität",
     modified: "2026-05-12",
+    creatorRef: "ch.so.afu",
     organizationUnit: "Amt für Umwelt",
     keywords: ["Nitrat"],
-    document: datasetIndexPayload[0],
+    document: createDocument(),
     ...overrides
   };
 }
@@ -52,15 +92,15 @@ afterEach(() => {
 });
 
 describe("loadSourceIndex", () => {
-  it("loads dataset.index.json and derives search records", async () => {
+  it("loads dataset.index.xtf and derives search records", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify(datasetIndexPayload), {
+      new Response(datasetIndexPayload, {
         status: 200,
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/xml" }
       })
     );
 
-    const records = await loadSourceIndex("/mock-sources/dataset.index.json");
+    const records = await loadSourceIndex("/mock-sources/dataset.index.xtf");
 
     expect(records).toHaveLength(2);
     expect(records[0]).toMatchObject({
@@ -68,22 +108,22 @@ describe("loadSourceIndex", () => {
       title: "Nitratmessungen",
       description: "Messwerte zur Wasserqualität",
       modified: "2026-05-12",
+      creatorRef: "ch.so.afu",
       organizationUnit: "Amt für Umwelt",
       keywords: ["Nitrat"]
     });
-    expect(records[0]?.document).toEqual(datasetIndexPayload[0]);
   });
 
-  it("rejects an invalid dataset index payload", async () => {
+  it("rejects an invalid xtf payload", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ datasets: datasetIndexPayload }), {
+      new Response("<broken>", {
         status: 200,
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/xml" }
       })
     );
 
-    await expect(loadSourceIndex("/mock-sources/dataset.index.json")).rejects.toThrow(
-      "Die dataset.index.json ist ungültig."
+    await expect(loadSourceIndex("/mock-sources/dataset.index.xtf")).rejects.toThrow(
+      "Die Datei ist nicht lesbar oder enthält kein gültiges XTF/XML."
     );
   });
 });
@@ -96,14 +136,15 @@ describe("searchSourceIndex", () => {
       title: "Gemeindegrenzen",
       description: "Amtliche Grenzen",
       modified: "2026-05-10",
+      creatorRef: "ch.so.agi",
       organizationUnit: "Amt für Geoinformation",
       keywords: ["Grenzen"],
-      document: datasetIndexPayload[1]
+      document: createDocument("so.agi.gemeindegrenzen")
     })
   ];
 
-  it("filters by organization unit and full text", () => {
-    const results = searchSourceIndex(index, "nitrat", "Amt für Umwelt");
+  it("filters by creator ref and full text", () => {
+    const results = searchSourceIndex(index, "nitrat", "ch.so.afu");
     expect(results).toHaveLength(1);
     expect(results[0]?.identifier).toBe("so.afu.nitratmessungen");
   });
@@ -111,11 +152,11 @@ describe("searchSourceIndex", () => {
 
 describe("loadDatasetFromSource", () => {
   it("imports a selected dataset and keeps the source url", async () => {
-    const preview = await loadDatasetFromSource("Datenportal", "https://example.test/dataset.index.json", createIndexEntry());
+    const preview = await loadDatasetFromSource("Datenportal", "https://example.test/dataset.index.xtf", createIndexEntry());
 
     expect(preview.sourceType).toBe("endpoint");
     expect(preview.sourceLabel).toBe("Datenportal");
-    expect(preview.sourceUrl).toBe("https://example.test/dataset.index.json");
+    expect(preview.sourceUrl).toBe("https://example.test/dataset.index.xtf");
     expect(isDatasetRoot(preview.root)).toBe(true);
     if (!isDatasetRoot(preview.root)) {
       throw new Error("Expected dataset root");

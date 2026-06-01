@@ -1,6 +1,6 @@
 # datenblatt-editor
 
-Lokaler, vollstaendig offline-faehiger Metadateneditor fuer genau ein `Dataset` oder eine `DatasetSeries` pro JSON-Datei.
+Lokaler, vollstaendig offline-faehiger Metadateneditor fuer genau ein `Dataset` oder eine `DatasetSeries` pro XTF/XML-Datei.
 
 Die Anwendung ist als clientseitige SPA umgesetzt. Es gibt kein Backend, keine Anmeldung und keine Server-Persistenz. Alle Arbeitsstaende bleiben lokal im Browser und werden in IndexedDB gespeichert.
 
@@ -8,12 +8,12 @@ Die Anwendung ist als clientseitige SPA umgesetzt. Es gibt kein Backend, keine A
 
 - Bearbeitung einzelner `Dataset`
 - Bearbeitung hierarchischer `DatasetSeries` mit Serienkopf und Ausgaben
-- Import von JSON-Dateien im Root-Format oder als nacktem Objekt fuer `Dataset` und `DatasetSeries`
+- Import von XTF/XML-Dateien fuer `Dataset` und `DatasetSeries`
 - Offline-"Endpunkte" ueber gebuendelte Snapshot-Dateien
 - Lokale Entwuerfe in IndexedDB
 - Debounced Autosave
 - Fachliche und strukturelle Validierung
-- Export als Root-JSON
+- Export als XTF 2.4
 - Installierbare PWA
 
 Nicht Teil der aktuellen Ausbaustufe:
@@ -136,14 +136,14 @@ spec/           Eingangsspezifikation und Mockups
 - Entwuerfe werden unter der Dexie-Datenbank `datenblatt-editor` gespeichert.
 - Formularaenderungen werden mit `750 ms` Debounce nach IndexedDB geschrieben.
 - Der Export ist bei Validierungsfehlern blockiert.
-- Die PWA cached App-Shell, Assets und die gemockte `dataset.index.json` fuer kompletten Offline-Betrieb.
+- Die PWA cached App-Shell, Assets und die gemockte `dataset.index.xtf` fuer kompletten Offline-Betrieb.
 
 ## Quellenmodell im MVP
 
-Der UI-Begriff "JSON von Endpunkt laden" bleibt bewusst erhalten. Technisch wird im MVP aber keine Live-API verwendet, sondern eine mit der App ausgelieferte Snapshot-Datei:
+Die "externe Quelle" des MVP bleibt eine mit der App ausgelieferte Snapshot-Datei:
 
 ```text
-public/mock-sources/dataset.index.json
+public/mock-sources/dataset.index.xtf
 ```
 
 Das hat zwei Konsequenzen:
@@ -158,7 +158,7 @@ Lokale Entwuerfe werden in IndexedDB gehalten. Es gibt zwei Stores:
 - `datasets`
 - `settings`
 
-`datasets` speichert den kompletten Draft inklusive Herkunftsinformationen und Root-JSON. `settings` speichert zuletzt verwendete URL und Filter fuer den Quellen-Dialog.
+`datasets` speichert den kompletten Draft inklusive Herkunftsinformationen und dem internen Objektmodell. `settings` speichert zuletzt verwendete URL und Filter fuer den Quellen-Dialog.
 
 ## Validierung
 
@@ -172,7 +172,7 @@ Geprueft werden unter anderem:
 - Root `type === "Dataset"` oder `type === "DatasetSeries"`
 - Pflichtfelder
 - Datumsformat
-- `modified >= issued`
+- bei Issues `modified >= issued`
 - gueltiger `temporalCoverage`
 - doppelte Attributnamen
 - Warnung bei Attributen ohne Beschreibung

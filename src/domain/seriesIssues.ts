@@ -1,5 +1,4 @@
 import type {
-  ContactPoint,
   DatasetAttribute,
   DatasetIssue,
   DatasetSeries,
@@ -11,19 +10,14 @@ import type {
 
 export const issueInheritedGroups = [
   "description",
-  "publisherRef",
-  "creatorRef",
-  "contactPoint",
-  "themes",
-  "keywords",
+  "accessLevel",
+  "publicationStatus",
   "accrualPeriodicity",
-  "issued",
   "modified",
   "temporalCoverage",
   "surveyMethod",
   "dataAvailableFrom",
   "furtherUses",
-  "auxiliaryData",
   "remarks"
 ] as const satisfies readonly IssueInheritedGroup[];
 
@@ -54,19 +48,14 @@ export function deriveImportedIssueState(rawIssue: JsonObject): LocalIssueState 
     autoTitle: !hasOwn(rawIssue, "title"),
     inheritedGroups: {
       description: !hasOwn(rawIssue, "description"),
-      publisherRef: !hasOwn(rawIssue, "publisherRef"),
-      creatorRef: !hasOwn(rawIssue, "creatorRef"),
-      contactPoint: !hasOwn(rawIssue, "contactPoint"),
-      themes: !hasOwn(rawIssue, "themes"),
-      keywords: !hasOwn(rawIssue, "keywords"),
+      accessLevel: !hasOwn(rawIssue, "accessLevel"),
+      publicationStatus: !hasOwn(rawIssue, "publicationStatus"),
       accrualPeriodicity: !hasOwn(rawIssue, "accrualPeriodicity"),
-      issued: !hasOwn(rawIssue, "issued"),
       modified: !hasOwn(rawIssue, "modified"),
       temporalCoverage: !hasOwn(rawIssue, "temporalCoverage"),
       surveyMethod: !hasOwn(rawIssue, "surveyMethod"),
       dataAvailableFrom: !hasOwn(rawIssue, "dataAvailableFrom"),
       furtherUses: !hasOwn(rawIssue, "furtherUses"),
-      auxiliaryData: !hasOwn(rawIssue, "auxiliaryData"),
       remarks: !hasOwn(rawIssue, "remarks")
     }
   });
@@ -142,9 +131,6 @@ export function syncIssueFromSeriesDefaults(series: DatasetSeries, issue: Datase
 export function createEffectiveIssue(series: DatasetSeries, issue: DatasetIssue): DatasetIssue {
   const effective: DatasetIssue = {
     ...issue,
-    contactPoint: cloneContactPoint(issue.contactPoint),
-    themes: copyStringArray(issue.themes),
-    keywords: copyStringArray(issue.keywords),
     temporalCoverage: cloneTemporalCoverage(issue.temporalCoverage),
     attributes: cloneAttributes(issue.attributes)
   };
@@ -173,19 +159,14 @@ function inferIssueStateFromCurrentValues(issue: DatasetIssue): LocalIssueState 
     autoTitle: !hasText(issue.title),
     inheritedGroups: {
       description: !hasText(issue.description),
-      publisherRef: !hasText(issue.publisherRef),
-      creatorRef: !hasText(issue.creatorRef),
-      contactPoint: isEmptyContactPoint(issue.contactPoint),
-      themes: !issue.themes?.length,
-      keywords: !issue.keywords?.length,
+      accessLevel: !hasText(issue.accessLevel),
+      publicationStatus: !hasText(issue.publicationStatus),
       accrualPeriodicity: !hasText(issue.accrualPeriodicity),
-      issued: !hasText(issue.issued),
       modified: !hasText(issue.modified),
       temporalCoverage: isEmptyTemporalCoverage(issue.temporalCoverage),
       surveyMethod: !hasText(issue.surveyMethod),
       dataAvailableFrom: !hasText(issue.dataAvailableFrom),
       furtherUses: !hasText(issue.furtherUses),
-      auxiliaryData: !hasText(issue.auxiliaryData),
       remarks: !hasText(issue.remarks)
     }
   });
@@ -196,26 +177,14 @@ function assignGroupFromSeries(target: DatasetIssue, series: DatasetSeries, grou
     case "description":
       target.description = series.description ?? "";
       return;
-    case "publisherRef":
-      target.publisherRef = series.publisherRef ?? "";
+    case "accessLevel":
+      target.accessLevel = series.accessLevel ?? "";
       return;
-    case "creatorRef":
-      target.creatorRef = series.creatorRef ?? "";
-      return;
-    case "contactPoint":
-      target.contactPoint = cloneContactPoint(series.contactPoint);
-      return;
-    case "themes":
-      target.themes = copyStringArray(series.themes);
-      return;
-    case "keywords":
-      target.keywords = copyStringArray(series.keywords);
+    case "publicationStatus":
+      target.publicationStatus = series.publicationStatus ?? "";
       return;
     case "accrualPeriodicity":
       target.accrualPeriodicity = series.accrualPeriodicity ?? "";
-      return;
-    case "issued":
-      target.issued = series.issued ?? "";
       return;
     case "modified":
       target.modified = series.modified ?? "";
@@ -232,9 +201,6 @@ function assignGroupFromSeries(target: DatasetIssue, series: DatasetSeries, grou
     case "furtherUses":
       target.furtherUses = series.furtherUses ?? "";
       return;
-    case "auxiliaryData":
-      target.auxiliaryData = series.auxiliaryData ?? "";
-      return;
     case "remarks":
       target.remarks = series.remarks ?? "";
       return;
@@ -249,35 +215,12 @@ function hasText(value?: string): boolean {
   return (value ?? "").trim().length > 0;
 }
 
-function isEmptyContactPoint(contactPoint?: ContactPoint): boolean {
-  return !hasText(contactPoint?.name) &&
-    !hasText(contactPoint?.organizationUnit) &&
-    !hasText(contactPoint?.email) &&
-    !hasText(contactPoint?.phone) &&
-    !hasText(contactPoint?.url);
-}
-
 function isEmptyTemporalCoverage(coverage?: TemporalCoverage): boolean {
   return !hasText(coverage?.startDate) && !hasText(coverage?.endDate) && !hasText(coverage?.referenceDate);
 }
 
-function cloneContactPoint(contactPoint?: ContactPoint): ContactPoint {
-  return {
-    name: "",
-    organizationUnit: "",
-    email: "",
-    phone: "",
-    url: "",
-    ...(contactPoint ?? {})
-  };
-}
-
 function cloneTemporalCoverage(coverage?: TemporalCoverage): TemporalCoverage {
   return { ...(coverage ?? {}) };
-}
-
-function copyStringArray(values?: string[]): string[] {
-  return [...(values ?? [])];
 }
 
 function cloneAttributes(attributes?: DatasetAttribute[]): DatasetAttribute[] {

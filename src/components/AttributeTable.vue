@@ -10,6 +10,11 @@ const props = defineProps<{
   emptyMessage?: string;
 }>();
 
+function optionsFor(attribute: DatasetAttribute): string[] {
+  const type = (attribute.dataType ?? "").trim();
+  return type && !attributeDataTypeOptions.includes(type) ? [...attributeDataTypeOptions, type] : attributeDataTypeOptions;
+}
+
 function addAttribute(): void {
   props.attributes.push({
     name: "",
@@ -78,7 +83,7 @@ function move(index: number, direction: -1 | 1): void {
             <td>
               <select v-model="attribute.dataType" class="select attribute-table__input">
                 <option value="">Bitte wählen</option>
-                <option v-for="option in attributeDataTypeOptions" :key="option" :value="option">{{ option }}</option>
+                <option v-for="option in optionsFor(attribute)" :key="option" :value="option">{{ option }}</option>
               </select>
             </td>
             <td><textarea v-model="attribute.description" class="textarea attribute-table__textarea" rows="2" /></td>

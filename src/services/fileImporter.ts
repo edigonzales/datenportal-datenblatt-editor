@@ -1,31 +1,19 @@
 import type { ImportPreview } from "../domain/datasetTypes";
-import { normalizeImportedJson } from "../domain/normalize";
-import { validateImportedStructure } from "../domain/validation";
+import { isDatasetSeriesRoot } from "../domain/normalize";
+import { parseSingleXtfTransfer } from "./xtfService";
 
-export async function importJsonFile(file: File): Promise<ImportPreview> {
+export async function importXtfFile(file: File): Promise<ImportPreview> {
   const text = await file.text();
   return parseImportedText(text, file.name);
 }
 
-export function parseImportedText(text: string, fileName = "dataset.json"): ImportPreview {
-  let payload: unknown;
-  try {
-    payload = JSON.parse(text);
-  } catch {
-    throw new Error("Die Datei ist nicht lesbar oder enthält kein gültiges Datenblatt.");
-  }
+export function parseImportedText(text: string, fileName = "dataset.xtf"): ImportPreview {
+  const root = parseSingleXtfTransfer(text);
 
-  const structureIssues = validateImportedStructure(payload);
-  const blockingIssue = structureIssues.find((entry) => entry.severity === "error");
-  if (blockingIssue) {
-    throw new Error(blockingIssue.message);
-  }
-
-  const normalized = normalizeImportedJson(payload);
   return {
-    draftKind: normalized.draftKind,
-    root: normalized.root,
-    importShape: normalized.importShape,
+    draftKind: isDatasetSeriesRoot(root) ? "series" : "dataset",
+    root,
+    importShape: "xtf",
     sourceType: "file",
     sourceLabel: `Datei ${fileName}`,
     originalFileName: fileName

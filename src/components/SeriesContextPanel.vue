@@ -28,8 +28,8 @@ const attributeCount = computed(() => props.series.attributes?.length ?? 0);
         <strong>{{ series.title || "Unbenannte Datensatzserie" }}</strong>
       </div>
       <div class="context-summary__row">
-        <span class="muted">Publisher / Creator</span>
-        <span>{{ series.publisherRef || "offen" }} / {{ series.creatorRef || "offen" }}</span>
+        <span class="muted">Creator</span>
+        <span>{{ series.creatorRef || "offen" }}</span>
       </div>
       <div class="context-summary__row">
         <span class="muted">Kontakt</span>

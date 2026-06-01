@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { defaultMetadataSource, defaultSourceIndexUrl } from "../config/metadataSources";
+import { defaultMetadataSource, normalizeSourceIndexUrl } from "../config/metadataSources";
 import type { ImportPreview, MetadataSearchRecord } from "../domain/datasetTypes";
 import { loadDatasetFromSource, loadSourceIndex, searchSourceIndex } from "../services/endpointLoader";
 
@@ -15,8 +15,8 @@ const emit = defineEmits<{
   remember: [payload: { sourceUrl: string; organizationUnit: string }];
 }>();
 
-const sourceUrl = ref(props.initialSourceUrl || defaultSourceIndexUrl);
-const organizationUnit = ref(props.initialOrganizationUnit || "");
+const sourceUrl = ref(normalizeSourceIndexUrl(props.initialSourceUrl));
+const creatorRefFilter = ref(props.initialOrganizationUnit || "");
 const query = ref("");
 const entries = ref<MetadataSearchRecord[]>([]);
 const results = ref<MetadataSearchRecord[]>([]);
@@ -25,7 +25,7 @@ const loading = ref(false);
 const error = ref("");
 
 const organizationUnits = computed(() =>
-  [...new Set(entries.value.map((entry) => entry.organizationUnit?.trim() ?? "").filter(Boolean))].sort((left, right) =>
+  [...new Set(entries.value.map((entry) => entry.creatorRef?.trim() ?? "").filter(Boolean))].sort((left, right) =>
     left.localeCompare(right, "de-CH")
   )
 );
@@ -41,12 +41,12 @@ onMounted(async () => {
 function rememberFilters(): void {
   emit("remember", {
     sourceUrl: sourceUrl.value.trim(),
-    organizationUnit: organizationUnit.value
+    organizationUnit: creatorRefFilter.value
   });
 }
 
 function updateResults(): void {
-  results.value = searchSourceIndex(entries.value, query.value, organizationUnit.value);
+  results.value = searchSourceIndex(entries.value, query.value, creatorRefFilter.value);
 
   if (!results.value.some((entry) => entry.identifier === selectedIdentifier.value)) {
     selectedIdentifier.value = "";
@@ -60,8 +60,8 @@ async function reloadIndex(): Promise<void> {
   try {
     entries.value = await loadSourceIndex(sourceUrl.value.trim());
 
-    if (organizationUnit.value && !organizationUnits.value.includes(organizationUnit.value)) {
-      organizationUnit.value = "";
+    if (creatorRefFilter.value && !organizationUnits.value.includes(creatorRefFilter.value)) {
+      creatorRefFilter.value = "";
     }
 
     updateResults();
@@ -115,7 +115,7 @@ async function importSelected(): Promise<void> {
         <div class="dialog-header">
           <div>
             <h2>Metadaten von Quelle laden</h2>
-            <p class="muted">Eine dataset.index.json laden, durchsuchen und den gewählten Eintrag in den Editor übernehmen.</p>
+            <p class="muted">Eine XTF-Quelle laden, durchsuchen und den gewählten Eintrag in den Editor übernehmen.</p>
           </div>
           <button class="button" type="button" @click="emit('close')">Schließen</button>
         </div>
@@ -129,13 +129,13 @@ async function importSelected(): Promise<void> {
               v-model="sourceUrl"
               class="text-input"
               type="url"
-              placeholder="https://example.org/dataset.index.json"
+              placeholder="https://example.org/dataset.index.xtf"
             />
-            <p class="field-help">Direkte URL zur externen dataset.index.json-Datei.</p>
+            <p class="field-help">Direkte URL zu einer XTF-Datei mit Dataset- und DatasetSeries-Objekten.</p>
           </div>
           <div class="field-row">
             <label for="organization-filter">Organisationseinheit</label>
-            <select id="organization-filter" v-model="organizationUnit" class="select">
+            <select id="organization-filter" v-model="creatorRefFilter" class="select">
               <option value="">Alle</option>
               <option v-for="entry in organizationUnits" :key="entry" :value="entry">{{ entry }}</option>
             </select>

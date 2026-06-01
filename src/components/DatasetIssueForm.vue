@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { DatasetIssue, IssueInheritedGroup } from "../domain/datasetTypes";
+import { accessLevelOptions, publicationStatusOptions } from "../config/vocabularies";
 import {
   disableIssueIdentifierAuto,
   disableIssueTitleAuto,
@@ -65,7 +66,7 @@ function markOverridden(group: IssueInheritedGroup): void {
             />
           </div>
           <div class="field-row">
-            <label for="issue-title">Titel *</label>
+            <label for="issue-title">Titel</label>
             <input
               id="issue-title"
               :value="issue.title"
@@ -88,24 +89,30 @@ function markOverridden(group: IssueInheritedGroup): void {
         </div>
         <div class="inline-grid">
           <div class="field-row">
-            <label for="issue-publisherRef">PublisherRef</label>
-            <input
-              id="issue-publisherRef"
-              v-model="issue.publisherRef"
-              class="text-input"
-              type="text"
-              @input="markOverridden('publisherRef')"
-            />
+            <label for="issue-access-level">Zugänglichkeit *</label>
+            <select
+              id="issue-access-level"
+              v-model="issue.accessLevel"
+              class="select"
+              @change="markOverridden('accessLevel')"
+            >
+              <option v-for="option in accessLevelOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
           </div>
           <div class="field-row">
-            <label for="issue-creatorRef">CreatorRef</label>
-            <input
-              id="issue-creatorRef"
-              v-model="issue.creatorRef"
-              class="text-input"
-              type="text"
-              @input="markOverridden('creatorRef')"
-            />
+            <label for="issue-publication-status">Publikationsstatus *</label>
+            <select
+              id="issue-publication-status"
+              v-model="issue.publicationStatus"
+              class="select"
+              @change="markOverridden('publicationStatus')"
+            >
+              <option v-for="option in publicationStatusOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
           </div>
         </div>
         <label class="checkbox-item">
@@ -119,6 +126,6 @@ function markOverridden(group: IssueInheritedGroup): void {
       </div>
     </section>
 
-    <SharedMetadataSections :entry="issue" id-prefix="issue" track-overrides @override-group="markOverridden" />
+    <SharedMetadataSections :entry="issue" kind="issue" id-prefix="issue" track-overrides @override-group="markOverridden" />
   </section>
 </template>

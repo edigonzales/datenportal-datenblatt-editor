@@ -3,15 +3,15 @@ import { computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import AttributeTable from "./AttributeTable.vue";
 import DatasetForm from "./DatasetForm.vue";
-import JsonPreview from "./JsonPreview.vue";
 import SeriesIssueWorkspace from "./SeriesIssueWorkspace.vue";
 import ValidationPanel from "./ValidationPanel.vue";
+import XtfPreview from "./XtfPreview.vue";
 import { isDatasetSeriesRoot } from "../domain/normalize";
 import { useDatasetStore } from "../stores/datasetStore";
 import { validateEditableRoot } from "../domain/validation";
 
 const props = defineProps<{
-  tab: "main" | "attributes" | "issues" | "json";
+  tab: "main" | "attributes" | "issues" | "xtf";
 }>();
 
 const route = useRoute();
@@ -112,7 +112,7 @@ function openSeriesIssue(issueId: string): void {
       <template v-if="currentDatasetRoot">
         <DatasetForm v-if="tab === 'main'" :dataset="currentDatasetRoot.dataset" />
         <AttributeTable v-else-if="tab === 'attributes'" :attributes="currentDatasetRoot.dataset.attributes ?? []" />
-        <JsonPreview v-else :root="currentDatasetRoot" />
+        <XtfPreview v-else :root="currentDatasetRoot" />
       </template>
 
       <template v-else-if="currentSeriesRoot">
@@ -133,7 +133,7 @@ function openSeriesIssue(issueId: string): void {
           :active-issue-id="activeIssueId"
           @select="openSeriesIssue($event)"
         />
-        <JsonPreview v-else :root="currentSeriesRoot" />
+        <XtfPreview v-else :root="currentSeriesRoot" />
       </template>
     </div>
 

@@ -27,54 +27,50 @@ export interface DatasetSharedFields extends JsonObject {
   identifier?: string;
   title?: string;
   description?: string;
+  accessLevel?: string;
+  publicationStatus?: string;
   accrualPeriodicity?: string;
-  issued?: string;
   modified?: string;
   temporalCoverage?: TemporalCoverage;
   surveyMethod?: string;
   attributes?: DatasetAttribute[];
   dataAvailableFrom?: string;
   furtherUses?: string;
-  auxiliaryData?: string;
   remarks?: string;
 }
 
 export interface Dataset extends DatasetSharedFields {
-  publisherRef?: string;
   creatorRef?: string;
   contactPoint?: ContactPoint;
   themes?: string[];
   keywords?: string[];
 }
 
+export interface DatasetIssue extends DatasetSharedFields {
+  issued?: string;
+  auxiliaryData?: string;
+  __localIssueId?: string;
+  __localIssueState?: LocalIssueState;
+  issueLabel?: string;
+  isCurrentIssue?: boolean;
+}
+
 export type IssueInheritedGroup =
   | "description"
-  | "publisherRef"
-  | "creatorRef"
-  | "contactPoint"
-  | "themes"
-  | "keywords"
+  | "accessLevel"
+  | "publicationStatus"
   | "accrualPeriodicity"
-  | "issued"
   | "modified"
   | "temporalCoverage"
   | "surveyMethod"
   | "dataAvailableFrom"
   | "furtherUses"
-  | "auxiliaryData"
   | "remarks";
 
 export interface LocalIssueState extends JsonObject {
   inheritedGroups?: Partial<Record<IssueInheritedGroup, boolean>>;
   autoIdentifier?: boolean;
   autoTitle?: boolean;
-}
-
-export interface DatasetIssue extends Dataset {
-  __localIssueId?: string;
-  __localIssueState?: LocalIssueState;
-  issueLabel?: string;
-  isCurrentIssue?: boolean;
 }
 
 export interface DatasetSeries extends Dataset {
@@ -104,7 +100,7 @@ export type AppMode =
   | "editing-series"
   | "validation-error";
 export type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
-export type ImportShape = "root" | "naked";
+export type ImportShape = "xtf";
 export type ImportConflictAction = "open-existing" | "save-copy" | "overwrite";
 
 export interface MetadataSource {
@@ -118,9 +114,10 @@ export interface MetadataSearchRecord {
   title: string;
   description: string;
   modified?: string;
+  creatorRef?: string;
   organizationUnit?: string;
   keywords: string[];
-  document: unknown;
+  document: EditableRootJson;
 }
 
 export interface DatasetDraftRecord {

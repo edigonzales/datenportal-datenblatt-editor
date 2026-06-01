@@ -100,7 +100,7 @@ Wichtig:
 
 - duerfen lang gecacht werden
 
-### JSON-Snapshots
+### XTF-Snapshots
 
 - werden mit dem Build ausgeliefert
 - koennen ebenfalls normal statisch gecacht werden
@@ -115,8 +115,8 @@ Da die App via Service Worker precached wird, kommen Updates ohnehin ueber neue 
 - Navigation zwischen den Routen
 - Oeffnen lokaler Entwuerfe
 - Bearbeiten und Speichern in IndexedDB
-- Laden der `dataset.index.json`
-- Export von JSON
+- Laden der `dataset.index.xtf`
+- Export von XTF
 
 ### Was fuer Offline vorher passiert sein muss
 
@@ -124,7 +124,7 @@ Die Anwendung muss mindestens einmal erfolgreich geladen worden sein, damit:
 
 - App-Shell
 - Assets
-- `dataset.index.json`
+- `dataset.index.xtf`
 - Service Worker
 
 im Browser verfuegbar sind.
@@ -148,11 +148,21 @@ Wichtig:
 
 Wenn sich die "externen" Quelldaten aendern sollen:
 
-1. `public/mock-sources/dataset.index.json` aktualisieren
+1. `public/mock-sources/dataset.index.xtf` aktualisieren
 2. `npm run build`
 3. `dist/` neu deployen
 
 Es reicht nicht, nur einen laufenden Browser-Cache zu erwarten. Die Daten sind Teil der ausgelieferten App-Version.
+
+### XTF fachlich validieren
+
+Vor Release oder bei geaenderten Mock-Daten:
+
+```bash
+java -jar /Users/stefan/apps/ilivalidator-1.15.0/ilivalidator-1.15.0.jar \
+  --modeldir /Users/stefan/sources/sogis-interlis-repository/models/AGI \
+  public/mock-sources/dataset.index.xtf
+```
 
 ## Datenschutz und Sicherheit
 
@@ -172,7 +182,7 @@ Es reicht nicht, nur einen laufenden Browser-Cache zu erwarten. Die Daten sind T
 
 Empfehlung:
 
-- Nutzer sollten regelmaessig als JSON exportieren, wenn ein Arbeitsstand archiviert werden soll
+- Nutzer sollten regelmaessig als XTF exportieren, wenn ein Arbeitsstand archiviert werden soll
 - sensible Inhalte nicht in gemeinsam genutzten Browserprofilen pflegen
 
 ## Browserdaten und Support
@@ -211,7 +221,7 @@ Vor einem Release:
 2. `npm test`
 3. `npm run build`
 4. `npm run test:e2e`
-5. `dataset.index.json` fachlich pruefen
+5. `dataset.index.xtf` fachlich pruefen
 6. `dist/` deployen
 7. installierte App / Offline-Verhalten einmal pruefen
 
@@ -243,7 +253,7 @@ Lokal im Browser in IndexedDB.
 
 ### "Wie wird die Mock-Quelle aktualisiert?"
 
-Nur ueber geaenderte JSON-Dateien plus neuen Build und neues Deployment.
+Nur ueber geaenderte XTF-Dateien plus neuen Build und neues Deployment.
 
 ### "Was passiert beim Browserwechsel oder auf einem zweiten Geraet?"
 
@@ -277,9 +287,9 @@ Massnahmen:
 
 Pruefen:
 
-- liegt die erwartete `dataset.index.json` im Build?
+- liegt die erwartete `dataset.index.xtf` im Build?
 - wurde die korrekte Mock-Datei deployed?
-- ist das JSON syntaktisch gueltig?
+- ist das XTF/XML syntaktisch gueltig?
 
 ### Lokale Entwuerfe "verschwinden"
 

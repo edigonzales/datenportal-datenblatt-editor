@@ -1,10 +1,6 @@
 import type { ImportPreview, MetadataSearchRecord } from "../domain/datasetTypes";
-import { isDatasetSeriesRoot, normalizeImportedJson } from "../domain/normalize";
-import { validateImportedStructure } from "../domain/validation";
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
+import { isDatasetSeriesRoot } from "../domain/normalize";
+import { parseXtfTransfer } from "./xtfService";
 
 function toStringValue(value: unknown): string {
   return typeof value === "string" ? value : "";
@@ -15,27 +11,24 @@ function toStringArray(value: unknown): string[] {
 }
 
 export async function loadSourceIndex(indexUrl: string): Promise<MetadataSearchRecord[]> {
-  const response = await fetch(indexUrl, { headers: { Accept: "application/json" } });
+  const response = await fetch(indexUrl, { headers: { Accept: "application/xml,text/xml" } });
   if (!response.ok) {
     throw new Error("Die Quelle konnte nicht geladen werden.");
   }
 
-  const payload = (await response.json()) as unknown;
-  if (!Array.isArray(payload)) {
-    throw new Error("Die dataset.index.json ist ungültig.");
-  }
+  const payload = await response.text();
+  const roots = parseXtfTransfer(payload);
 
-  return payload.map((document) => {
-    const root = isObjectRecord(document) ? document : {};
-    const draftRoot = normalizeImportedJson(root).root;
-    const entry = isDatasetSeriesRoot(draftRoot) ? draftRoot.series : draftRoot.dataset;
-    const contactPoint = isObjectRecord(entry.contactPoint) ? entry.contactPoint : {};
+  return roots.map((document) => {
+    const entry = isDatasetSeriesRoot(document) ? document.series : document.dataset;
+    const contactPoint = entry.contactPoint ?? {};
 
     return {
       identifier: toStringValue(entry.identifier),
       title: toStringValue(entry.title),
       description: toStringValue(entry.description),
       modified: toStringValue(entry.modified),
+      creatorRef: toStringValue(entry.creatorRef),
       organizationUnit: toStringValue(contactPoint.organizationUnit),
       keywords: toStringArray(entry.keywords),
       document
@@ -46,12 +39,12 @@ export async function loadSourceIndex(indexUrl: string): Promise<MetadataSearchR
 export function searchSourceIndex(
   entries: MetadataSearchRecord[],
   query: string,
-  organizationUnit: string
+  creatorRefFilter: string
 ): MetadataSearchRecord[] {
   const search = query.trim().toLocaleLowerCase();
 
   return entries.filter((entry) => {
-    const matchesOrganization = organizationUnit ? entry.organizationUnit === organizationUnit : true;
+    const matchesOrganization = creatorRefFilter ? entry.creatorRef === creatorRefFilter : true;
     if (!matchesOrganization) {
       return false;
     }
@@ -64,6 +57,7 @@ export function searchSourceIndex(
       entry.identifier,
       entry.title,
       entry.description,
+      entry.creatorRef ?? "",
       entry.organizationUnit ?? "",
       ...entry.keywords
     ]
@@ -78,18 +72,10 @@ export async function loadDatasetFromSource(
   sourceUrl: string,
   entry: MetadataSearchRecord
 ): Promise<ImportPreview> {
-  const payload = entry.document;
-  const structureIssues = validateImportedStructure(payload);
-  const blockingIssue = structureIssues.find((issue) => issue.severity === "error");
-  if (blockingIssue) {
-    throw new Error(blockingIssue.message);
-  }
-
-  const normalized = normalizeImportedJson(payload);
   return {
-    draftKind: normalized.draftKind,
-    root: normalized.root,
-    importShape: normalized.importShape,
+    draftKind: isDatasetSeriesRoot(entry.document) ? "series" : "dataset",
+    root: entry.document,
+    importShape: "xtf",
     sourceType: "endpoint",
     sourceLabel,
     sourceUrl

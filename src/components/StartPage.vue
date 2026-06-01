@@ -108,7 +108,7 @@ function scrollToDrafts(): void {
     <section class="action-grid">
       <article class="action-card">
         <h3>Metadaten von Quelle laden</h3>
-        <p>Einen Katalog per URL laden, durchsuchen und Datenblätter oder Datensatzserien in den Editor übernehmen.</p>
+        <p>Einen XTF-Katalog per URL laden, durchsuchen und Datasets oder DatasetSeries in den Editor übernehmen.</p>
         <div class="card-actions" style="margin-top: 16px">
           <button class="button button--primary" type="button" @click="sourceDialogOpen = true">Quelle öffnen</button>
         </div>
@@ -116,7 +116,7 @@ function scrollToDrafts(): void {
 
       <article class="action-card">
         <h3>Datenblatt (einzelner Datensatz) importieren</h3>
-        <p>Eine lokale Datenblatt-Datei mit genau einem Datensatz öffnen und im Editor weiterbearbeiten.</p>
+        <p>Eine lokale XTF/XML-Datei mit genau einem Dataset öffnen und im Editor weiterbearbeiten.</p>
         <div class="card-actions" style="margin-top: 16px">
           <button class="button button--secondary" type="button" @click="fileDialogOpen = true">Datenblatt importieren</button>
         </div>
@@ -132,7 +132,7 @@ function scrollToDrafts(): void {
 
       <article class="action-card">
         <h3>Datenblatt (Serie) importieren</h3>
-        <p>Eine lokale Datenblatt-Datei mit Serienkopf und Ausgaben importieren und im Serien-Workspace bearbeiten.</p>
+        <p>Eine lokale XTF/XML-Datei mit Serienkopf und Ausgaben importieren und im Serien-Workspace bearbeiten.</p>
         <div class="card-actions" style="margin-top: 16px">
           <button class="button button--secondary" type="button" @click="fileDialogOpen = true">Datenblatt importieren</button>
         </div>

@@ -2,7 +2,7 @@
 import { ref } from "vue";
 import type { ImportPreview } from "../domain/datasetTypes";
 import { getRootIdentifier, getRootTitle } from "../domain/normalize";
-import { importJsonFile } from "../services/fileImporter";
+import { importXtfFile } from "../services/fileImporter";
 
 const emit = defineEmits<{
   close: [];
@@ -22,7 +22,7 @@ async function handleFiles(files: FileList | null): Promise<void> {
   error.value = "";
   preview.value = null;
   try {
-    preview.value = await importJsonFile(file);
+    preview.value = await importXtfFile(file);
   } catch (reason) {
     error.value = reason instanceof Error ? reason.message : "Das Datenblatt konnte nicht importiert werden.";
   }
@@ -53,8 +53,8 @@ async function handleFiles(files: FileList | null): Promise<void> {
           "
         >
           <strong>Datenblatt-Datei hier ablegen oder Datei wählen</strong>
-          <p class="muted">Akzeptiert werden lokale Dateien mit genau einem Datenblatt oder einem Datenblatt (Serie).</p>
-          <input class="sr-only" type="file" accept="application/json,.json" @change="void handleFiles(($event.target as HTMLInputElement).files)" />
+          <p class="muted">Akzeptiert werden lokale XTF/XML-Dateien mit genau einem Dataset oder einer DatasetSeries.</p>
+          <input class="sr-only" type="file" accept=".xtf,.xml,text/xml,application/xml" @change="void handleFiles(($event.target as HTMLInputElement).files)" />
         </label>
 
         <div v-if="error" class="notice" data-tone="danger">
@@ -66,8 +66,7 @@ async function handleFiles(files: FileList | null): Promise<void> {
           <div>
             <h3>Vorschau</h3>
             <p class="muted">
-              {{ preview.draftKind === "series" ? "Datensatzserie" : "Datenblatt" }} |
-              {{ preview.importShape === "root" ? "Root-Format" : "Nacktes Objekt" }}
+              {{ preview.draftKind === "series" ? "Datensatzserie" : "Datenblatt" }} | XTF-Transfer
             </p>
           </div>
           <div>

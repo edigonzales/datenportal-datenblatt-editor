@@ -6,6 +6,7 @@ import { accrualPeriodicityOptions, themeOptions } from "../config/vocabularies"
 const props = withDefaults(
   defineProps<{
     entry: Dataset | DatasetSeries | DatasetIssue;
+    kind: "dataset" | "issue";
     idPrefix?: string;
     trackOverrides?: boolean;
   }>(),
@@ -21,17 +22,25 @@ const emit = defineEmits<{
 
 type TemporalCoverageMode = "range" | "reference" | "none";
 
-const contactPoint = computed(
-  () =>
-    props.entry.contactPoint ??
-    (props.entry.contactPoint = {
+const datasetEntry = computed(() => (props.kind === "issue" ? null : (props.entry as Dataset | DatasetSeries)));
+const issueEntry = computed(() => (props.kind === "issue" ? (props.entry as DatasetIssue) : null));
+
+const contactPoint = computed(() => {
+  if (!datasetEntry.value) {
+    return null;
+  }
+
+  return (
+    datasetEntry.value.contactPoint ??
+    (datasetEntry.value.contactPoint = {
       name: "",
       organizationUnit: "",
       email: "",
       phone: "",
       url: ""
     })
-);
+  );
+});
 
 const temporalCoverage = computed(() => props.entry.temporalCoverage ?? (props.entry.temporalCoverage = {}));
 const temporalModeName = computed(() => `${props.idPrefix}-temporal-mode`);
@@ -43,14 +52,17 @@ function emitOverride(group: IssueInheritedGroup): void {
 }
 
 function toggleTheme(theme: string, checked: boolean): void {
-  emitOverride("themes");
-  const current = new Set(props.entry.themes ?? []);
+  if (!datasetEntry.value) {
+    return;
+  }
+
+  const current = new Set(datasetEntry.value.themes ?? []);
   if (checked) {
     current.add(theme);
   } else {
     current.delete(theme);
   }
-  props.entry.themes = [...current];
+  datasetEntry.value.themes = [...current];
 }
 
 function formatKeywords(keywords: string[] | undefined): string {
@@ -64,10 +76,10 @@ function parseKeywords(value: string): string[] {
     .filter((entry) => entry.length > 0);
 }
 
-const keywordsText = ref(formatKeywords(props.entry.keywords));
+const keywordsText = ref(formatKeywords(datasetEntry.value?.keywords));
 
 watch(
-  () => props.entry.keywords,
+  () => datasetEntry.value?.keywords,
   (keywords) => {
     const formattedKeywords = formatKeywords(keywords);
     const normalizedInput = formatKeywords(parseKeywords(keywordsText.value));
@@ -79,13 +91,18 @@ watch(
 );
 
 function updateKeywords(value: string): void {
-  emitOverride("keywords");
+  if (!datasetEntry.value) {
+    return;
+  }
+
   keywordsText.value = value;
-  props.entry.keywords = parseKeywords(value);
+  datasetEntry.value.keywords = parseKeywords(value);
 }
 
 function normalizeKeywordsInput(): void {
-  keywordsText.value = formatKeywords(props.entry.keywords);
+  if (datasetEntry.value) {
+    keywordsText.value = formatKeywords(datasetEntry.value.keywords);
+  }
 }
 
 function deriveMode(coverage: TemporalCoverage): TemporalCoverageMode {
@@ -133,7 +150,7 @@ function setTemporalMode(nextMode: TemporalCoverageMode): void {
 </script>
 
 <template>
-  <section class="form-section section-stack">
+  <section v-if="contactPoint" class="form-section section-stack">
     <div>
       <h3>Zuständigkeiten / Kontakt</h3>
     </div>
@@ -141,13 +158,7 @@ function setTemporalMode(nextMode: TemporalCoverageMode): void {
       <div class="inline-grid">
         <div class="field-row">
           <label :for="`${idPrefix}-contact-name`">Name</label>
-          <input
-            :id="`${idPrefix}-contact-name`"
-            v-model="contactPoint.name"
-            class="text-input"
-            type="text"
-            @input="emitOverride('contactPoint')"
-          />
+          <input :id="`${idPrefix}-contact-name`" v-model="contactPoint.name" class="text-input" type="text" />
         </div>
         <div class="field-row">
           <label :for="`${idPrefix}-contact-organization`">Organisationseinheit</label>
@@ -156,56 +167,37 @@ function setTemporalMode(nextMode: TemporalCoverageMode): void {
             v-model="contactPoint.organizationUnit"
             class="text-input"
             type="text"
-            @input="emitOverride('contactPoint')"
           />
         </div>
       </div>
       <div class="inline-grid">
         <div class="field-row">
-          <label :for="`${idPrefix}-contact-email`">E-Mail *</label>
-          <input
-            :id="`${idPrefix}-contact-email`"
-            v-model="contactPoint.email"
-            class="text-input"
-            type="email"
-            @input="emitOverride('contactPoint')"
-          />
+          <label :for="`${idPrefix}-contact-email`">E-Mail / URI *</label>
+          <input :id="`${idPrefix}-contact-email`" v-model="contactPoint.email" class="text-input" type="text" />
         </div>
         <div class="field-row">
           <label :for="`${idPrefix}-contact-phone`">Telefon</label>
-          <input
-            :id="`${idPrefix}-contact-phone`"
-            v-model="contactPoint.phone"
-            class="text-input"
-            type="text"
-            @input="emitOverride('contactPoint')"
-          />
+          <input :id="`${idPrefix}-contact-phone`" v-model="contactPoint.phone" class="text-input" type="text" />
         </div>
       </div>
       <div class="field-row">
         <label :for="`${idPrefix}-contact-url`">URL</label>
-        <input
-          :id="`${idPrefix}-contact-url`"
-          v-model="contactPoint.url"
-          class="text-input"
-          type="url"
-          @input="emitOverride('contactPoint')"
-        />
+        <input :id="`${idPrefix}-contact-url`" v-model="contactPoint.url" class="text-input" type="text" />
       </div>
     </div>
   </section>
 
-  <section class="form-section section-stack">
+  <section v-if="datasetEntry" class="form-section section-stack">
     <div>
       <h3>Themen und Keywords</h3>
     </div>
     <div class="field-grid">
       <div class="field-row">
-        <span class="fieldset-label">Themen</span>
-        <div class="checkbox-list">
-          <label v-for="theme in themeOptions" :key="theme.value" class="checkbox-item">
+        <span class="fieldset-label">Themen *</span>
+        <div class="checkbox-list checkbox-list--themes">
+          <label v-for="theme in themeOptions" :key="theme.value" class="checkbox-item checkbox-item--theme">
             <input
-              :checked="entry.themes?.includes(theme.value)"
+              :checked="datasetEntry.themes?.includes(theme.value)"
               type="checkbox"
               @change="toggleTheme(theme.value, ($event.target as HTMLInputElement).checked)"
             />
@@ -225,7 +217,7 @@ function setTemporalMode(nextMode: TemporalCoverageMode): void {
           @blur="normalizeKeywordsInput"
         />
         <div class="chip-row">
-          <span v-for="keyword in entry.keywords" :key="keyword" class="chip">{{ keyword }}</span>
+          <span v-for="keyword in datasetEntry.keywords" :key="keyword" class="chip">{{ keyword }}</span>
         </div>
       </div>
     </div>
@@ -250,18 +242,12 @@ function setTemporalMode(nextMode: TemporalCoverageMode): void {
         </select>
       </div>
       <div class="inline-grid">
-        <div class="field-row">
+        <div v-if="issueEntry" class="field-row">
           <label :for="`${idPrefix}-issued`">Issued</label>
-          <input
-            :id="`${idPrefix}-issued`"
-            v-model="entry.issued"
-            class="text-input"
-            type="date"
-            @input="emitOverride('issued')"
-          />
+          <input :id="`${idPrefix}-issued`" v-model="issueEntry.issued" class="text-input" type="date" />
         </div>
         <div class="field-row">
-          <label :for="`${idPrefix}-modified`">Modified</label>
+          <label :for="`${idPrefix}-modified`">{{ issueEntry ? "Modified" : "Modified *" }}</label>
           <input
             :id="`${idPrefix}-modified`"
             v-model="entry.modified"
@@ -359,7 +345,7 @@ function setTemporalMode(nextMode: TemporalCoverageMode): void {
         />
       </div>
       <div class="field-row">
-        <label :for="`${idPrefix}-data-available-from`">Daten verfügbar ab / URL</label>
+        <label :for="`${idPrefix}-data-available-from`">Verfügbare Daten ab</label>
         <input
           :id="`${idPrefix}-data-available-from`"
           v-model="entry.dataAvailableFrom"
@@ -369,7 +355,7 @@ function setTemporalMode(nextMode: TemporalCoverageMode): void {
         />
       </div>
       <div class="field-row">
-        <label :for="`${idPrefix}-further-uses`">Weitere Nutzungen</label>
+        <label :for="`${idPrefix}-further-uses`">Weitere Verwendungen</label>
         <textarea
           :id="`${idPrefix}-further-uses`"
           v-model="entry.furtherUses"
@@ -378,14 +364,13 @@ function setTemporalMode(nextMode: TemporalCoverageMode): void {
           @input="emitOverride('furtherUses')"
         />
       </div>
-      <div class="field-row">
+      <div v-if="issueEntry" class="field-row">
         <label :for="`${idPrefix}-auxiliary-data`">Hilfsdaten</label>
         <textarea
           :id="`${idPrefix}-auxiliary-data`"
-          v-model="entry.auxiliaryData"
+          v-model="issueEntry.auxiliaryData"
           class="textarea"
           rows="3"
-          @input="emitOverride('auxiliaryData')"
         />
       </div>
     </div>

@@ -13,7 +13,7 @@ describe("normalizeImportedJson", () => {
     if (!isDatasetRoot(result.root)) {
       throw new Error("Expected dataset root");
     }
-    expect(result.importShape).toBe("naked");
+    expect(result.importShape).toBe("xtf");
     expect(result.root.type).toBe("Dataset");
     expect(result.root.dataset.identifier).toBe("so.afu.nitratmessungen");
   });
@@ -33,7 +33,7 @@ describe("normalizeImportedJson", () => {
     if (!isDatasetRoot(result.root)) {
       throw new Error("Expected dataset root");
     }
-    expect(result.importShape).toBe("root");
+    expect(result.importShape).toBe("xtf");
     expect(result.root.schemaVersion).toBe("2026-05-23");
     expect(result.root.dataset.title).toBe("Gemeindegrenzen");
   });
@@ -70,7 +70,8 @@ describe("normalizeImportedJson", () => {
         identifier: "ch.foo",
         title: "Ch Foo",
         description: "Serienbeschreibung",
-        publisherRef: "pub",
+        accessLevel: "open",
+        publicationStatus: "published",
         creatorRef: "creator",
         contactPoint: {
           email: "kontakt@example.org"
@@ -95,9 +96,9 @@ describe("normalizeImportedJson", () => {
 
     expect(issue?.identifier).toBe("ch.foo_2026");
     expect(issue?.title).toBe("Ch Foo 2026");
-    expect(issue?.publisherRef).toBe("pub");
-    expect(issue?.contactPoint?.email).toBe("kontakt@example.org");
-    expect(issue?.__localIssueState?.inheritedGroups?.publisherRef).toBe(true);
+    expect(issue?.accessLevel).toBe("open");
+    expect(issue?.publicationStatus).toBe("published");
+    expect(issue?.__localIssueState?.inheritedGroups?.accessLevel).toBe(true);
     expect(issue?.__localIssueState?.autoIdentifier).toBe(true);
     expect(issue?.__localIssueState?.autoTitle).toBe(true);
   });

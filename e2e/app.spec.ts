@@ -97,7 +97,7 @@ test("loads a dataset from the offline source dialog", async ({ page }) => {
   const closeButton = page.getByRole("button", { name: "Schließen" });
   await expect(closeButton).toHaveCSS("background-color", "rgb(255, 255, 255)");
   await expect(closeButton).toHaveCSS("border-color", "rgb(214, 210, 204)");
-  await expect(page.getByLabel("Quelle")).toHaveValue("/mock-sources/dataset.index.json");
+  await expect(page.getByLabel("Quelle")).toHaveValue("/mock-sources/dataset.index.xtf");
   await expect(page.getByLabel("Quelle")).toHaveCSS("height", "40px");
   await expect(page.getByLabel("Organisationseinheit")).toHaveCSS("height", "40px");
   await expect(page.getByRole("heading", { name: "Vorschau" })).toHaveCount(0);
@@ -105,29 +105,29 @@ test("loads a dataset from the offline source dialog", async ({ page }) => {
   const importButton = page.getByRole("button", { name: "In Editor übernehmen" });
   await expect(importButton).toBeDisabled();
 
-  await page.getByLabel("Quelle").fill("/missing/dataset.index.json");
+  await page.getByLabel("Quelle").fill("/missing/dataset.index.xtf");
   await page.getByRole("button", { name: "Quelle laden" }).click();
   const errorNotice = page.locator(".notice");
   await expect(errorNotice).toBeVisible();
   await expect(errorNotice).toHaveCSS("border-radius", "5px");
   await expect(errorNotice).toContainText("Die Quelle konnte nicht geladen werden.");
 
-  await page.getByLabel("Quelle").fill("/mock-sources/dataset.index.json");
+  await page.getByLabel("Quelle").fill("/mock-sources/dataset.index.xtf");
   await page.getByRole("button", { name: "Quelle laden" }).click();
-  await expect(sourceDialog).toContainText("3 Einträge gefunden");
+  await expect(sourceDialog).toContainText("2 Einträge gefunden");
 
-  await page.getByLabel("Eintrag suchen oder Identifier eingeben").fill("so.afu.nitratmessungen");
+  await page.getByLabel("Eintrag suchen oder Identifier eingeben").fill("ch.so.grundwasser.qualitaet");
   await page.getByRole("button", { name: "Suchen" }).click();
-  const nitratCard = sourceDialog.locator(".draft-card").filter({ hasText: "Nitratmessungen im Kanton Solothurn" }).first();
+  const nitratCard = sourceDialog.locator(".draft-card").filter({ hasText: "Wasserqualität Grundwasser Kanton Solothurn" }).first();
   await nitratCard.click();
   const selectedCard = sourceDialog.locator('.draft-card[data-selected="true"]');
-  await expect(selectedCard).toContainText("Nitratmessungen im Kanton Solothurn");
+  await expect(selectedCard).toContainText("Wasserqualität Grundwasser Kanton Solothurn");
   await expect(importButton).toBeEnabled();
 
   await importButton.click();
 
   const contextBar = page.locator(".context-bar");
-  await expect(contextBar).toContainText("Nitratmessungen im Kanton Solothurn");
+  await expect(contextBar).toContainText("Wasserqualität Grundwasser Kanton Solothurn");
   await expect(page.getByText("Von Quelle geladen")).toBeVisible();
   await expect(contextBar).toHaveCSS("padding-top", "16px");
   await expect(contextBar).toHaveCSS("padding-left", "20px");
@@ -185,9 +185,9 @@ test("loads a dataset from the offline source dialog", async ({ page }) => {
   await page.getByRole("link", { name: "Attribute" }).click();
   await expect(page.locator(".table-wrap")).toHaveCSS("border-radius", "6px");
 
-  await page.getByRole("link", { name: "Datenblatt-Vorschau" }).click();
-  await expect(page.locator(".json-panel")).toHaveCSS("border-radius", "6px");
-  await expect(page.locator(".json-panel pre")).toHaveCSS("border-radius", "5px");
+  await page.getByRole("link", { name: "Vorschau" }).click();
+  await expect(page.locator(".preview-panel")).toHaveCSS("border-radius", "6px");
+  await expect(page.locator(".preview-panel pre")).toHaveCSS("border-radius", "5px");
 });
 
 test("creates and navigates a dataset series workspace", async ({ page }) => {
@@ -200,22 +200,25 @@ test("creates and navigates a dataset series workspace", async ({ page }) => {
   await expect(page.locator(".context-bar")).toContainText("Neue Datensatzserie");
   await expect(page.getByRole("link", { name: "Serie", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Ausgaben", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Datenblatt-Vorschau", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Vorschau", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Datenblatt exportieren" })).toBeDisabled();
 
   await page.getByLabel("Identifier *").fill("ch.foo");
   await page.getByLabel("Titel *").fill("Ch Foo");
   await page.getByLabel("Beschreibung *").fill("Serienbeschreibung");
-  await page.getByLabel("PublisherRef *").fill("pub");
+  await page.getByLabel("Zugänglichkeit *").selectOption("open");
+  await page.getByLabel("Publikationsstatus *").selectOption("published");
   await page.getByLabel("CreatorRef *").fill("creator");
-  await page.getByLabel("E-Mail *").fill("kontakt@example.org");
+  await page.getByLabel("E-Mail / URI *").fill("mailto:kontakt@example.org");
+  await page.getByText("Bevölkerung").click();
+  await page.getByLabel("Modified *").fill("2026-05-01");
 
   await page.getByRole("link", { name: "Ausgaben", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Ausgaben" })).toBeVisible();
   await expect(page.getByText("Serienkontext")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Ausgabe hinzufügen" })).toBeVisible();
-  await expect(page.getByLabel("PublisherRef")).toHaveValue("pub");
-  await expect(page.getByLabel("E-Mail *")).toHaveValue("kontakt@example.org");
+  await expect(page.getByLabel("Zugänglichkeit *")).toHaveValue("open");
+  await expect(page.getByLabel("Publikationsstatus *")).toHaveValue("published");
 
   const issueListBox = await page.locator(".series-issue-list").boundingBox();
   const issueEditorBox = await page.locator(".series-workspace__editor").boundingBox();
@@ -223,7 +226,7 @@ test("creates and navigates a dataset series workspace", async ({ page }) => {
 
   await page.getByLabel("IssueLabel *").fill("2026");
   await expect(page.getByLabel("Identifier *")).toHaveValue("ch.foo_2026");
-  await expect(page.getByLabel("Titel *")).toHaveValue("Ch Foo 2026");
+  await expect(page.getByLabel("Titel")).toHaveValue("Ch Foo 2026");
 
   await page.getByRole("button", { name: "Ausgabe hinzufügen" }).click();
   await expect(page.locator(".series-issue-card")).toHaveCount(2);
@@ -231,10 +234,10 @@ test("creates and navigates a dataset series workspace", async ({ page }) => {
   await page.getByRole("link", { name: "Serie", exact: true }).click();
   await page.getByLabel("Titel *").fill("Ch Bar");
   await page.getByRole("link", { name: "Ausgaben", exact: true }).click();
-  await expect(page.getByLabel("Titel *")).toHaveValue("Ch Bar 2026");
+  await expect(page.getByLabel("Titel")).toHaveValue("Ch Bar 2026");
 
-  await page.getByRole("link", { name: "Datenblatt-Vorschau", exact: true }).click();
-  await expect(page.locator(".json-panel")).toContainText("\"type\": \"DatasetSeries\"");
+  await page.getByRole("link", { name: "Vorschau", exact: true }).click();
+  await expect(page.locator(".preview-panel")).toContainText("<DatasetSeries");
 });
 
 test("shows 6px radius on empty state and file import surfaces", async ({ page }) => {
@@ -273,7 +276,7 @@ test("deletes all local drafts at once", async ({ page }) => {
   await expect(page.locator(".draft-card")).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Datensatz" })).toHaveAttribute("href", "/");
   await expect(page.getByRole("link", { name: "Attribute" })).toHaveAttribute("href", "/");
-  await expect(page.getByRole("link", { name: "Datenblatt-Vorschau" })).toHaveAttribute("href", "/");
+  await expect(page.getByRole("link", { name: "Vorschau" })).toHaveAttribute("href", "/");
 });
 
 test("cancels bulk deletion without changing drafts", async ({ page }) => {

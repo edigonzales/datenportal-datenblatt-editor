@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { defaultSourceIndexUrl } from "../config/metadataSources";
+import { normalizeSourceIndexUrl } from "../config/metadataSources";
 import type {
   AppMode,
   ConflictResolutionContext,
@@ -17,6 +17,7 @@ import {
   getRootIdentifier,
   getRootTitle
 } from "../domain/normalize";
+import { formatTime } from "../services/dateFormat";
 import { DatasetRepository } from "../services/datasetRepository";
 
 const repository = new DatasetRepository();
@@ -73,10 +74,7 @@ export const useDatasetStore = defineStore("dataset", {
         return state.sessionSourceLabel || "Datei";
       }
       if (state.saveState === "saved") {
-        return `zuletzt gespeichert ${new Date(state.currentDraft.updatedAt).toLocaleTimeString("de-CH", {
-          hour: "2-digit",
-          minute: "2-digit"
-        })}`;
+        return `zuletzt gespeichert ${formatTime(state.currentDraft.updatedAt)}`;
       }
       return state.sessionSourceLabel || "lokal";
     },
@@ -98,14 +96,18 @@ export const useDatasetStore = defineStore("dataset", {
   actions: {
     async initialize(): Promise<void> {
       await this.refreshDrafts();
-      this.lastSourceUrl = (await repository.getSetting<string>("lastSourceUrl")) ?? defaultSourceIndexUrl;
+      const storedSourceUrl = await repository.getSetting<string>("lastSourceUrl");
+      this.lastSourceUrl = normalizeSourceIndexUrl(storedSourceUrl);
+      if (storedSourceUrl !== this.lastSourceUrl) {
+        await repository.setSetting("lastSourceUrl", this.lastSourceUrl);
+      }
       this.lastOrganizationUnit = (await repository.getSetting<string>("lastOrganizationUnit")) ?? "";
     },
 
     async rememberSourceFilters(sourceUrl: string, organizationUnit: string): Promise<void> {
-      this.lastSourceUrl = sourceUrl;
+      this.lastSourceUrl = normalizeSourceIndexUrl(sourceUrl);
       this.lastOrganizationUnit = organizationUnit;
-      await repository.setSetting("lastSourceUrl", sourceUrl);
+      await repository.setSetting("lastSourceUrl", this.lastSourceUrl);
       await repository.setSetting("lastOrganizationUnit", organizationUnit);
     },
 

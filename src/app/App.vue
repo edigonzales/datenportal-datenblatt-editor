@@ -29,17 +29,17 @@ const currentValidation = computed(() =>
 );
 const editorTabs = computed(() => {
   if (currentDraftKind.value === "series") {
-    return [
-      { key: "main", label: "Serie", to: currentDraftId.value ? `/draft/${currentDraftId.value}` : "/" },
-      { key: "issues", label: "Ausgaben", to: currentDraftId.value ? `/draft/${currentDraftId.value}/issues` : "/" },
-      { key: "json", label: "Datenblatt-Vorschau", to: currentDraftId.value ? `/draft/${currentDraftId.value}/json` : "/" }
-    ];
+      return [
+        { key: "main", label: "Serie", to: currentDraftId.value ? `/draft/${currentDraftId.value}` : "/" },
+        { key: "issues", label: "Ausgaben", to: currentDraftId.value ? `/draft/${currentDraftId.value}/issues` : "/" },
+        { key: "xtf", label: "Vorschau", to: currentDraftId.value ? `/draft/${currentDraftId.value}/xtf` : "/" }
+      ];
   }
 
   return [
     { key: "main", label: "Datensatz", to: currentDraftId.value ? `/draft/${currentDraftId.value}` : "/" },
     { key: "attributes", label: "Attribute", to: currentDraftId.value ? `/draft/${currentDraftId.value}/attributes` : "/" },
-    { key: "json", label: "Datenblatt-Vorschau", to: currentDraftId.value ? `/draft/${currentDraftId.value}/json` : "/" }
+    { key: "xtf", label: "Vorschau", to: currentDraftId.value ? `/draft/${currentDraftId.value}/xtf` : "/" }
   ];
 });
 const exportDisabled = computed(() => !store.currentDraft || (currentValidation.value?.errorCount ?? 0) > 0);

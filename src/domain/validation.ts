@@ -84,7 +84,7 @@ const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/;
 
 export function validateImportedStructure(input: unknown): ValidationIssue[] {
   if (!isObject(input)) {
-    return [issue("error", "invalid-json", "$", "Die Datei enthält kein gültiges Datenblatt-Objekt.")];
+    return [issue("error", "invalid-structure", "$", "Die Datei enthält kein gültiges Datenblatt-Objekt.")];
   }
 
   if (isDatasetIssueLike(input) && !isDatasetSeriesLike(input)) {
@@ -234,7 +234,13 @@ function validateDatasetMetadata(issues: ValidationIssue[], dataset: Dataset, pr
   pushRequired(issues, dataset.identifier, `${prefix}.identifier`, "Identifier ist ein Pflichtfeld.");
   pushRequired(issues, dataset.title, `${prefix}.title`, "Titel ist ein Pflichtfeld.");
   pushRequired(issues, dataset.description, `${prefix}.description`, "Beschreibung ist ein Pflichtfeld.");
-  pushRequired(issues, dataset.publisherRef, `${prefix}.publisherRef`, "PublisherRef ist ein Pflichtfeld.");
+  pushRequired(issues, dataset.accessLevel, `${prefix}.accessLevel`, "AccessLevel ist ein Pflichtfeld.");
+  pushRequired(
+    issues,
+    dataset.publicationStatus,
+    `${prefix}.publicationStatus`,
+    "PublicationStatus ist ein Pflichtfeld."
+  );
   pushRequired(issues, dataset.creatorRef, `${prefix}.creatorRef`, "CreatorRef ist ein Pflichtfeld.");
   pushRequired(
     issues,
@@ -242,8 +248,14 @@ function validateDatasetMetadata(issues: ValidationIssue[], dataset: Dataset, pr
     `${prefix}.contactPoint.email`,
     "Die Kontakt-E-Mail ist ein Pflichtfeld."
   );
+  if (!dataset.themes?.length) {
+    issues.push(issue("error", "required", `${prefix}.themes`, "Mindestens ein Thema ist ein Pflichtfeld."));
+  }
+  pushRequired(issues, dataset.modified, `${prefix}.modified`, "Modified ist ein Pflichtfeld.");
 
-  validateSharedDescriptiveFields(issues, dataset, prefix);
+  validateDatasetCommonFields(issues, dataset, prefix);
+  validateUriField(issues, dataset.contactPoint?.email, `${prefix}.contactPoint.email`, "Kontakt-E-Mail");
+  validateUriField(issues, dataset.contactPoint?.url, `${prefix}.contactPoint.url`, "Kontakt-URL");
 }
 
 function validateSeriesMetadata(issues: ValidationIssue[], datasetSeries: DatasetSeries, prefix: string): void {
@@ -258,52 +270,33 @@ function validateIssueMetadata(
   prefix: string
 ): void {
   pushRequired(issues, effectiveIssue.identifier, `${prefix}.identifier`, "Identifier ist ein Pflichtfeld.");
-  pushRequired(issues, effectiveIssue.title, `${prefix}.title`, "Titel ist ein Pflichtfeld.");
   pushIssueRequired(
     issues,
     datasetIssue,
-    "description",
-    effectiveIssue.description,
-    `${prefix}.description`,
-    "Beschreibung ist ein Pflichtfeld."
+    "accessLevel",
+    effectiveIssue.accessLevel,
+    `${prefix}.accessLevel`,
+    "AccessLevel ist ein Pflichtfeld."
   );
   pushIssueRequired(
     issues,
     datasetIssue,
-    "publisherRef",
-    effectiveIssue.publisherRef,
-    `${prefix}.publisherRef`,
-    "PublisherRef ist ein Pflichtfeld."
-  );
-  pushIssueRequired(
-    issues,
-    datasetIssue,
-    "creatorRef",
-    effectiveIssue.creatorRef,
-    `${prefix}.creatorRef`,
-    "CreatorRef ist ein Pflichtfeld."
-  );
-  pushIssueRequired(
-    issues,
-    datasetIssue,
-    "contactPoint",
-    effectiveIssue.contactPoint?.email,
-    `${prefix}.contactPoint.email`,
-    "Die Kontakt-E-Mail ist ein Pflichtfeld."
+    "publicationStatus",
+    effectiveIssue.publicationStatus,
+    `${prefix}.publicationStatus`,
+    "PublicationStatus ist ein Pflichtfeld."
   );
   pushRequired(issues, datasetIssue.issueLabel, `${prefix}.issueLabel`, "IssueLabel ist ein Pflichtfeld.");
   validateIssueSharedFields(issues, datasetIssue, effectiveIssue, prefix);
 }
 
-function validateSharedDescriptiveFields(
+function validateDatasetCommonFields(
   issues: ValidationIssue[],
-  entry: Pick<Dataset, "description" | "identifier" | "issued" | "modified" | "attributes" | "temporalCoverage"> &
-    Pick<DatasetIssue, "description" | "identifier" | "issued" | "modified" | "attributes" | "temporalCoverage"> &
+  entry: Pick<Dataset, "description" | "identifier" | "modified" | "attributes" | "temporalCoverage" | "contactPoint"> &
     JsonObject,
   prefix: string
 ): void {
   validateDescriptionLength(issues, entry.description, `${prefix}.description`);
-
   if (entry.identifier && entry.identifier !== entry.identifier.trim()) {
     issues.push(
       issue(
@@ -315,16 +308,8 @@ function validateSharedDescriptiveFields(
     );
   }
 
-  validateDateField(issues, toStringValue(entry.issued), `${prefix}.issued`, "Issued");
   validateDateField(issues, toStringValue(entry.modified), `${prefix}.modified`, "Modified");
   validateTemporalCoverage(issues, entry.temporalCoverage, `${prefix}.temporalCoverage`);
-
-  if (entry.issued && entry.modified && isIsoDate(entry.issued) && isIsoDate(entry.modified)) {
-    if (entry.modified < entry.issued) {
-      issues.push(issue("error", "date-order", `${prefix}.modified`, "Modified darf nicht vor Issued liegen."));
-    }
-  }
-
   validateAttributeIssues(issues, entry.attributes ?? [], `${prefix}.attributes`);
 }
 
@@ -334,10 +319,6 @@ function validateIssueSharedFields(
   effectiveIssue: DatasetIssue,
   prefix: string
 ): void {
-  if (!isIssueGroupInherited(datasetIssue, "description")) {
-    validateDescriptionLength(issues, effectiveIssue.description, `${prefix}.description`);
-  }
-
   if (effectiveIssue.identifier && effectiveIssue.identifier !== effectiveIssue.identifier.trim()) {
     issues.push(
       issue(
@@ -349,10 +330,8 @@ function validateIssueSharedFields(
     );
   }
 
-  if (!isIssueGroupInherited(datasetIssue, "issued")) {
-    validateDateField(issues, toStringValue(effectiveIssue.issued), `${prefix}.issued`, "Issued");
-  }
-
+  validateDescriptionLength(issues, effectiveIssue.description, `${prefix}.description`);
+  validateDateField(issues, toStringValue(effectiveIssue.issued), `${prefix}.issued`, "Issued");
   if (!isIssueGroupInherited(datasetIssue, "modified")) {
     validateDateField(issues, toStringValue(effectiveIssue.modified), `${prefix}.modified`, "Modified");
   }
@@ -362,8 +341,8 @@ function validateIssueSharedFields(
   }
 
   if (
-    (effectiveIssue.issued || effectiveIssue.modified) &&
-    (isIssueGroupInherited(datasetIssue, "issued") === false || isIssueGroupInherited(datasetIssue, "modified") === false) &&
+    effectiveIssue.issued &&
+    effectiveIssue.modified &&
     isIsoDate(effectiveIssue.issued ?? "") &&
     isIsoDate(effectiveIssue.modified ?? "")
   ) {
@@ -404,6 +383,8 @@ function validateAttributeIssues(issues: ValidationIssue[], attributes: DatasetA
     if (!attribute.description?.trim()) {
       missingDescriptionCount += 1;
     }
+
+    validateUriField(issues, attribute.codeList, `${prefix}[${index}].codeList`, "CodeList-URI");
   }
 
   if (missingDescriptionCount > 0) {
@@ -492,7 +473,7 @@ function pushRequired(issues: ValidationIssue[], value: string | undefined, path
 function pushIssueRequired(
   issues: ValidationIssue[],
   datasetIssue: DatasetIssue,
-  group: "description" | "publisherRef" | "creatorRef" | "contactPoint",
+  group: "description" | "accessLevel" | "publicationStatus",
   value: string | undefined,
   path: string,
   message: string
@@ -507,6 +488,18 @@ function pushIssueRequired(
 function validateDescriptionLength(issues: ValidationIssue[], description: string | undefined, path: string): void {
   if ((description ?? "").length > 1024) {
     issues.push(issue("error", "description-length", path, "Die Beschreibung darf maximal 1024 Zeichen lang sein."));
+  }
+}
+
+function validateUriField(issues: ValidationIssue[], value: string | undefined, path: string, label: string): void {
+  if (!value?.trim()) {
+    return;
+  }
+
+  try {
+    new URL(value);
+  } catch {
+    issues.push(issue("error", "uri-format", path, `${label} muss eine gültige URI sein.`));
   }
 }
 
