@@ -6,6 +6,7 @@ import type {
   DatasetRootJson,
   DatasetSeries,
   DatasetSeriesRootJson,
+  DatasetSharedFields,
   DraftKind,
   EditableRootJson,
   ImportShape,
@@ -20,6 +21,7 @@ import {
 } from "./seriesIssues";
 
 export const DEFAULT_SCHEMA_VERSION = "2026-05-23";
+export const FIXED_ACCESS_LEVEL = "open";
 
 export class DatasetImportError extends Error {
   code: string;
@@ -201,6 +203,19 @@ export function cloneRoot(root: EditableRootJson): EditableRootJson {
   return JSON.parse(JSON.stringify(root)) as EditableRootJson;
 }
 
+export function enforceOpenAccessLevel(root: EditableRootJson): EditableRootJson {
+  if (isDatasetSeriesRoot(root)) {
+    assignOpenAccessLevel(root.series);
+    for (const issue of root.series.issues ?? []) {
+      assignOpenAccessLevel(issue);
+    }
+    return root;
+  }
+
+  assignOpenAccessLevel(root.dataset);
+  return root;
+}
+
 export function toExportRoot(root: EditableRootJson): EditableRootJson {
   const cloned = cloneRoot(root);
 
@@ -221,7 +236,7 @@ function createEmptyDataset(): Dataset {
     identifier: "",
     title: "",
     description: "",
-    accessLevel: "",
+    accessLevel: FIXED_ACCESS_LEVEL,
     publicationStatus: "",
     creatorRef: "",
     contactPoint: {
@@ -237,6 +252,7 @@ function createEmptyDataset(): Dataset {
     modified: "",
     temporalCoverage: {},
     surveyMethod: "",
+    model: "",
     attributes: [],
     dataAvailableFrom: "",
     furtherUses: "",
@@ -251,13 +267,14 @@ function createEmptyDatasetIssueFields(): DatasetIssue {
     description: "",
     issueLabel: "",
     isCurrentIssue: false,
-    accessLevel: "",
+    accessLevel: FIXED_ACCESS_LEVEL,
     publicationStatus: "",
     accrualPeriodicity: "",
     issued: "",
     modified: "",
     temporalCoverage: {},
     surveyMethod: "",
+    model: "",
     attributes: [],
     dataAvailableFrom: "",
     furtherUses: "",
@@ -374,4 +391,8 @@ function isString(value: unknown): value is string {
 
 function hasOwn(value: JsonObject, key: string): boolean {
   return Object.prototype.hasOwnProperty.call(value, key);
+}
+
+function assignOpenAccessLevel(entry: DatasetSharedFields): void {
+  entry.accessLevel = FIXED_ACCESS_LEVEL;
 }

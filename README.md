@@ -136,14 +136,20 @@ spec/           Eingangsspezifikation und Mockups
 - Entwuerfe werden unter der Dexie-Datenbank `datenblatt-editor` gespeichert.
 - Formularaenderungen werden mit `750 ms` Debounce nach IndexedDB geschrieben.
 - Der Export ist bei Validierungsfehlern blockiert.
-- Die PWA cached App-Shell, Assets und die gemockte `dataset.index.xtf` fuer kompletten Offline-Betrieb.
+- Die PWA cached App-Shell, Assets und die gemockten XTF-Snapshots fuer kompletten Offline-Betrieb.
 
 ## Quellenmodell im MVP
 
-Die "externe Quelle" des MVP bleibt eine mit der App ausgelieferte Snapshot-Datei:
+Die "externe Quelle" des MVP bleibt ein mit der App ausgelieferter XTF-Snapshot:
 
 ```text
 public/mock-sources/dataset.index.xtf
+```
+
+Zusaetzlich wird der Datenherr-Katalog als XTF mit ausgeliefert:
+
+```text
+public/mock-sources/offices.xtf
 ```
 
 Das hat zwei Konsequenzen:

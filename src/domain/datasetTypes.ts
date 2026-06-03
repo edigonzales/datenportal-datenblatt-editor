@@ -33,6 +33,7 @@ export interface DatasetSharedFields extends JsonObject {
   modified?: string;
   temporalCoverage?: TemporalCoverage;
   surveyMethod?: string;
+  model?: string;
   attributes?: DatasetAttribute[];
   dataAvailableFrom?: string;
   furtherUses?: string;
@@ -63,6 +64,7 @@ export type IssueInheritedGroup =
   | "modified"
   | "temporalCoverage"
   | "surveyMethod"
+  | "model"
   | "dataAvailableFrom"
   | "furtherUses"
   | "remarks";
@@ -107,6 +109,11 @@ export interface MetadataSource {
   label: string;
   indexUrl: string;
   version: string;
+}
+
+export interface OfficeCatalogEntry {
+  identifier: string;
+  name: string;
 }
 
 export interface MetadataSearchRecord {

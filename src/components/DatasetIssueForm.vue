@@ -16,6 +16,12 @@ const emit = defineEmits<{
   "set-current": [value: boolean];
 }>();
 
+const readOnlyAccessLevelOption =
+  accessLevelOptions.find((option) => option.value === "open") ?? {
+    value: "open",
+    label: "Öffentlich, frei zugänglich"
+  };
+
 function updateIdentifier(value: string): void {
   disableIssueIdentifierAuto(props.issue);
   props.issue.identifier = value;
@@ -90,14 +96,9 @@ function markOverridden(group: IssueInheritedGroup): void {
         <div class="inline-grid">
           <div class="field-row">
             <label for="issue-access-level">Zugänglichkeit *</label>
-            <select
-              id="issue-access-level"
-              v-model="issue.accessLevel"
-              class="select"
-              @change="markOverridden('accessLevel')"
-            >
-              <option v-for="option in accessLevelOptions" :key="option.value" :value="option.value">
-                {{ option.label }}
+            <select id="issue-access-level" v-model="issue.accessLevel" class="select" disabled aria-readonly="true">
+              <option :value="readOnlyAccessLevelOption.value">
+                {{ readOnlyAccessLevelOption.label }}
               </option>
             </select>
           </div>

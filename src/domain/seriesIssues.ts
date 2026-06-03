@@ -16,6 +16,7 @@ export const issueInheritedGroups = [
   "modified",
   "temporalCoverage",
   "surveyMethod",
+  "model",
   "dataAvailableFrom",
   "furtherUses",
   "remarks"
@@ -54,6 +55,7 @@ export function deriveImportedIssueState(rawIssue: JsonObject): LocalIssueState 
       modified: !hasOwn(rawIssue, "modified"),
       temporalCoverage: !hasOwn(rawIssue, "temporalCoverage"),
       surveyMethod: !hasOwn(rawIssue, "surveyMethod"),
+      model: !hasOwn(rawIssue, "model"),
       dataAvailableFrom: !hasOwn(rawIssue, "dataAvailableFrom"),
       furtherUses: !hasOwn(rawIssue, "furtherUses"),
       remarks: !hasOwn(rawIssue, "remarks")
@@ -165,6 +167,7 @@ function inferIssueStateFromCurrentValues(issue: DatasetIssue): LocalIssueState 
       modified: !hasText(issue.modified),
       temporalCoverage: isEmptyTemporalCoverage(issue.temporalCoverage),
       surveyMethod: !hasText(issue.surveyMethod),
+      model: !hasText(issue.model),
       dataAvailableFrom: !hasText(issue.dataAvailableFrom),
       furtherUses: !hasText(issue.furtherUses),
       remarks: !hasText(issue.remarks)
@@ -194,6 +197,9 @@ function assignGroupFromSeries(target: DatasetIssue, series: DatasetSeries, grou
       return;
     case "surveyMethod":
       target.surveyMethod = series.surveyMethod ?? "";
+      return;
+    case "model":
+      target.model = series.model ?? "";
       return;
     case "dataAvailableFrom":
       target.dataAvailableFrom = series.dataAvailableFrom ?? "";

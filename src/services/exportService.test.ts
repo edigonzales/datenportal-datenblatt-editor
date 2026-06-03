@@ -24,6 +24,7 @@ describe("exportService", () => {
 
     expect(xml).toContain("<Dataset");
     expect(xml).toContain("<identifier>so.afu.test</identifier>");
+    expect(xml).toContain("<creatorRef>ch.so.afu</creatorRef>");
   });
 
   it("strips local issue editor metadata from series exports", () => {

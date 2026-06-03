@@ -8,12 +8,12 @@ describe("normalizeSourceIndexUrl", () => {
     expect(normalizeSourceIndexUrl("   ")).toBe(defaultSourceIndexUrl);
   });
 
-  it("migrates the legacy local json source to xtf", () => {
-    expect(normalizeSourceIndexUrl("/mock-sources/dataset.index.json")).toBe(defaultSourceIndexUrl);
+  it("keeps local xtf urls unchanged", () => {
+    expect(normalizeSourceIndexUrl("/mock-sources/dataset.index.xtf")).toBe(defaultSourceIndexUrl);
   });
 
-  it("migrates absolute local json variants to xtf", () => {
-    expect(normalizeSourceIndexUrl("http://127.0.0.1:4173/mock-sources/dataset.index.json")).toBe(
+  it("keeps absolute xtf urls unchanged", () => {
+    expect(normalizeSourceIndexUrl("http://127.0.0.1:4173/mock-sources/dataset.index.xtf")).toBe(
       "http://127.0.0.1:4173/mock-sources/dataset.index.xtf"
     );
   });

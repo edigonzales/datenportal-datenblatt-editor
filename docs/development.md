@@ -158,19 +158,23 @@ Regel:
 
 ## Snapshot-Daten pflegen
 
-Die "externe Quelle" des MVP ist eine lokale `dataset.index.xtf`. Das ist bewusst so, damit die App komplett offline laeuft.
+Die Mock-Quellen des MVP sind lokale XTF-Dateien. Das ist bewusst so, damit die App komplett offline laeuft.
 
-Format:
+Unterstuetzte Dateien:
 
 ```text
 public/mock-sources/dataset.index.xtf
+public/mock-sources/offices.xtf
 ```
 
-Die Datei enthaelt einen XTF-Transfer mit allen `Dataset`- und `DatasetSeries`-Objekten im Basket `Metadata`.
+`dataset.index.xtf` enthaelt einen XTF-Transfer mit allen `Dataset`- und `DatasetSeries`-Objekten im Basket `Metadata`.
+`offices.xtf` enthaelt den Datenherr-Katalog fuer die Auswahl im Editor.
+
+JSON-Snapshots unter `public/mock-sources/` sind kein unterstuetztes Format mehr.
 
 Empfehlung bei Aenderungen:
 
-- Identifier und enthaltene Dataset-Dokumente konsistent halten
+- Identifier und enthaltene Dataset-Dokumente sowie Office-Identifier konsistent halten
 - nach Aenderungen immer `npm run build` ausfuehren
 - Ladefluss ueber den Dialog einmal komplett pruefen
 

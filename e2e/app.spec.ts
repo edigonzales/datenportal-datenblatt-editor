@@ -203,10 +203,11 @@ test("creates and navigates a dataset series workspace", async ({ page }) => {
   await expect(page.getByRole("link", { name: "Vorschau", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Datenblatt exportieren" })).toBeDisabled();
 
+  await expect(page.getByLabel("Zugänglichkeit *")).toHaveValue("open");
+  await expect(page.getByLabel("Zugänglichkeit *")).toBeDisabled();
   await page.getByLabel("Identifier *").fill("ch.foo");
   await page.getByLabel("Titel *").fill("Ch Foo");
   await page.getByLabel("Beschreibung *").fill("Serienbeschreibung");
-  await page.getByLabel("Zugänglichkeit *").selectOption("open");
   await page.getByLabel("Publikationsstatus *").selectOption("published");
   await page.getByLabel("CreatorRef *").fill("creator");
   await page.getByLabel("E-Mail / URI *").fill("mailto:kontakt@example.org");
@@ -218,6 +219,7 @@ test("creates and navigates a dataset series workspace", async ({ page }) => {
   await expect(page.getByText("Serienkontext")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Ausgabe hinzufügen" })).toBeVisible();
   await expect(page.getByLabel("Zugänglichkeit *")).toHaveValue("open");
+  await expect(page.getByLabel("Zugänglichkeit *")).toBeDisabled();
   await expect(page.getByLabel("Publikationsstatus *")).toHaveValue("published");
 
   const issueListBox = await page.locator(".series-issue-list").boundingBox();

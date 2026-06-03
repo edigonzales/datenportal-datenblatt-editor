@@ -241,7 +241,7 @@ function validateDatasetMetadata(issues: ValidationIssue[], dataset: Dataset, pr
     `${prefix}.publicationStatus`,
     "PublicationStatus ist ein Pflichtfeld."
   );
-  pushRequired(issues, dataset.creatorRef, `${prefix}.creatorRef`, "CreatorRef ist ein Pflichtfeld.");
+  pushRequired(issues, dataset.creatorRef, `${prefix}.creatorRef`, "Datenherr ist ein Pflichtfeld.");
   pushRequired(
     issues,
     dataset.contactPoint?.email,

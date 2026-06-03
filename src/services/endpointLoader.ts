@@ -1,6 +1,6 @@
-import type { ImportPreview, MetadataSearchRecord } from "../domain/datasetTypes";
+import type { ImportPreview, MetadataSearchRecord, OfficeCatalogEntry } from "../domain/datasetTypes";
 import { isDatasetSeriesRoot } from "../domain/normalize";
-import { parseXtfTransfer } from "./xtfService";
+import { parseOfficeCatalogTransfer, parseXtfTransfer } from "./xtfService";
 
 function toStringValue(value: unknown): string {
   return typeof value === "string" ? value : "";
@@ -34,6 +34,16 @@ export async function loadSourceIndex(indexUrl: string): Promise<MetadataSearchR
       document
     };
   });
+}
+
+export async function loadOfficeCatalog(catalogUrl: string): Promise<OfficeCatalogEntry[]> {
+  const response = await fetch(catalogUrl, { headers: { Accept: "application/xml,text/xml" } });
+  if (!response.ok) {
+    throw new Error("Der Datenherr-Katalog konnte nicht geladen werden.");
+  }
+
+  const payload = await response.text();
+  return parseOfficeCatalogTransfer(payload).sort((left, right) => left.name.localeCompare(right.name, "de-CH"));
 }
 
 export function searchSourceIndex(

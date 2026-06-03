@@ -17,7 +17,7 @@ vi.mock("../services/endpointLoader", () => ({
 }));
 
 describe("SourceLoadDialog", () => {
-  it("normalizes a legacy json initial source url to xtf", async () => {
+  it("loads an xtf initial source url unchanged", async () => {
     loadSourceIndex.mockResolvedValue([
       {
         identifier: "so.afu.nitratmessungen",
@@ -40,7 +40,7 @@ describe("SourceLoadDialog", () => {
 
     render(SourceLoadDialog, {
       props: {
-        initialSourceUrl: "/mock-sources/dataset.index.json",
+        initialSourceUrl: "/mock-sources/dataset.index.xtf",
         initialOrganizationUnit: "ch.so.afu"
       }
     });

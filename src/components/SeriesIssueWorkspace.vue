@@ -122,6 +122,7 @@ const seriesDefaultsSignature = computed(() =>
     modified: props.series.modified ?? "",
     temporalCoverage: props.series.temporalCoverage ?? {},
     surveyMethod: props.series.surveyMethod ?? "",
+    model: props.series.model ?? "",
     dataAvailableFrom: props.series.dataAvailableFrom ?? "",
     furtherUses: props.series.furtherUses ?? "",
     remarks: props.series.remarks ?? ""

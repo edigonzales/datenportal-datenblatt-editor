@@ -430,6 +430,22 @@
   border-color: var(--dp-color-border-strong);
 }
 
+.text-input:disabled,
+.textarea:disabled,
+.select:disabled {
+  color: var(--dp-color-text-muted);
+  background: var(--dp-color-surface-alt);
+  border-color: var(--dp-color-border);
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.text-input:disabled:hover,
+.textarea:disabled:hover,
+.select:disabled:hover {
+  border-color: var(--dp-color-border);
+}
+
 .inline-grid {
   display: grid;
   gap: var(--dp-space-3);

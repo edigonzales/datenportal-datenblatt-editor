@@ -115,7 +115,8 @@ Da die App via Service Worker precached wird, kommen Updates ohnehin ueber neue 
 - Navigation zwischen den Routen
 - Oeffnen lokaler Entwuerfe
 - Bearbeiten und Speichern in IndexedDB
-- Laden der `dataset.index.xtf`
+- Laden von `dataset.index.xtf`
+- Laden von `offices.xtf`
 - Export von XTF
 
 ### Was fuer Offline vorher passiert sein muss
@@ -125,6 +126,7 @@ Die Anwendung muss mindestens einmal erfolgreich geladen worden sein, damit:
 - App-Shell
 - Assets
 - `dataset.index.xtf`
+- `offices.xtf`
 - Service Worker
 
 im Browser verfuegbar sind.
@@ -149,10 +151,11 @@ Wichtig:
 Wenn sich die "externen" Quelldaten aendern sollen:
 
 1. `public/mock-sources/dataset.index.xtf` aktualisieren
-2. `npm run build`
-3. `dist/` neu deployen
+2. bei Bedarf `public/mock-sources/offices.xtf` aktualisieren
+3. `npm run build`
+4. `dist/` neu deployen
 
-Es reicht nicht, nur einen laufenden Browser-Cache zu erwarten. Die Daten sind Teil der ausgelieferten App-Version.
+Es reicht nicht, nur einen laufenden Browser-Cache zu erwarten. Die XTF-Dateien sind Teil der ausgelieferten App-Version.
 
 ### XTF fachlich validieren
 
@@ -163,6 +166,8 @@ java -jar /Users/stefan/apps/ilivalidator-1.15.0/ilivalidator-1.15.0.jar \
   --modeldir /Users/stefan/sources/sogis-interlis-repository/models/AGI \
   public/mock-sources/dataset.index.xtf
 ```
+
+JSON-Snapshots unter `public/mock-sources/` sind kein unterstuetztes Format.
 
 ## Datenschutz und Sicherheit
 
@@ -222,8 +227,9 @@ Vor einem Release:
 3. `npm run build`
 4. `npm run test:e2e`
 5. `dataset.index.xtf` fachlich pruefen
-6. `dist/` deployen
-7. installierte App / Offline-Verhalten einmal pruefen
+6. bei Aenderungen `offices.xtf` fachlich pruefen
+7. `dist/` deployen
+8. installierte App / Offline-Verhalten einmal pruefen
 
 ## Typische Betriebsfragen
 
@@ -288,7 +294,8 @@ Massnahmen:
 Pruefen:
 
 - liegt die erwartete `dataset.index.xtf` im Build?
-- wurde die korrekte Mock-Datei deployed?
+- liegt die erwartete `offices.xtf` im Build?
+- wurden die korrekten XTF-Dateien deployed?
 - ist das XTF/XML syntaktisch gueltig?
 
 ### Lokale Entwuerfe "verschwinden"

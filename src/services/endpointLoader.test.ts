@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { EditableRootJson, MetadataSearchRecord } from "../domain/datasetTypes";
 import { isDatasetRoot } from "../domain/normalize";
-import { loadDatasetFromSource, loadSourceIndex, searchSourceIndex } from "./endpointLoader";
+import { loadDatasetFromSource, loadOfficeCatalog, loadSourceIndex, searchSourceIndex } from "./endpointLoader";
 
 const datasetIndexPayload = `<?xml version="1.0" encoding="UTF-8"?>
 <ili:transfer xmlns="http://www.interlis.ch/xtf/2.4/SO_AGI_DataCatalog_Datasheet_20260523" xmlns:base="http://www.interlis.ch/xtf/2.4/SO_AGI_DataCatalog_Base_20260529" xmlns:ili="http://www.interlis.ch/xtf/2.4/INTERLIS">
@@ -48,6 +48,27 @@ const datasetIndexPayload = `<?xml version="1.0" encoding="UTF-8"?>
         <modified>2026-05-10</modified>
       </Dataset>
     </Metadata>
+  </ili:datasection>
+</ili:transfer>`;
+
+const officeCatalogPayload = `<?xml version="1.0" encoding="UTF-8"?>
+<ili:transfer xmlns:ili="http://www.interlis.ch/xtf/2.4/INTERLIS" xmlns:base="http://www.interlis.ch/xtf/2.4/SO_AGI_DataCatalog_Base_20260529">
+  <ili:headersection>
+    <ili:models>
+      <ili:model>SO_AGI_DataCatalog_Base_20260529</ili:model>
+    </ili:models>
+  </ili:headersection>
+  <ili:datasection>
+    <base:Office ili:bid="SO_AGI_DataCatalog_Base_20260529.Office">
+      <base:Office.Office ili:tid="ch.so.afu">
+        <base:identifier>ch.so.afu</base:identifier>
+        <base:name>Amt für Umwelt</base:name>
+      </base:Office.Office>
+      <base:Office.Office ili:tid="ch.so.agi">
+        <base:identifier>ch.so.agi</base:identifier>
+        <base:name>Amt für Geoinformation</base:name>
+      </base:Office.Office>
+    </base:Office>
   </ili:datasection>
 </ili:transfer>`;
 
@@ -128,6 +149,37 @@ describe("loadSourceIndex", () => {
   });
 });
 
+describe("loadOfficeCatalog", () => {
+  it("loads offices.xtf and sorts entries by display name", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(officeCatalogPayload, {
+        status: 200,
+        headers: { "Content-Type": "application/xml" }
+      })
+    );
+
+    const entries = await loadOfficeCatalog("/mock-sources/offices.xtf");
+
+    expect(entries).toEqual([
+      { identifier: "ch.so.agi", name: "Amt für Geoinformation" },
+      { identifier: "ch.so.afu", name: "Amt für Umwelt" }
+    ]);
+  });
+
+  it("rejects an invalid office catalog payload", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response("<broken>", {
+        status: 200,
+        headers: { "Content-Type": "application/xml" }
+      })
+    );
+
+    await expect(loadOfficeCatalog("/mock-sources/offices.xtf")).rejects.toThrow(
+      "Die Datei ist nicht lesbar oder enthält kein gültiges XTF/XML."
+    );
+  });
+});
+
 describe("searchSourceIndex", () => {
   const index: MetadataSearchRecord[] = [
     createIndexEntry(),
@@ -162,5 +214,6 @@ describe("loadDatasetFromSource", () => {
       throw new Error("Expected dataset root");
     }
     expect(preview.root.dataset.identifier).toBe("so.afu.nitratmessungen");
+    expect(preview.root.dataset.creatorRef).toBe("ch.so.afu");
   });
 });

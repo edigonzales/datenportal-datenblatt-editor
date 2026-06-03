@@ -19,6 +19,7 @@ const datasetXtf = `<?xml version="1.0" encoding="UTF-8"?>
         <accessLevel>open</accessLevel>
         <publicationStatus>published</publicationStatus>
         <creatorRef>ch.so.afu</creatorRef>
+        <model>SO_AGI_Dataset_Model</model>
         <contactPoint>
           <base:ContactPoint>
             <base:email>mailto:afu@bd.so.ch</base:email>
@@ -48,6 +49,7 @@ const seriesXtf = `<?xml version="1.0" encoding="UTF-8"?>
         <accessLevel>open</accessLevel>
         <publicationStatus>published</publicationStatus>
         <creatorRef>ch.so.astat</creatorRef>
+        <model>SO_AGI_Series_Model</model>
         <contactPoint>
           <base:ContactPoint>
             <base:email>mailto:astat@bd.so.ch</base:email>
@@ -80,6 +82,7 @@ describe("parseImportedText", () => {
       throw new Error("Expected dataset root");
     }
     expect(preview.root.dataset.identifier).toBe("so.afu.nitratmessungen");
+    expect(preview.root.dataset.model).toBe("SO_AGI_Dataset_Model");
   });
 
   it("parses valid dataset series xtf", () => {
@@ -91,6 +94,8 @@ describe("parseImportedText", () => {
       throw new Error("Expected series root");
     }
     expect(preview.root.type).toBe("DatasetSeries");
+    expect(preview.root.series.model).toBe("SO_AGI_Series_Model");
+    expect(preview.root.series.issues?.[0]?.model).toBe("SO_AGI_Series_Model");
   });
 
   it("rejects invalid xml", () => {

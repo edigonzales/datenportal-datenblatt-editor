@@ -1,4 +1,4 @@
-import type { Dataset, DatasetIssue, DatasetSeries, EditableRootJson, JsonObject } from "../domain/datasetTypes";
+import type { Dataset, DatasetIssue, DatasetSeries, EditableRootJson, JsonObject, OfficeCatalogEntry } from "../domain/datasetTypes";
 import { DEFAULT_SCHEMA_VERSION, normalizeImportedJson, toExportRoot } from "../domain/normalize";
 
 const INTERLIS_NS = "http://www.interlis.ch/xtf/2.4/INTERLIS";
@@ -49,6 +49,34 @@ export function parseSingleXtfTransfer(text: string): EditableRootJson {
     throw new Error("Die Datei muss genau ein Dataset oder genau eine DatasetSeries enthalten.");
   }
   return records[0];
+}
+
+export function parseOfficeCatalogTransfer(text: string): OfficeCatalogEntry[] {
+  const document = parseXml(text);
+  const transfer = document.documentElement;
+  if (!transfer || transfer.localName !== "transfer") {
+    throw new Error("Die Datei enthält keinen gültigen XTF-Transfer.");
+  }
+
+  const dataSection = firstChildElement(transfer, "datasection");
+  const officeBasket = dataSection ? childElements(dataSection).find((element) => element.localName === "Office") ?? null : null;
+  if (!officeBasket) {
+    throw new Error("Der XTF-Transfer enthält keinen Office-Basket.");
+  }
+
+  const records = childElements(officeBasket)
+    .filter((element) => element.localName === "Office.Office")
+    .map((element) => ({
+      identifier: childText(element, "identifier"),
+      name: childText(element, "name")
+    }))
+    .filter((office) => office.identifier && office.name);
+
+  if (!records.length) {
+    throw new Error("Der XTF-Transfer enthält keine Office-Objekte.");
+  }
+
+  return records;
 }
 
 export function serializeToXtf(root: EditableRootJson): string {
@@ -120,6 +148,7 @@ function buildIssueNode(document: XMLDocument, issue: DatasetIssue): Element {
   appendOptionalTextElement(document, element, DATASHEET_NS, "modified", issue.modified);
   appendTemporalCoverage(document, element, issue.temporalCoverage);
   appendOptionalTextElement(document, element, DATASHEET_NS, "surveyMethod", issue.surveyMethod);
+  appendOptionalTextElement(document, element, DATASHEET_NS, "model", issue.model);
   appendAttributes(document, element, issue.attributes);
   appendOptionalTextElement(document, element, DATASHEET_NS, "dataAvailableFrom", issue.dataAvailableFrom);
   appendOptionalTextElement(document, element, DATASHEET_NS, "furtherUses", issue.furtherUses);
@@ -146,6 +175,7 @@ function appendDatasetFields(document: XMLDocument, element: Element, dataset: D
   appendTextElement(document, element, DATASHEET_NS, "modified", dataset.modified);
   appendTemporalCoverage(document, element, dataset.temporalCoverage);
   appendOptionalTextElement(document, element, DATASHEET_NS, "surveyMethod", dataset.surveyMethod);
+  appendOptionalTextElement(document, element, DATASHEET_NS, "model", dataset.model);
   appendAttributes(document, element, dataset.attributes);
   appendOptionalTextElement(document, element, DATASHEET_NS, "dataAvailableFrom", dataset.dataAvailableFrom);
   appendOptionalTextElement(document, element, DATASHEET_NS, "furtherUses", dataset.furtherUses);
@@ -245,6 +275,7 @@ function parseDatasetElement(element: Element): JsonObject {
     modified: childText(element, "modified"),
     temporalCoverage: parseTemporalCoverage(firstChildElement(element, "temporalCoverage")),
     surveyMethod: childText(element, "surveyMethod"),
+    model: childText(element, "model"),
     attributes: childElementsByName(element, "attributes").map(parseAttributeWrapper),
     dataAvailableFrom: childText(element, "dataAvailableFrom"),
     furtherUses: childText(element, "furtherUses"),
@@ -267,6 +298,8 @@ function parseSeriesElement(element: Element): JsonObject {
 }
 
 function parseIssueElement(element: Element): JsonObject {
+  const modelElement = firstChildElement(element, "model");
+
   return {
     identifier: childText(element, "identifier"),
     title: childText(element, "title"),
@@ -280,6 +313,7 @@ function parseIssueElement(element: Element): JsonObject {
     modified: childText(element, "modified"),
     temporalCoverage: parseTemporalCoverage(firstChildElement(element, "temporalCoverage")),
     surveyMethod: childText(element, "surveyMethod"),
+    ...(modelElement ? { model: modelElement.textContent?.trim() ?? "" } : {}),
     attributes: childElementsByName(element, "attributes").map(parseAttributeWrapper),
     dataAvailableFrom: childText(element, "dataAvailableFrom"),
     furtherUses: childText(element, "furtherUses"),

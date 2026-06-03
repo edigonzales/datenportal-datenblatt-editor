@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
+import { defaultOfficeCatalogUrl } from "../config/metadataSources";
 import type { Dataset, DatasetSeries } from "../domain/datasetTypes";
 import { accessLevelOptions, publicationStatusOptions } from "../config/vocabularies";
+import { loadOfficeCatalog } from "../services/endpointLoader";
 import SharedMetadataSections from "./SharedMetadataSections.vue";
 
 const props = defineProps<{
@@ -10,6 +12,57 @@ const props = defineProps<{
 }>();
 
 const isSeries = computed(() => props.mode === "series");
+const readOnlyAccessLevelOption =
+  accessLevelOptions.find((option) => option.value === "open") ?? {
+    value: "open",
+    label: "Öffentlich, frei zugänglich"
+  };
+
+const officeCatalogLoading = ref(false);
+const officeCatalogError = ref("");
+const officeOptions = ref<{ identifier: string; name: string }[]>([]);
+
+const officeSelectDisabled = computed(
+  () => officeCatalogLoading.value || Boolean(officeCatalogError.value) || officeOptions.value.length === 0
+);
+
+function normalizeCreatorRef(): void {
+  const currentValue = props.dataset.creatorRef?.trim() ?? "";
+  if (!currentValue || officeOptions.value.length === 0) {
+    return;
+  }
+
+  if (!officeOptions.value.some((entry) => entry.identifier === currentValue)) {
+    props.dataset.creatorRef = "";
+  }
+}
+
+watch(officeOptions, () => {
+  normalizeCreatorRef();
+});
+
+watch(
+  () => props.dataset,
+  () => {
+    normalizeCreatorRef();
+  }
+);
+
+onMounted(async () => {
+  officeCatalogLoading.value = true;
+  officeCatalogError.value = "";
+
+  try {
+    officeOptions.value = await loadOfficeCatalog(defaultOfficeCatalogUrl);
+    normalizeCreatorRef();
+  } catch (reason) {
+    officeOptions.value = [];
+    officeCatalogError.value =
+      reason instanceof Error ? reason.message : "Der Datenherr-Katalog konnte nicht geladen werden.";
+  } finally {
+    officeCatalogLoading.value = false;
+  }
+});
 </script>
 
 <template>
@@ -41,9 +94,9 @@ const isSeries = computed(() => props.mode === "series");
         <div class="inline-grid">
           <div class="field-row">
             <label for="access-level">Zugänglichkeit *</label>
-            <select id="access-level" v-model="dataset.accessLevel" class="select">
-              <option v-for="option in accessLevelOptions" :key="option.value" :value="option.value">
-                {{ option.label }}
+            <select id="access-level" v-model="dataset.accessLevel" class="select" disabled aria-readonly="true">
+              <option :value="readOnlyAccessLevelOption.value">
+                {{ readOnlyAccessLevelOption.label }}
               </option>
             </select>
           </div>
@@ -57,8 +110,17 @@ const isSeries = computed(() => props.mode === "series");
           </div>
         </div>
         <div class="field-row">
-          <label for="creatorRef">CreatorRef *</label>
-          <input id="creatorRef" v-model="dataset.creatorRef" class="text-input" type="text" />
+          <label for="creatorRef">Datenherr *</label>
+          <select id="creatorRef" v-model="dataset.creatorRef" class="select" :disabled="officeSelectDisabled">
+            <option value="">Bitte wählen</option>
+            <option v-for="office in officeOptions" :key="office.identifier" :value="office.identifier">
+              {{ office.name }}
+            </option>
+          </select>
+          <p v-if="officeCatalogLoading" class="field-help">Datenherren werden geladen.</p>
+          <div v-if="officeCatalogError" class="notice" data-tone="danger">
+            <span>{{ officeCatalogError }}</span>
+          </div>
         </div>
       </div>
     </section>

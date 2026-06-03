@@ -105,6 +105,15 @@ function normalizeKeywordsInput(): void {
   }
 }
 
+function updateModel(value: string): void {
+  if (datasetEntry.value) {
+    datasetEntry.value.model = value;
+  } else if (issueEntry.value) {
+    issueEntry.value.model = value;
+  }
+  emitOverride("model");
+}
+
 function deriveMode(coverage: TemporalCoverage): TemporalCoverageMode {
   if (coverage.referenceDate) {
     return "reference";
@@ -342,6 +351,16 @@ function setTemporalMode(nextMode: TemporalCoverageMode): void {
           class="textarea"
           rows="4"
           @input="emitOverride('surveyMethod')"
+        />
+      </div>
+      <div class="field-row">
+        <label :for="`${idPrefix}-model`">Datenmodell</label>
+        <input
+          :id="`${idPrefix}-model`"
+          :value="entry.model ?? ''"
+          class="text-input"
+          type="text"
+          @input="updateModel(($event.target as HTMLInputElement).value)"
         />
       </div>
       <div class="field-row">

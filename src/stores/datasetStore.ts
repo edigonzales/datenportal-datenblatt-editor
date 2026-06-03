@@ -14,6 +14,7 @@ import {
   cloneRoot,
   createEmptyDatasetRoot,
   createEmptyDatasetSeriesRoot,
+  enforceOpenAccessLevel,
   getRootIdentifier,
   getRootTitle
 } from "../domain/normalize";
@@ -121,6 +122,7 @@ export const useDatasetStore = defineStore("dataset", {
         return null;
       }
 
+      enforceOpenAccessLevel(draft.data);
       this.currentDraft = draft;
       this.sessionSourceType = sourceType;
       this.sessionSourceLabel = draft.sourceLabel ?? "";
@@ -254,6 +256,7 @@ export const useDatasetStore = defineStore("dataset", {
       this.saveState = "saving";
       this.saveError = "";
       try {
+        enforceOpenAccessLevel(this.currentDraft.data);
         const persisted = await repository.saveDraft({
           ...this.currentDraft,
           identifier: getRootIdentifier(this.currentDraft.data).trim(),
@@ -304,6 +307,7 @@ export const useDatasetStore = defineStore("dataset", {
     async persistPreview(preview: ImportPreview, overrideId?: string): Promise<DatasetDraftRecord> {
       const now = timestamp();
       const root = cloneRoot(preview.root);
+      enforceOpenAccessLevel(root);
       const draft = await repository.saveDraft({
         id: overrideId ?? crypto.randomUUID(),
         draftKind: preview.draftKind,

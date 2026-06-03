@@ -7,27 +7,13 @@ export const defaultMetadataSource: MetadataSource = {
 };
 
 export const defaultSourceIndexUrl = defaultMetadataSource.indexUrl;
-
-const legacyMockSourceIndexPath = "/mock-sources/dataset.index.json";
+const localOfficeCatalogUrl = "/mock-sources/offices.xtf";
+export const defaultOfficeCatalogUrl = import.meta.env.VITE_OFFICE_CATALOG_URL?.trim() || localOfficeCatalogUrl;
 
 export function normalizeSourceIndexUrl(sourceUrl?: string): string {
   const trimmed = sourceUrl?.trim() ?? "";
   if (!trimmed) {
     return defaultSourceIndexUrl;
-  }
-
-  if (trimmed === legacyMockSourceIndexPath) {
-    return defaultSourceIndexUrl;
-  }
-
-  try {
-    const parsed = new URL(trimmed);
-    if (parsed.pathname === legacyMockSourceIndexPath) {
-      parsed.pathname = defaultSourceIndexUrl;
-      return parsed.toString();
-    }
-  } catch {
-    return trimmed;
   }
 
   return trimmed;
