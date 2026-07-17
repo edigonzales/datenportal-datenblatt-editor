@@ -251,10 +251,6 @@ function setTemporalMode(nextMode: TemporalCoverageMode): void {
         </select>
       </div>
       <div class="inline-grid">
-        <div v-if="issueEntry" class="field-row">
-          <label :for="`${idPrefix}-issued`">Issued</label>
-          <input :id="`${idPrefix}-issued`" v-model="issueEntry.issued" class="text-input" type="date" />
-        </div>
         <div class="field-row">
           <label :for="`${idPrefix}-modified`">{{ issueEntry ? "Modified" : "Modified *" }}</label>
           <input
@@ -383,6 +379,15 @@ function setTemporalMode(nextMode: TemporalCoverageMode): void {
           @input="emitOverride('furtherUses')"
         />
       </div>
+      <div v-if="datasetEntry" class="field-row">
+        <label :for="`${idPrefix}-auxiliary-data`">Hilfsdaten</label>
+        <textarea
+          :id="`${idPrefix}-auxiliary-data`"
+          v-model="datasetEntry.auxiliaryData"
+          class="textarea"
+          rows="3"
+        />
+      </div>
       <div v-if="issueEntry" class="field-row">
         <label :for="`${idPrefix}-auxiliary-data`">Hilfsdaten</label>
         <textarea
@@ -395,18 +400,4 @@ function setTemporalMode(nextMode: TemporalCoverageMode): void {
     </div>
   </section>
 
-  <section class="form-section section-stack">
-    <div>
-      <h3>Bemerkungen</h3>
-    </div>
-    <div class="field-row">
-      <textarea
-        :id="`${idPrefix}-remarks`"
-        v-model="entry.remarks"
-        class="textarea"
-        rows="4"
-        @input="emitOverride('remarks')"
-      />
-    </div>
-  </section>
 </template>

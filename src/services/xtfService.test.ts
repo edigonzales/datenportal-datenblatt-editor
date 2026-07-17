@@ -48,7 +48,6 @@ const exampleTransfer = `<?xml version="1.0" encoding="UTF-8"?>
             <identifier>ch.so.bevoelkerung.altersstruktur_2025</identifier>
             <issueLabel>2025</issueLabel>
             <isCurrentIssue>true</isCurrentIssue>
-            <accessLevel>open</accessLevel>
             <publicationStatus>published</publicationStatus>
           </DatasetIssue>
         </issues>
@@ -57,7 +56,6 @@ const exampleTransfer = `<?xml version="1.0" encoding="UTF-8"?>
             <identifier>ch.so.bevoelkerung.altersstruktur_2024</identifier>
             <issueLabel>2024</issueLabel>
             <isCurrentIssue>false</isCurrentIssue>
-            <accessLevel>open</accessLevel>
             <publicationStatus>published</publicationStatus>
             <model>SO_AGI_Issue_Model</model>
           </DatasetIssue>
@@ -160,7 +158,6 @@ describe("xtfService", () => {
     issue.identifier = "so.astat.reihe_2026";
     issue.issueLabel = "2026";
     issue.isCurrentIssue = true;
-    issue.accessLevel = "open";
     issue.publicationStatus = "published";
     issue.model = "SO_AGI_Issue_Model";
     issue.__localIssueId = "local-1";
@@ -172,5 +169,158 @@ describe("xtfService", () => {
     expect(xml).toContain("<model>SO_AGI_Series_Model</model>");
     expect(xml).toContain("<model>SO_AGI_Issue_Model</model>");
     expect(xml).not.toContain("__localIssueId");
+  });
+
+  it("serializes the current dataset model fields in XSD order", () => {
+    const root = createEmptyDatasetRoot();
+    root.dataset.identifier = "so.afu.vollstaendig";
+    root.dataset.title = "Vollständiger Datensatz";
+    root.dataset.description = "Beschreibung";
+    root.dataset.accessLevel = "restricted";
+    root.dataset.publicationStatus = "in_review";
+    root.dataset.creatorRef = "ch.so.afu";
+    root.dataset.contactPoint = {
+      name: "Kontakt",
+      organizationUnit: "AfU",
+      email: "mailto:afu@bd.so.ch",
+      phone: "+41 32 627 24 61",
+      url: "https://afu.so.ch"
+    };
+    root.dataset.themes = ["Raum_und_Umwelt"];
+    root.dataset.keywords = ["Wasser"];
+    root.dataset.accrualPeriodicity = "annually";
+    root.dataset.modified = "2026-05-12";
+    root.dataset.temporalCoverage = { startDate: "2025-01-01", endDate: "2025-12-31" };
+    root.dataset.surveyMethod = "Messung";
+    root.dataset.attributes = [
+      { name: "Jahr", dataType: "INTEGER", description: "Messjahr", mandatory: true }
+    ];
+    root.dataset.model = "SO_AGI_Water_Model";
+    root.dataset.dataAvailableFrom = "ab 2025";
+    root.dataset.furtherUses = "Monitoring";
+    root.dataset.auxiliaryData = "Messstellenverzeichnis";
+
+    const xml = serializeToXtf(root);
+    const document = new DOMParser().parseFromString(xml, "application/xml");
+    const dataset = document.getElementsByTagNameNS(
+      "http://www.interlis.ch/xtf/2.4/SO_AGI_DataCatalog_Datasheet_20260523",
+      "Dataset"
+    )[0];
+
+    expect(Array.from(dataset.children).map((element) => element.localName)).toEqual([
+      "identifier",
+      "title",
+      "description",
+      "accessLevel",
+      "publicationStatus",
+      "creatorRef",
+      "contactPoint",
+      "themes",
+      "keywords",
+      "accrualPeriodicity",
+      "modified",
+      "temporalCoverage",
+      "surveyMethod",
+      "attributes",
+      "model",
+      "dataAvailableFrom",
+      "furtherUses",
+      "auxiliaryData"
+    ]);
+    expect(xml).toContain("<ClosedTemporalCoverage>");
+    expect(xml).not.toContain("remarks");
+    expect(xml).not.toContain("<accessLevel>restricted</accessLevel></DatasetIssue>");
+
+    const parsed = serializeToXtf(
+      parseXtfTransfer(xml)[0] ?? createEmptyDatasetRoot()
+    );
+    expect(parsed).toContain("<auxiliaryData>Messstellenverzeichnis</auxiliaryData>");
+  });
+
+  it("serializes dataset series and issues according to the current model", () => {
+    const root = createEmptyDatasetSeriesRoot();
+    root.series.identifier = "so.astat.reihe";
+    root.series.title = "Reihe";
+    root.series.description = "Beschreibung";
+    root.series.accessLevel = "internal";
+    root.series.publicationStatus = "published";
+    root.series.creatorRef = "ch.so.astat";
+    root.series.contactPoint!.email = "mailto:statistik@fd.so.ch";
+    root.series.themes = ["Bevoelkerung"];
+    root.series.modified = "2026-05-12";
+    root.series.auxiliaryData = "Registerdaten";
+
+    const issue = root.series.issues?.[0];
+    if (!issue) {
+      throw new Error("Expected initial issue");
+    }
+    issue.identifier = "so.astat.reihe_2026";
+    issue.title = "Reihe 2026";
+    issue.description = "Ausgabe 2026";
+    issue.issueLabel = "2026";
+    issue.isCurrentIssue = true;
+    issue.publicationStatus = "published";
+    issue.accrualPeriodicity = "annually";
+    issue.modified = "2026-12-31";
+    issue.temporalCoverage = { referenceDate: "2026-12-31" };
+    issue.surveyMethod = "Registerauswertung";
+    issue.attributes = [{ name: "Wert", dataType: "INTEGER", mandatory: false }];
+    issue.model = "SO_AGI_Issue_Model";
+    issue.dataAvailableFrom = "2026";
+    issue.furtherUses = "Statistik";
+    issue.auxiliaryData = "Ausgabenspezifische Zusatzdaten";
+
+    const xml = serializeToXtf(root);
+    const document = new DOMParser().parseFromString(xml, "application/xml");
+    const issueElement = document.getElementsByTagNameNS(
+      "http://www.interlis.ch/xtf/2.4/SO_AGI_DataCatalog_Datasheet_20260523",
+      "DatasetIssue"
+    )[0];
+
+    expect(Array.from(issueElement.children).map((element) => element.localName)).toEqual([
+      "identifier",
+      "title",
+      "description",
+      "issueLabel",
+      "isCurrentIssue",
+      "publicationStatus",
+      "accrualPeriodicity",
+      "modified",
+      "temporalCoverage",
+      "surveyMethod",
+      "attributes",
+      "model",
+      "dataAvailableFrom",
+      "furtherUses",
+      "auxiliaryData"
+    ]);
+    expect(xml).toContain("<auxiliaryData>Registerdaten</auxiliaryData>");
+    expect(xml).toContain("<auxiliaryData>Ausgabenspezifische Zusatzdaten</auxiliaryData>");
+    expect(xml).not.toContain("<accessLevel>open</accessLevel>");
+  });
+
+  it("rejects fields that are not part of the current model", () => {
+    expect(() => parseXtfTransfer(exampleTransfer.replace("<issueLabel>2025</issueLabel>", "<issueLabel>2025</issueLabel><accessLevel>open</accessLevel>"))).toThrow(
+      "nicht modellierte Feld \"accessLevel\""
+    );
+    expect(() => parseXtfTransfer(exampleTransfer.replace("<title>Wasserqualität Grundwasser Kanton Solothurn</title>", "<title>Wasserqualität Grundwasser Kanton Solothurn</title><remarks>veraltet</remarks>"))).toThrow(
+      "nicht modellierte Feld \"remarks\""
+    );
+    expect(() =>
+      parseXtfTransfer(
+        exampleTransfer.replace(
+          "<modified>2025-05-19</modified>",
+          "<modified>2025-05-19</modified><temporalCoverage><base:TemporalCoverage><base:referenceDate>2025-05-19</base:referenceDate></base:TemporalCoverage></temporalCoverage>"
+        )
+      )
+    ).toThrow('nicht modellierte Feld "TemporalCoverage"');
+    expect(() =>
+      parseXtfTransfer(
+        exampleTransfer.replace(
+          "</ili:models>",
+          "<ili:model>SO_AGI_DataCatalog_Datasheet_20240101</ili:model></ili:models>"
+        )
+      )
+    ).toThrow("nicht die aktuellen Datenkatalog-Modelle");
   });
 });

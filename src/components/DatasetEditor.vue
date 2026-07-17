@@ -11,7 +11,7 @@ import { useDatasetStore } from "../stores/datasetStore";
 import { validateEditableRoot } from "../domain/validation";
 
 const props = defineProps<{
-  tab: "main" | "attributes" | "issues" | "xtf";
+  tab: "main" | "issues" | "xtf";
 }>();
 
 const route = useRoute();
@@ -62,11 +62,6 @@ watch(
       return;
     }
 
-    if (tab === "attributes") {
-      void router.replace(`/draft/${draft.id}`);
-      return;
-    }
-
     if (tab !== "issues") {
       return;
     }
@@ -110,8 +105,16 @@ function openSeriesIssue(issueId: string): void {
       </section>
 
       <template v-if="currentDatasetRoot">
-        <DatasetForm v-if="tab === 'main'" :dataset="currentDatasetRoot.dataset" />
-        <AttributeTable v-else-if="tab === 'attributes'" :attributes="currentDatasetRoot.dataset.attributes ?? []" />
+        <div v-if="tab === 'main'" class="section-stack">
+          <DatasetForm :dataset="currentDatasetRoot.dataset" />
+          <AttributeTable
+            :attributes="currentDatasetRoot.dataset.attributes ?? (currentDatasetRoot.dataset.attributes = [])"
+            title="Datensatzattribute"
+            description="Attribute, die zu diesem Datensatz gehören."
+            empty-title="Noch keine Datensatzattribute"
+            empty-message="Fügen Sie hier die Attribute dieses Datensatzes hinzu."
+          />
+        </div>
         <XtfPreview v-else :root="currentDatasetRoot" />
       </template>
 

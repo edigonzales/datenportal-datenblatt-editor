@@ -8,22 +8,24 @@
   color-scheme: light;
 
   /* Farben */
-  --dp-color-ink: #2D3E4F;
+  --dp-color-ink: #2F4858;
   --dp-color-text: #2F4858;
-  --dp-color-text-muted: #5A6773;
+  --dp-color-text-muted: #536779;
   --dp-color-text-soft: #7A848D;
   --dp-color-text-inverse: #FFFFFF;
 
   --dp-color-bg: #FFFFFF;
   --dp-color-surface: #FFFFFF;
-  --dp-color-surface-alt: #F3F1EE;
-  --dp-color-surface-subtle: #F7F5F1;
+  --dp-color-surface-alt: #F4F7F9;
+  --dp-color-surface-subtle: #F4F7F9;
+  --dp-color-badge: #EEF2F5;
+  --dp-color-badge-hover: #E1E8EF;
 
-  --dp-color-line: #E1DED9;
-  --dp-color-border: #D6D2CC;
-  --dp-color-border-strong: #BFB8AF;
+  --dp-color-line: #D9E0E6;
+  --dp-color-border: #D9E0E6;
+  --dp-color-border-strong: #C1CCD7;
 
-  --dp-color-accent: #D3121B;
+  --dp-color-accent: #D20A11;
   --dp-color-accent-hover: #B80F17;
   --dp-color-accent-soft: #FDEBEC;
 
@@ -44,7 +46,7 @@
   --dp-color-danger-border: #F0B8BD;
 
   /* Typografie */
-  --dp-font-sans: "Frutiger LT Com", Frutiger, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --dp-font-sans: Frutiger, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --dp-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 
   --dp-font-size-xs: 0.75rem;    /* 12px */
@@ -95,9 +97,9 @@
   /* Radius: bewusst dezent */
   --dp-radius-none: 0;
   --dp-radius-xs: 2px;
-  --dp-radius-sm: 3px;
-  --dp-radius-md: 5px;
-  --dp-radius-lg: 6px;
+  --dp-radius-sm: 4px;
+  --dp-radius-md: 4px;
+  --dp-radius-lg: 4px;
   --dp-radius-pill: 999px;
 
   /* Borders und Schatten */
@@ -107,7 +109,7 @@
   --dp-shadow-none: none;
 
   /* Fokus und Bewegung */
-  --dp-focus-ring-color: rgba(211, 18, 27, 0.35);
+  --dp-focus-ring-color: rgba(11, 95, 255, 0.35);
   --dp-focus-ring: 0 0 0 3px var(--dp-focus-ring-color);
   --dp-transition-fast: 120ms ease;
   --dp-transition-default: 180ms ease;

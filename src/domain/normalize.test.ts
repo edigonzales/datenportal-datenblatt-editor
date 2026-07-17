@@ -2,47 +2,20 @@ import { describe, expect, it } from "vitest";
 import {
   createEmptyDatasetRoot,
   createEmptyDatasetSeriesRoot,
-  enforceOpenAccessLevel,
   isDatasetRoot,
   isDatasetSeriesRoot,
   normalizeImportedJson
 } from "./normalize";
 
 describe("createEmptyDatasetRoot", () => {
-  it("prefills access level with open for datasets and series issues", () => {
+  it("prefills new datasets and series with open access", () => {
     const datasetRoot = createEmptyDatasetRoot();
     const seriesRoot = createEmptyDatasetSeriesRoot();
 
     expect(datasetRoot.dataset.accessLevel).toBe("open");
     expect(seriesRoot.series.accessLevel).toBe("open");
-    expect(seriesRoot.series.issues?.[0]?.accessLevel).toBe("open");
-  });
-});
-
-describe("enforceOpenAccessLevel", () => {
-  it("overwrites non-open values in datasets and series issues", () => {
-    const root = createEmptyDatasetSeriesRoot();
-    root.series.accessLevel = "restricted";
-    root.series.issues = [
-      {
-        ...root.series.issues![0],
-        accessLevel: "internal"
-      }
-    ];
-
-    enforceOpenAccessLevel(root);
-
-    expect(root.series.accessLevel).toBe("open");
-    expect(root.series.issues?.[0]?.accessLevel).toBe("open");
-  });
-
-  it("fills empty dataset access levels with open", () => {
-    const root = createEmptyDatasetRoot();
-    root.dataset.accessLevel = "";
-
-    enforceOpenAccessLevel(root);
-
-    expect(root.dataset.accessLevel).toBe("open");
+    expect(seriesRoot.series.auxiliaryData).toBe("");
+    expect(seriesRoot.series.issues?.[0]?.auxiliaryData).toBe("");
   });
 });
 
@@ -142,13 +115,34 @@ describe("normalizeImportedJson", () => {
 
     expect(issue?.identifier).toBe("ch.foo_2026");
     expect(issue?.title).toBe("Ch Foo 2026");
-    expect(issue?.accessLevel).toBe("open");
     expect(issue?.publicationStatus).toBe("published");
     expect(issue?.model).toBe("SO_AGI_DataModel");
-    expect(issue?.__localIssueState?.inheritedGroups?.accessLevel).toBe(true);
     expect(issue?.__localIssueState?.inheritedGroups?.model).toBe(true);
     expect(issue?.__localIssueState?.autoIdentifier).toBe(true);
     expect(issue?.__localIssueState?.autoTitle).toBe(true);
+  });
+
+  it("rejects fields removed from the model", () => {
+    expect(() =>
+      normalizeImportedJson({
+        type: "DatasetSeries",
+        series: {
+          identifier: "ch.foo",
+          auxiliaryData: "Grundlage",
+          remarks: "veraltet"
+        }
+      })
+    ).toThrow('Feld "remarks"');
+
+    expect(() =>
+      normalizeImportedJson({
+        type: "DatasetSeries",
+        series: {
+          identifier: "ch.foo",
+          issues: [{ issueLabel: "2026", accessLevel: "open" }]
+        }
+      })
+    ).toThrow('Feld "accessLevel"');
   });
 
   it("keeps an explicitly imported issue model as overridden", () => {

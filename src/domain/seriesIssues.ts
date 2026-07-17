@@ -10,7 +10,6 @@ import type {
 
 export const issueInheritedGroups = [
   "description",
-  "accessLevel",
   "publicationStatus",
   "accrualPeriodicity",
   "modified",
@@ -18,8 +17,7 @@ export const issueInheritedGroups = [
   "surveyMethod",
   "model",
   "dataAvailableFrom",
-  "furtherUses",
-  "remarks"
+  "furtherUses"
 ] as const satisfies readonly IssueInheritedGroup[];
 
 export function createLocalIssueState(partial: Partial<LocalIssueState> = {}): LocalIssueState {
@@ -28,19 +26,18 @@ export function createLocalIssueState(partial: Partial<LocalIssueState> = {}): L
     boolean
   >;
 
-  const state: LocalIssueState = {
+  for (const group of issueInheritedGroups) {
+    const value = partial.inheritedGroups?.[group];
+    if (typeof value === "boolean") {
+      inheritedGroups[group] = value;
+    }
+  }
+
+  return {
     inheritedGroups,
-    autoIdentifier: true,
-    autoTitle: true,
-    ...partial
+    autoIdentifier: partial.autoIdentifier !== false,
+    autoTitle: partial.autoTitle !== false
   };
-
-  state.inheritedGroups = {
-    ...inheritedGroups,
-    ...(partial.inheritedGroups ?? {})
-  };
-
-  return state;
 }
 
 export function deriveImportedIssueState(rawIssue: JsonObject): LocalIssueState {
@@ -49,7 +46,6 @@ export function deriveImportedIssueState(rawIssue: JsonObject): LocalIssueState 
     autoTitle: !hasOwn(rawIssue, "title"),
     inheritedGroups: {
       description: !hasOwn(rawIssue, "description"),
-      accessLevel: !hasOwn(rawIssue, "accessLevel"),
       publicationStatus: !hasOwn(rawIssue, "publicationStatus"),
       accrualPeriodicity: !hasOwn(rawIssue, "accrualPeriodicity"),
       modified: !hasOwn(rawIssue, "modified"),
@@ -57,8 +53,7 @@ export function deriveImportedIssueState(rawIssue: JsonObject): LocalIssueState 
       surveyMethod: !hasOwn(rawIssue, "surveyMethod"),
       model: !hasOwn(rawIssue, "model"),
       dataAvailableFrom: !hasOwn(rawIssue, "dataAvailableFrom"),
-      furtherUses: !hasOwn(rawIssue, "furtherUses"),
-      remarks: !hasOwn(rawIssue, "remarks")
+      furtherUses: !hasOwn(rawIssue, "furtherUses")
     }
   });
 }
@@ -161,7 +156,6 @@ function inferIssueStateFromCurrentValues(issue: DatasetIssue): LocalIssueState 
     autoTitle: !hasText(issue.title),
     inheritedGroups: {
       description: !hasText(issue.description),
-      accessLevel: !hasText(issue.accessLevel),
       publicationStatus: !hasText(issue.publicationStatus),
       accrualPeriodicity: !hasText(issue.accrualPeriodicity),
       modified: !hasText(issue.modified),
@@ -169,8 +163,7 @@ function inferIssueStateFromCurrentValues(issue: DatasetIssue): LocalIssueState 
       surveyMethod: !hasText(issue.surveyMethod),
       model: !hasText(issue.model),
       dataAvailableFrom: !hasText(issue.dataAvailableFrom),
-      furtherUses: !hasText(issue.furtherUses),
-      remarks: !hasText(issue.remarks)
+      furtherUses: !hasText(issue.furtherUses)
     }
   });
 }
@@ -179,9 +172,6 @@ function assignGroupFromSeries(target: DatasetIssue, series: DatasetSeries, grou
   switch (group) {
     case "description":
       target.description = series.description ?? "";
-      return;
-    case "accessLevel":
-      target.accessLevel = series.accessLevel ?? "";
       return;
     case "publicationStatus":
       target.publicationStatus = series.publicationStatus ?? "";
@@ -206,9 +196,6 @@ function assignGroupFromSeries(target: DatasetIssue, series: DatasetSeries, grou
       return;
     case "furtherUses":
       target.furtherUses = series.furtherUses ?? "";
-      return;
-    case "remarks":
-      target.remarks = series.remarks ?? "";
       return;
   }
 }

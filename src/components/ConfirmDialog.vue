@@ -17,8 +17,8 @@ const emit = defineEmits<{
     <div class="dialog dialog--narrow">
       <div class="dialog-header">
         <div>
-          <h2>{{ title }}</h2>
-          <p class="muted">{{ message }}</p>
+          <h3>{{ title }}</h3>
+          <p>{{ message }}</p>
         </div>
       </div>
       <div class="action-row">

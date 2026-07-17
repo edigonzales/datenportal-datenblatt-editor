@@ -6,7 +6,6 @@ import type {
   DatasetRootJson,
   DatasetSeries,
   DatasetSeriesRootJson,
-  DatasetSharedFields,
   DraftKind,
   EditableRootJson,
   ImportShape,
@@ -21,7 +20,7 @@ import {
 } from "./seriesIssues";
 
 export const DEFAULT_SCHEMA_VERSION = "2026-05-23";
-export const FIXED_ACCESS_LEVEL = "open";
+export const DEFAULT_ACCESS_LEVEL = "open";
 
 export class DatasetImportError extends Error {
   code: string;
@@ -126,6 +125,7 @@ export function normalizeImportedJson(
   }
 
   if ("series" in input) {
+    assertCurrentFields(input, ["type", "schemaVersion", "series"], "Root");
     if (input.type !== "DatasetSeries") {
       throw new DatasetImportError("invalid-root-type", "Das Root-Objekt muss den Typ \"DatasetSeries\" haben.");
     }
@@ -134,12 +134,11 @@ export function normalizeImportedJson(
       throw new DatasetImportError("missing-series", "Das Root-Objekt enthält keine gültige Datensatzserie.");
     }
 
-    const { schemaVersion, series, type, ...rest } = input;
+    const { schemaVersion, series } = input;
     return {
       draftKind: "series",
       importShape: "xtf",
       root: {
-        ...rest,
         type: "DatasetSeries",
         schemaVersion: typeof schemaVersion === "string" ? schemaVersion : DEFAULT_SCHEMA_VERSION,
         series: hydrateSeries(series)
@@ -148,6 +147,7 @@ export function normalizeImportedJson(
   }
 
   if ("dataset" in input) {
+    assertCurrentFields(input, ["type", "schemaVersion", "dataset"], "Root");
     if (input.type !== "Dataset") {
       throw new DatasetImportError("invalid-root-type", "Das Root-Objekt muss den Typ \"Dataset\" haben.");
     }
@@ -156,12 +156,11 @@ export function normalizeImportedJson(
       throw new DatasetImportError("missing-dataset", "Das Root-Objekt enthält kein gültiges Datenblatt.");
     }
 
-    const { dataset, schemaVersion, type, ...rest } = input;
+    const { dataset, schemaVersion } = input;
     return {
       draftKind: "dataset",
       importShape: "xtf",
       root: {
-        ...rest,
         type: "Dataset",
         schemaVersion: typeof schemaVersion === "string" ? schemaVersion : DEFAULT_SCHEMA_VERSION,
         dataset: hydrateDataset(dataset)
@@ -203,19 +202,6 @@ export function cloneRoot(root: EditableRootJson): EditableRootJson {
   return JSON.parse(JSON.stringify(root)) as EditableRootJson;
 }
 
-export function enforceOpenAccessLevel(root: EditableRootJson): EditableRootJson {
-  if (isDatasetSeriesRoot(root)) {
-    assignOpenAccessLevel(root.series);
-    for (const issue of root.series.issues ?? []) {
-      assignOpenAccessLevel(issue);
-    }
-    return root;
-  }
-
-  assignOpenAccessLevel(root.dataset);
-  return root;
-}
-
 export function toExportRoot(root: EditableRootJson): EditableRootJson {
   const cloned = cloneRoot(root);
 
@@ -236,7 +222,7 @@ function createEmptyDataset(): Dataset {
     identifier: "",
     title: "",
     description: "",
-    accessLevel: FIXED_ACCESS_LEVEL,
+    accessLevel: DEFAULT_ACCESS_LEVEL,
     publicationStatus: "",
     creatorRef: "",
     contactPoint: {
@@ -256,7 +242,7 @@ function createEmptyDataset(): Dataset {
     attributes: [],
     dataAvailableFrom: "",
     furtherUses: "",
-    remarks: ""
+    auxiliaryData: ""
   };
 }
 
@@ -267,10 +253,8 @@ function createEmptyDatasetIssueFields(): DatasetIssue {
     description: "",
     issueLabel: "",
     isCurrentIssue: false,
-    accessLevel: FIXED_ACCESS_LEVEL,
     publicationStatus: "",
     accrualPeriodicity: "",
-    issued: "",
     modified: "",
     temporalCoverage: {},
     surveyMethod: "",
@@ -278,79 +262,69 @@ function createEmptyDatasetIssueFields(): DatasetIssue {
     attributes: [],
     dataAvailableFrom: "",
     furtherUses: "",
-    auxiliaryData: "",
-    remarks: ""
+    auxiliaryData: ""
   };
 }
 
-function hydrateDataset(dataset: JsonObject): Dataset {
-  const base = createEmptyDataset();
-  const {
-    contactPoint,
-    themes,
-    keywords,
-    attributes,
-    temporalCoverage,
-    ...rest
-  } = dataset;
+function hydrateDataset(dataset: JsonObject, isSeries = false): Dataset {
+  assertCurrentFields(dataset, isSeries ? [...datasetFields, "issues"] : datasetFields, isSeries ? "DatasetSeries" : "Dataset");
 
   return {
-    ...base,
-    ...rest,
-    contactPoint: hydrateContactPoint(contactPoint),
-    themes: Array.isArray(themes) ? themes.filter(isString) : [],
-    keywords: Array.isArray(keywords) ? keywords.filter(isString) : [],
-    attributes: Array.isArray(attributes) ? attributes.filter(isObject).map(hydrateAttribute) : [],
-    temporalCoverage: hydrateTemporalCoverage(temporalCoverage)
+    identifier: textValue(dataset.identifier),
+    title: textValue(dataset.title),
+    description: textValue(dataset.description),
+    accessLevel: textValue(dataset.accessLevel),
+    publicationStatus: textValue(dataset.publicationStatus),
+    creatorRef: textValue(dataset.creatorRef),
+    contactPoint: hydrateContactPoint(dataset.contactPoint),
+    themes: Array.isArray(dataset.themes) ? dataset.themes.filter(isString) : [],
+    keywords: Array.isArray(dataset.keywords) ? dataset.keywords.filter(isString) : [],
+    accrualPeriodicity: textValue(dataset.accrualPeriodicity),
+    modified: textValue(dataset.modified),
+    temporalCoverage: hydrateTemporalCoverage(dataset.temporalCoverage),
+    surveyMethod: textValue(dataset.surveyMethod),
+    model: textValue(dataset.model),
+    attributes: Array.isArray(dataset.attributes) ? dataset.attributes.filter(isObject).map(hydrateAttribute) : [],
+    dataAvailableFrom: textValue(dataset.dataAvailableFrom),
+    furtherUses: textValue(dataset.furtherUses),
+    auxiliaryData: textValue(dataset.auxiliaryData)
   };
 }
 
 function hydrateSeries(series: JsonObject): DatasetSeries {
-  const base = createEmptyDataset();
-  const {
-    contactPoint,
-    themes,
-    keywords,
-    attributes,
-    temporalCoverage,
-    issues,
-    ...rest
-  } = series;
-
   const hydratedSeries: DatasetSeries = {
-    ...base,
-    ...rest,
-    contactPoint: hydrateContactPoint(contactPoint),
-    themes: Array.isArray(themes) ? themes.filter(isString) : [],
-    keywords: Array.isArray(keywords) ? keywords.filter(isString) : [],
-    attributes: Array.isArray(attributes) ? attributes.filter(isObject).map(hydrateAttribute) : [],
-    temporalCoverage: hydrateTemporalCoverage(temporalCoverage),
+    ...hydrateDataset(series, true),
     issues: []
   };
 
-  hydratedSeries.issues = Array.isArray(issues) ? issues.filter(isObject).map((entry) => hydrateIssue(entry, hydratedSeries)) : [];
+  hydratedSeries.issues = Array.isArray(series.issues)
+    ? series.issues.filter(isObject).map((entry) => hydrateIssue(entry, hydratedSeries))
+    : [];
 
   return hydratedSeries;
 }
 
 function hydrateIssue(issue: JsonObject, series?: DatasetSeries): DatasetIssue {
-  const base = createEmptyDatasetIssueFields();
-  const {
-    attributes,
-    temporalCoverage,
-    __localIssueState,
-    ...rest
-  } = issue;
+  assertCurrentFields(issue, issueFields, "DatasetIssue");
 
   const hydratedIssue: DatasetIssue = {
-    ...base,
-    ...rest,
+    identifier: textValue(issue.identifier),
+    title: textValue(issue.title),
+    description: textValue(issue.description),
+    publicationStatus: textValue(issue.publicationStatus),
+    accrualPeriodicity: textValue(issue.accrualPeriodicity),
+    modified: textValue(issue.modified),
+    temporalCoverage: hydrateTemporalCoverage(issue.temporalCoverage),
+    surveyMethod: textValue(issue.surveyMethod),
+    model: textValue(issue.model),
+    attributes: Array.isArray(issue.attributes) ? issue.attributes.filter(isObject).map(hydrateAttribute) : [],
+    dataAvailableFrom: textValue(issue.dataAvailableFrom),
+    furtherUses: textValue(issue.furtherUses),
+    auxiliaryData: textValue(issue.auxiliaryData),
+    issueLabel: textValue(issue.issueLabel),
+    isCurrentIssue: issue.isCurrentIssue === true,
     __localIssueId: typeof issue.__localIssueId === "string" ? issue.__localIssueId : crypto.randomUUID(),
-    __localIssueState: hydrateLocalIssueState(__localIssueState, issue),
-    attributes: Array.isArray(attributes) ? attributes.filter(isObject).map(hydrateAttribute) : [],
-    temporalCoverage: hasOwn(issue, "temporalCoverage")
-      ? hydrateTemporalCoverage(temporalCoverage)
-      : base.temporalCoverage
+    __localIssueState: hydrateLocalIssueState(issue.__localIssueState, issue)
   };
 
   if (series) {
@@ -361,8 +335,14 @@ function hydrateIssue(issue: JsonObject, series?: DatasetSeries): DatasetIssue {
 }
 
 function hydrateContactPoint(value: unknown): ContactPoint {
-  const base = createEmptyDataset().contactPoint ?? {};
-  return isObject(value) ? { ...base, ...value } : base;
+  const contactPoint = isObject(value) ? value : {};
+  return {
+    name: textValue(contactPoint.name),
+    organizationUnit: textValue(contactPoint.organizationUnit),
+    email: textValue(contactPoint.email),
+    phone: textValue(contactPoint.phone),
+    url: textValue(contactPoint.url)
+  };
 }
 
 function hydrateAttribute(value: JsonObject): DatasetAttribute {
@@ -372,13 +352,17 @@ function hydrateAttribute(value: JsonObject): DatasetAttribute {
     description: typeof value.description === "string" ? value.description : "",
     unit: typeof value.unit === "string" ? value.unit : "",
     codeList: typeof value.codeList === "string" ? value.codeList : "",
-    mandatory: typeof value.mandatory === "boolean" ? value.mandatory : false,
-    ...value
+    mandatory: typeof value.mandatory === "boolean" ? value.mandatory : false
   };
 }
 
 function hydrateTemporalCoverage(value: unknown): TemporalCoverage {
-  return isObject(value) ? { ...value } : {};
+  const coverage = isObject(value) ? value : {};
+  return {
+    startDate: textValue(coverage.startDate),
+    endDate: textValue(coverage.endDate),
+    referenceDate: textValue(coverage.referenceDate)
+  };
 }
 
 function hydrateLocalIssueState(value: unknown, source: JsonObject): LocalIssueState {
@@ -389,10 +373,57 @@ function isString(value: unknown): value is string {
   return typeof value === "string";
 }
 
-function hasOwn(value: JsonObject, key: string): boolean {
-  return Object.prototype.hasOwnProperty.call(value, key);
+function textValue(value: unknown): string {
+  return typeof value === "string" ? value : "";
 }
 
-function assignOpenAccessLevel(entry: DatasetSharedFields): void {
-  entry.accessLevel = FIXED_ACCESS_LEVEL;
+const datasetFields = [
+  "identifier",
+  "title",
+  "description",
+  "accessLevel",
+  "publicationStatus",
+  "creatorRef",
+  "contactPoint",
+  "themes",
+  "keywords",
+  "accrualPeriodicity",
+  "modified",
+  "temporalCoverage",
+  "surveyMethod",
+  "attributes",
+  "model",
+  "dataAvailableFrom",
+  "furtherUses",
+  "auxiliaryData"
+];
+
+const issueFields = [
+  "identifier",
+  "title",
+  "description",
+  "issueLabel",
+  "isCurrentIssue",
+  "publicationStatus",
+  "accrualPeriodicity",
+  "modified",
+  "temporalCoverage",
+  "surveyMethod",
+  "attributes",
+  "model",
+  "dataAvailableFrom",
+  "furtherUses",
+  "auxiliaryData",
+  "__localIssueId",
+  "__localIssueState"
+];
+
+function assertCurrentFields(value: JsonObject, allowedFields: string[], context: string): void {
+  const unsupportedField = Object.keys(value).find((field) => !allowedFields.includes(field));
+  if (unsupportedField) {
+    throw new DatasetImportError(
+      "unsupported-field",
+      `Das Feld "${unsupportedField}" in ${context} gehört nicht zum aktuellen Datenmodell.`
+    );
+  }
 }

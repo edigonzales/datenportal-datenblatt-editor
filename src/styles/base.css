@@ -1,14 +1,14 @@
 @font-face {
-  font-family: "Frutiger LT Com";
-  src: url("/fonts/FrutigerLTCom-Roman.woff2") format("woff2");
+  font-family: "Frutiger";
+  src: url("/fonts/FrutigerLTW05-55Roman.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Frutiger LT Com";
-  src: url("/fonts/FrutigerLTCom-Black.woff2") format("woff2");
+  font-family: "Frutiger";
+  src: url("/fonts/FrutigerLTW05-75Black.woff2") format("woff2");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -31,8 +31,38 @@ body {
   font-family: var(--dp-font-sans);
   color: var(--dp-color-text);
   background: var(--dp-color-bg);
-  font-size: var(--dp-font-size-lg);
+  font-size: var(--dp-font-size-md);
   line-height: var(--dp-line-height-normal);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  color: var(--dp-color-ink);
+  font-weight: var(--dp-font-weight-bold);
+  line-height: var(--dp-line-height-tight);
+}
+
+h1 {
+  font-size: var(--dp-font-size-3xl);
+}
+
+h2 {
+  font-size: var(--dp-font-size-2xl);
+}
+
+h3 {
+  font-size: var(--dp-font-size-xl);
+}
+
+h4,
+h5,
+h6 {
+  font-size: var(--dp-font-size-md);
 }
 
 button,

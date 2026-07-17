@@ -12,11 +12,6 @@ const props = defineProps<{
 }>();
 
 const isSeries = computed(() => props.mode === "series");
-const readOnlyAccessLevelOption =
-  accessLevelOptions.find((option) => option.value === "open") ?? {
-    value: "open",
-    label: "Öffentlich, frei zugänglich"
-  };
 
 const officeCatalogLoading = ref(false);
 const officeCatalogError = ref("");
@@ -94,9 +89,9 @@ onMounted(async () => {
         <div class="inline-grid">
           <div class="field-row">
             <label for="access-level">Zugänglichkeit *</label>
-            <select id="access-level" v-model="dataset.accessLevel" class="select" disabled aria-readonly="true">
-              <option :value="readOnlyAccessLevelOption.value">
-                {{ readOnlyAccessLevelOption.label }}
+            <select id="access-level" v-model="dataset.accessLevel" class="select">
+              <option v-for="option in accessLevelOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
               </option>
             </select>
           </div>

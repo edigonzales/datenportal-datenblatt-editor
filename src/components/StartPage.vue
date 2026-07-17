@@ -155,7 +155,7 @@ function scrollToDrafts(): void {
       </article>
     </section>
 
-    <section id="drafts">
+    <section id="drafts" class="drafts-section">
       <LocalDraftList
         :drafts="drafts"
         :exportable-ids="exportableDraftIds"

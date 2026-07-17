@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    @font-face {
+      font-family: "Frutiger LT Com";
+      src: url("file:///Users/stefan/sources/datenblatt-editor/public/fonts/FrutigerLTCom-Roman.woff2") format("woff2");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Frutiger LT Com";
+      src: url("file:///Users/stefan/sources/datenblatt-editor/public/fonts/FrutigerLTCom-Black.woff2") format("woff2");
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Frutiger LT Com", Frutiger, system-ui, sans-serif;
+      background: #efede9;
+      color: #2d3e4f;
+    }
+    .board {
+      width: 1820px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 56px;
+      letter-spacing: -0.01em;
+    }
+    .sub {
+      margin: 0 0 20px;
+      color: #5f6a75;
+      font-size: 24px;
+    }
+    .stack { display: grid; gap: 14px; }
+    .card {
+      border: 1px solid #cbc3b9;
+      border-radius: 12px;
+      background: white;
+      overflow: hidden;
+    }
+    .card h2 {
+      margin: 0;
+      font-size: 32px;
+      padding: 10px 12px;
+      border-bottom: 1px solid #e3ddd5;
+      background: #f8f6f3;
+    }
+    .card img {
+      width: 100%;
+      display: block;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <main class="board">
+    <h1>Form-Mockups A/B/C</h1>
+    <p class="sub">Direktvergleich der drei Richtungen bei identischem Feldumfang und identischen States.</p>
+    <section class="stack">
+      <article class="card"><h2>Variante A · Precision</h2><img src="./a-precision.png" alt="A" /></article>
+      <article class="card"><h2>Variante B · Layered</h2><img src="./b-layered.png" alt="B" /></article>
+      <article class="card"><h2>Variante C · Structured</h2><img src="./c-structured.png" alt="C" /></article>
+    </section>
+  </main>
+</body>
+</html>

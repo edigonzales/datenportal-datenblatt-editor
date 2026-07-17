@@ -83,6 +83,26 @@ describe("validateDataset", () => {
 
     expect(result.issues.some((entry) => entry.path === "$.dataset.contactPoint.url")).toBe(false);
   });
+
+  it("validates model vocabularies and mandatory attribute data types", () => {
+    const root = createEmptyDatasetRoot();
+    root.dataset.identifier = "so.afu.test";
+    root.dataset.title = "Test";
+    root.dataset.description = "Beschreibung";
+    root.dataset.accessLevel = "not-a-model-value";
+    root.dataset.publicationStatus = "published";
+    root.dataset.creatorRef = "creator";
+    root.dataset.contactPoint!.email = "mailto:mail@example.org";
+    root.dataset.themes = ["not-a-theme"];
+    root.dataset.modified = "2026-05-01";
+    root.dataset.attributes = [{ name: "wert", dataType: "", mandatory: false }];
+
+    const result = validateDataset(root);
+
+    expect(result.issues.some((entry) => entry.code === "invalid-code" && entry.path === "$.dataset.accessLevel")).toBe(true);
+    expect(result.issues.some((entry) => entry.code === "invalid-code" && entry.path === "$.dataset.themes[0]")).toBe(true);
+    expect(result.issues.some((entry) => entry.code === "attribute-data-type")).toBe(true);
+  });
 });
 
 describe("validateDatasetSeries", () => {
@@ -106,8 +126,7 @@ describe("validateDatasetSeries", () => {
         description: "Beschreibung",
         issueLabel: "2026",
         isCurrentIssue: false,
-        issued: "2026-05-12",
-        modified: "2026-05-01",
+        modified: "not-a-date",
         temporalCoverage: {},
         attributes: []
       }
@@ -117,7 +136,7 @@ describe("validateDatasetSeries", () => {
 
     expect(result.groups?.find((entry) => entry.scope === "series")?.issues.some((entry) => entry.code === "series-current-issue")).toBe(true);
     expect(result.groups?.find((entry) => entry.issueId === "issue-a")?.issues.some((entry) => entry.code === "identifier-whitespace")).toBe(true);
-    expect(result.groups?.find((entry) => entry.issueId === "issue-a")?.issues.some((entry) => entry.code === "date-order")).toBe(true);
+    expect(result.groups?.find((entry) => entry.issueId === "issue-a")?.issues.some((entry) => entry.code === "date-format")).toBe(true);
   });
 
   it("accepts inherited issue defaults without duplicating series-level required errors", () => {

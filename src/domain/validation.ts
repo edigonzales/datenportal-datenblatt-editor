@@ -22,6 +22,12 @@ import {
   isObject
 } from "./normalize";
 import { createEffectiveIssue, isIssueGroupInherited } from "./seriesIssues";
+import {
+  accessLevelOptions,
+  accrualPeriodicityOptions,
+  publicationStatusOptions,
+  themeOptions
+} from "../config/vocabularies";
 
 const ajv = new Ajv({ allErrors: true, allowUnionTypes: true });
 addFormats(ajv);
@@ -81,6 +87,10 @@ const validateDatasetSeriesRootSchema = ajv.compile(datasetSeriesRootSchema);
 const validateNakedDatasetSeriesSchema = ajv.compile(nakedDatasetSeriesSchema);
 
 const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/;
+const accessLevelValues = new Set(accessLevelOptions.map((option) => option.value).filter(Boolean));
+const accrualPeriodicityValues = new Set(accrualPeriodicityOptions.map((option) => option.value).filter(Boolean));
+const publicationStatusValues = new Set(publicationStatusOptions.map((option) => option.value).filter(Boolean));
+const themeValues = new Set(themeOptions.map((option) => option.value));
 
 export function validateImportedStructure(input: unknown): ValidationIssue[] {
   if (!isObject(input)) {
@@ -235,11 +245,19 @@ function validateDatasetMetadata(issues: ValidationIssue[], dataset: Dataset, pr
   pushRequired(issues, dataset.title, `${prefix}.title`, "Titel ist ein Pflichtfeld.");
   pushRequired(issues, dataset.description, `${prefix}.description`, "Beschreibung ist ein Pflichtfeld.");
   pushRequired(issues, dataset.accessLevel, `${prefix}.accessLevel`, "AccessLevel ist ein Pflichtfeld.");
+  validateEnumField(issues, dataset.accessLevel, accessLevelValues, `${prefix}.accessLevel`, "AccessLevel");
   pushRequired(
     issues,
     dataset.publicationStatus,
     `${prefix}.publicationStatus`,
     "PublicationStatus ist ein Pflichtfeld."
+  );
+  validateEnumField(
+    issues,
+    dataset.publicationStatus,
+    publicationStatusValues,
+    `${prefix}.publicationStatus`,
+    "PublicationStatus"
   );
   pushRequired(issues, dataset.creatorRef, `${prefix}.creatorRef`, "Datenherr ist ein Pflichtfeld.");
   pushRequired(
@@ -250,8 +268,19 @@ function validateDatasetMetadata(issues: ValidationIssue[], dataset: Dataset, pr
   );
   if (!dataset.themes?.length) {
     issues.push(issue("error", "required", `${prefix}.themes`, "Mindestens ein Thema ist ein Pflichtfeld."));
+  } else {
+    for (const [index, theme] of dataset.themes.entries()) {
+      validateEnumField(issues, theme, themeValues, `${prefix}.themes[${index}]`, "Thema");
+    }
   }
   pushRequired(issues, dataset.modified, `${prefix}.modified`, "Modified ist ein Pflichtfeld.");
+  validateEnumField(
+    issues,
+    dataset.accrualPeriodicity,
+    accrualPeriodicityValues,
+    `${prefix}.accrualPeriodicity`,
+    "Nachführung"
+  );
 
   validateDatasetCommonFields(issues, dataset, prefix);
   validateUriField(issues, dataset.contactPoint?.email, `${prefix}.contactPoint.email`, "Kontakt-E-Mail");
@@ -273,20 +302,26 @@ function validateIssueMetadata(
   pushIssueRequired(
     issues,
     datasetIssue,
-    "accessLevel",
-    effectiveIssue.accessLevel,
-    `${prefix}.accessLevel`,
-    "AccessLevel ist ein Pflichtfeld."
-  );
-  pushIssueRequired(
-    issues,
-    datasetIssue,
     "publicationStatus",
     effectiveIssue.publicationStatus,
     `${prefix}.publicationStatus`,
     "PublicationStatus ist ein Pflichtfeld."
   );
   pushRequired(issues, datasetIssue.issueLabel, `${prefix}.issueLabel`, "IssueLabel ist ein Pflichtfeld.");
+  validateEnumField(
+    issues,
+    effectiveIssue.publicationStatus,
+    publicationStatusValues,
+    `${prefix}.publicationStatus`,
+    "PublicationStatus"
+  );
+  validateEnumField(
+    issues,
+    effectiveIssue.accrualPeriodicity,
+    accrualPeriodicityValues,
+    `${prefix}.accrualPeriodicity`,
+    "Nachführung"
+  );
   validateIssueSharedFields(issues, datasetIssue, effectiveIssue, prefix);
 }
 
@@ -331,24 +366,12 @@ function validateIssueSharedFields(
   }
 
   validateDescriptionLength(issues, effectiveIssue.description, `${prefix}.description`);
-  validateDateField(issues, toStringValue(effectiveIssue.issued), `${prefix}.issued`, "Issued");
   if (!isIssueGroupInherited(datasetIssue, "modified")) {
     validateDateField(issues, toStringValue(effectiveIssue.modified), `${prefix}.modified`, "Modified");
   }
 
   if (!isIssueGroupInherited(datasetIssue, "temporalCoverage")) {
     validateTemporalCoverage(issues, effectiveIssue.temporalCoverage, `${prefix}.temporalCoverage`);
-  }
-
-  if (
-    effectiveIssue.issued &&
-    effectiveIssue.modified &&
-    isIsoDate(effectiveIssue.issued ?? "") &&
-    isIsoDate(effectiveIssue.modified ?? "")
-  ) {
-    if ((effectiveIssue.modified ?? "") < (effectiveIssue.issued ?? "")) {
-      issues.push(issue("error", "date-order", `${prefix}.modified`, "Modified darf nicht vor Issued liegen."));
-    }
   }
 
   validateAttributeIssues(issues, effectiveIssue.attributes ?? [], `${prefix}.attributes`);
@@ -365,6 +388,18 @@ function validateAttributeIssues(issues: ValidationIssue[], attributes: DatasetA
         issue("error", "attribute-name", `${prefix}[${index}].name`, "Jedes Attribut benötigt einen Namen.")
       );
       continue;
+    }
+
+    if (!attribute.dataType?.trim()) {
+      issues.push(
+        issue("error", "attribute-data-type", `${prefix}[${index}].dataType`, "Jedes Attribut benötigt einen Datentyp.")
+      );
+    }
+
+    if (typeof attribute.mandatory !== "boolean") {
+      issues.push(
+        issue("error", "attribute-mandatory", `${prefix}[${index}].mandatory`, "Jedes Attribut benötigt eine Pflichtangabe.")
+      );
     }
 
     const normalizedName = name.toLocaleLowerCase("de-CH");
@@ -473,7 +508,7 @@ function pushRequired(issues: ValidationIssue[], value: string | undefined, path
 function pushIssueRequired(
   issues: ValidationIssue[],
   datasetIssue: DatasetIssue,
-  group: "description" | "accessLevel" | "publicationStatus",
+  group: "description" | "publicationStatus",
   value: string | undefined,
   path: string,
   message: string
@@ -483,6 +518,18 @@ function pushIssueRequired(
   }
 
   pushRequired(issues, value, path, message);
+}
+
+function validateEnumField(
+  issues: ValidationIssue[],
+  value: string | undefined,
+  allowedValues: Set<string>,
+  path: string,
+  label: string
+): void {
+  if (value?.trim() && !allowedValues.has(value)) {
+    issues.push(issue("error", "invalid-code", path, `${label} enthält einen nicht erlaubten Wert.`));
+  }
 }
 
 function validateDescriptionLength(issues: ValidationIssue[], description: string | undefined, path: string): void {

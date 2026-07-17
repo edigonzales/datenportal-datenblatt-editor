@@ -116,7 +116,6 @@ const seriesDefaultsSignature = computed(() =>
     identifier: props.series.identifier ?? "",
     title: props.series.title ?? "",
     description: props.series.description ?? "",
-    accessLevel: props.series.accessLevel ?? "",
     publicationStatus: props.series.publicationStatus ?? "",
     accrualPeriodicity: props.series.accrualPeriodicity ?? "",
     modified: props.series.modified ?? "",
@@ -125,7 +124,7 @@ const seriesDefaultsSignature = computed(() =>
     model: props.series.model ?? "",
     dataAvailableFrom: props.series.dataAvailableFrom ?? "",
     furtherUses: props.series.furtherUses ?? "",
-    remarks: props.series.remarks ?? ""
+    auxiliaryData: props.series.auxiliaryData ?? ""
   })
 );
 

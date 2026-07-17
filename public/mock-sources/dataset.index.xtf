@@ -15,7 +15,6 @@
         <description>Messdaten der Grundwasserqualitätsuntersuchungen im Kanton Solothurn.</description>
         <accessLevel>open</accessLevel>
         <publicationStatus>published</publicationStatus>
-        <publisherRef>ch.so.agi</publisherRef>
         <creatorRef>ch.so.afu</creatorRef>
         <contactPoint>
           <base:ContactPoint>
@@ -30,10 +29,10 @@
         <accrualPeriodicity>annually</accrualPeriodicity>
         <modified>2025-05-19</modified>
         <temporalCoverage>
-          <base:TemporalCoverage>
+          <ClosedTemporalCoverage>
             <base:startDate>2024-01-01</base:startDate>
             <base:endDate>2024-12-31</base:endDate>
-          </base:TemporalCoverage>
+          </ClosedTemporalCoverage>
         </temporalCoverage>
         <surveyMethod>Vor-Ort und Laboranalyse.</surveyMethod>
         <attributes>
@@ -45,7 +44,7 @@
         </attributes>
         <dataAvailableFrom>ab 1998</dataAvailableFrom>
         <furtherUses>Monitoring und Gewässerschutz.</furtherUses>
-        <remarks>Beispiel-Dataset für den Editor.</remarks>
+        <auxiliaryData>Laborproben und Messstellenverzeichnis</auxiliaryData>
       </Dataset>
       <DatasetSeries ili:tid="ch.so.bevoelkerung.altersstruktur">
         <identifier>ch.so.bevoelkerung.altersstruktur</identifier>
@@ -53,7 +52,6 @@
         <description>Altersstruktur der Wohnbevölkerung im Kanton Solothurn.</description>
         <accessLevel>open</accessLevel>
         <publicationStatus>published</publicationStatus>
-        <publisherRef>ch.so.agi</publisherRef>
         <creatorRef>ch.so.afin</creatorRef>
         <contactPoint>
           <base:ContactPoint>
@@ -68,9 +66,9 @@
         <accrualPeriodicity>annually</accrualPeriodicity>
         <modified>2025-12-31</modified>
         <temporalCoverage>
-          <base:TemporalCoverage>
+          <ClosedTemporalCoverage>
             <base:referenceDate>2025-12-31</base:referenceDate>
-          </base:TemporalCoverage>
+          </ClosedTemporalCoverage>
         </temporalCoverage>
         <surveyMethod>Quelle: Einwohnerregister Kanton Solothurn.</surveyMethod>
         <attributes>
@@ -84,7 +82,7 @@
         </attributes>
         <dataAvailableFrom>2025</dataAvailableFrom>
         <furtherUses>Planungsgrundlage und Statistik.</furtherUses>
-        <remarks>Beispiel-Serie für den Editor.</remarks>
+        <auxiliaryData>Einwohnerregister als fachliche Grundlage</auxiliaryData>
         <issues>
           <DatasetIssue>
             <identifier>ch.so.bevoelkerung.altersstruktur_2025</identifier>
@@ -92,20 +90,17 @@
             <description>Ausgabe 2025 der DatasetSeries.</description>
             <issueLabel>2025</issueLabel>
             <isCurrentIssue>true</isCurrentIssue>
-            <accessLevel>open</accessLevel>
             <publicationStatus>published</publicationStatus>
             <accrualPeriodicity>annually</accrualPeriodicity>
-            <issued>2026-01-01</issued>
             <modified>2025-12-31</modified>
             <temporalCoverage>
-              <base:TemporalCoverage>
+              <ClosedTemporalCoverage>
                 <base:referenceDate>2025-12-31</base:referenceDate>
-              </base:TemporalCoverage>
+              </ClosedTemporalCoverage>
             </temporalCoverage>
             <surveyMethod>Quelle: Einwohnerregister Kanton Solothurn.</surveyMethod>
             <dataAvailableFrom>1920</dataAvailableFrom>
             <auxiliaryData>Einwohnerregister Kanton Solothurn</auxiliaryData>
-            <remarks>Issue 2025.</remarks>
           </DatasetIssue>
         </issues>
       </DatasetSeries>

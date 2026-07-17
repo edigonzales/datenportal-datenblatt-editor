@@ -87,7 +87,8 @@ describe("DatasetForm", () => {
     expect(dataset.model).toBe("SO_AGI_DataCatalog_Base_20260529");
   });
 
-  it("renders access level as open and disabled", () => {
+  it("renders access level as an editable model field", async () => {
+    const user = userEvent.setup();
     const dataset = createEmptyDatasetRoot().dataset;
 
     render(DatasetForm, {
@@ -99,7 +100,10 @@ describe("DatasetForm", () => {
     const accessLevelSelect = screen.getByLabelText("Zugänglichkeit *");
 
     expect(accessLevelSelect).toHaveValue("open");
-    expect(accessLevelSelect).toBeDisabled();
+    expect(accessLevelSelect).not.toBeDisabled();
+
+    await user.selectOptions(accessLevelSelect, "restricted");
+    expect(dataset.accessLevel).toBe("restricted");
   });
 
   it("renders the data owner select and stores the selected identifier", async () => {

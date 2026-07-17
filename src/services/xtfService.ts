@@ -12,15 +12,20 @@ export function parseXtfTransfer(text: string): EditableRootJson[] {
     throw new Error("Die Datei enthält keinen gültigen XTF-Transfer.");
   }
 
+  assertTransferModels(transfer);
+
   const dataSection = firstChildElement(transfer, "datasection");
   const metadataBasket = dataSection ? firstChildElement(dataSection, "Metadata") : null;
   if (!metadataBasket) {
     throw new Error("Der XTF-Transfer enthält keinen Metadata-Basket.");
   }
 
+  assertNamespace(metadataBasket, DATASHEET_NS, "Metadata-Basket");
+  assertAllowedChildren(metadataBasket, ["Dataset", "DatasetSeries"], "Metadata-Basket");
+
   const records = childElements(metadataBasket)
-    .filter((element) => element.localName === "Dataset" || element.localName === "DatasetSeries")
     .map((element) => {
+      assertNamespace(element, DATASHEET_NS, element.localName);
       if (element.localName === "DatasetSeries") {
         return normalizeImportedJson({
           type: "DatasetSeries",
@@ -141,19 +146,16 @@ function buildIssueNode(document: XMLDocument, issue: DatasetIssue): Element {
   appendOptionalTextElement(document, element, DATASHEET_NS, "description", issue.description);
   appendTextElement(document, element, DATASHEET_NS, "issueLabel", issue.issueLabel);
   appendBooleanElement(document, element, DATASHEET_NS, "isCurrentIssue", issue.isCurrentIssue);
-  appendTextElement(document, element, DATASHEET_NS, "accessLevel", issue.accessLevel);
   appendTextElement(document, element, DATASHEET_NS, "publicationStatus", issue.publicationStatus);
   appendOptionalTextElement(document, element, DATASHEET_NS, "accrualPeriodicity", issue.accrualPeriodicity);
-  appendOptionalTextElement(document, element, DATASHEET_NS, "issued", issue.issued);
   appendOptionalTextElement(document, element, DATASHEET_NS, "modified", issue.modified);
   appendTemporalCoverage(document, element, issue.temporalCoverage);
   appendOptionalTextElement(document, element, DATASHEET_NS, "surveyMethod", issue.surveyMethod);
-  appendOptionalTextElement(document, element, DATASHEET_NS, "model", issue.model);
   appendAttributes(document, element, issue.attributes);
+  appendOptionalTextElement(document, element, DATASHEET_NS, "model", issue.model);
   appendOptionalTextElement(document, element, DATASHEET_NS, "dataAvailableFrom", issue.dataAvailableFrom);
   appendOptionalTextElement(document, element, DATASHEET_NS, "furtherUses", issue.furtherUses);
   appendOptionalTextElement(document, element, DATASHEET_NS, "auxiliaryData", issue.auxiliaryData);
-  appendOptionalTextElement(document, element, DATASHEET_NS, "remarks", issue.remarks);
   return element;
 }
 
@@ -175,11 +177,11 @@ function appendDatasetFields(document: XMLDocument, element: Element, dataset: D
   appendTextElement(document, element, DATASHEET_NS, "modified", dataset.modified);
   appendTemporalCoverage(document, element, dataset.temporalCoverage);
   appendOptionalTextElement(document, element, DATASHEET_NS, "surveyMethod", dataset.surveyMethod);
-  appendOptionalTextElement(document, element, DATASHEET_NS, "model", dataset.model);
   appendAttributes(document, element, dataset.attributes);
+  appendOptionalTextElement(document, element, DATASHEET_NS, "model", dataset.model);
   appendOptionalTextElement(document, element, DATASHEET_NS, "dataAvailableFrom", dataset.dataAvailableFrom);
   appendOptionalTextElement(document, element, DATASHEET_NS, "furtherUses", dataset.furtherUses);
-  appendOptionalTextElement(document, element, DATASHEET_NS, "remarks", dataset.remarks);
+  appendOptionalTextElement(document, element, DATASHEET_NS, "auxiliaryData", dataset.auxiliaryData);
 }
 
 function appendContactPoint(document: XMLDocument, parent: Element, contactPoint?: Dataset["contactPoint"]): void {
@@ -205,7 +207,7 @@ function appendTemporalCoverage(document: XMLDocument, parent: Element, coverage
   }
 
   const wrapper = document.createElementNS(DATASHEET_NS, "temporalCoverage");
-  const temporal = document.createElementNS(BASE_NS, "base:TemporalCoverage");
+  const temporal = document.createElementNS(DATASHEET_NS, "ClosedTemporalCoverage");
   appendOptionalTextElement(document, temporal, BASE_NS, "base:startDate", stringOrEmpty(coverage.startDate));
   appendOptionalTextElement(document, temporal, BASE_NS, "base:endDate", stringOrEmpty(coverage.endDate));
   appendOptionalTextElement(document, temporal, BASE_NS, "base:referenceDate", stringOrEmpty(coverage.referenceDate));
@@ -260,7 +262,55 @@ function appendBooleanElement(
   parent.appendChild(element);
 }
 
-function parseDatasetElement(element: Element): JsonObject {
+function parseDatasetElement(element: Element, allowIssues = false): JsonObject {
+  assertNamespace(element, DATASHEET_NS, element.localName);
+  assertAllowedChildren(
+    element,
+    allowIssues
+      ? [
+          "identifier",
+          "title",
+          "description",
+          "accessLevel",
+          "publicationStatus",
+          "creatorRef",
+          "contactPoint",
+          "themes",
+          "keywords",
+          "accrualPeriodicity",
+          "modified",
+          "temporalCoverage",
+          "surveyMethod",
+          "attributes",
+          "model",
+          "dataAvailableFrom",
+          "furtherUses",
+          "auxiliaryData",
+          "issues"
+        ]
+      : [
+          "identifier",
+          "title",
+          "description",
+          "accessLevel",
+          "publicationStatus",
+          "creatorRef",
+          "contactPoint",
+          "themes",
+          "keywords",
+          "accrualPeriodicity",
+          "modified",
+          "temporalCoverage",
+          "surveyMethod",
+          "attributes",
+          "model",
+          "dataAvailableFrom",
+          "furtherUses",
+          "auxiliaryData"
+        ],
+    element.localName
+  );
+
   return {
     identifier: childText(element, "identifier"),
     title: childText(element, "title"),
@@ -275,22 +325,26 @@ function parseDatasetElement(element: Element): JsonObject {
     modified: childText(element, "modified"),
     temporalCoverage: parseTemporalCoverage(firstChildElement(element, "temporalCoverage")),
     surveyMethod: childText(element, "surveyMethod"),
-    model: childText(element, "model"),
     attributes: childElementsByName(element, "attributes").map(parseAttributeWrapper),
+    model: childText(element, "model"),
     dataAvailableFrom: childText(element, "dataAvailableFrom"),
     furtherUses: childText(element, "furtherUses"),
-    remarks: childText(element, "remarks")
+    auxiliaryData: childText(element, "auxiliaryData")
   };
 }
 
 function parseSeriesElement(element: Element): JsonObject {
   return {
-    ...parseDatasetElement(element),
+    ...parseDatasetElement(element, true),
     issues: childElementsByName(element, "issues").map((wrapper) => {
+      assertNamespace(wrapper, DATASHEET_NS, "issues");
+      assertAllowedChildren(wrapper, ["DatasetIssue"], "issues");
       const issueElement = firstChildElement(wrapper, "DatasetIssue");
       if (!issueElement) {
         throw new Error("Eine DatasetSeries enthält einen ungültigen Issue-Eintrag.");
       }
+
+      assertNamespace(issueElement, DATASHEET_NS, "DatasetIssue");
 
       return parseIssueElement(issueElement);
     })
@@ -298,35 +352,79 @@ function parseSeriesElement(element: Element): JsonObject {
 }
 
 function parseIssueElement(element: Element): JsonObject {
-  const modelElement = firstChildElement(element, "model");
+  assertAllowedChildren(
+    element,
+    [
+      "identifier",
+      "title",
+      "description",
+      "issueLabel",
+      "isCurrentIssue",
+      "publicationStatus",
+      "accrualPeriodicity",
+      "modified",
+      "temporalCoverage",
+      "surveyMethod",
+      "attributes",
+      "model",
+      "dataAvailableFrom",
+      "furtherUses",
+      "auxiliaryData"
+    ],
+    "DatasetIssue"
+  );
 
-  return {
+  const parsed: JsonObject = {
     identifier: childText(element, "identifier"),
-    title: childText(element, "title"),
-    description: childText(element, "description"),
     issueLabel: childText(element, "issueLabel"),
     isCurrentIssue: childText(element, "isCurrentIssue") === "true",
-    accessLevel: childText(element, "accessLevel"),
-    publicationStatus: childText(element, "publicationStatus"),
-    accrualPeriodicity: childText(element, "accrualPeriodicity"),
-    issued: childText(element, "issued"),
-    modified: childText(element, "modified"),
-    temporalCoverage: parseTemporalCoverage(firstChildElement(element, "temporalCoverage")),
-    surveyMethod: childText(element, "surveyMethod"),
-    ...(modelElement ? { model: modelElement.textContent?.trim() ?? "" } : {}),
-    attributes: childElementsByName(element, "attributes").map(parseAttributeWrapper),
-    dataAvailableFrom: childText(element, "dataAvailableFrom"),
-    furtherUses: childText(element, "furtherUses"),
-    auxiliaryData: childText(element, "auxiliaryData"),
-    remarks: childText(element, "remarks")
+    publicationStatus: childText(element, "publicationStatus")
   };
+
+  const optionalTextFields = [
+    "title",
+    "description",
+    "accrualPeriodicity",
+    "modified",
+    "surveyMethod",
+    "model",
+    "dataAvailableFrom",
+    "furtherUses",
+    "auxiliaryData"
+  ];
+  for (const field of optionalTextFields) {
+    const child = firstChildElement(element, field);
+    if (child) {
+      parsed[field] = child.textContent?.trim() ?? "";
+    }
+  }
+
+  const temporalCoverage = firstChildElement(element, "temporalCoverage");
+  if (temporalCoverage) {
+    parsed.temporalCoverage = parseTemporalCoverage(temporalCoverage);
+  }
+
+  const attributes = childElementsByName(element, "attributes");
+  if (attributes.length) {
+    parsed.attributes = attributes.map(parseAttributeWrapper);
+  }
+
+  return parsed;
 }
 
 function parseContactPoint(wrapper: Element | null): JsonObject {
+  if (wrapper) {
+    assertNamespace(wrapper, DATASHEET_NS, "contactPoint");
+    assertAllowedChildren(wrapper, ["ContactPoint"], "contactPoint", BASE_NS);
+  }
+
   const contact = wrapper ? childElements(wrapper)[0] : null;
   if (!contact) {
     return {};
   }
+
+  assertNamespace(contact, BASE_NS, "ContactPoint");
+  assertAllowedChildren(contact, ["name", "organizationUnit", "email", "phone", "url"], "ContactPoint", BASE_NS);
 
   return {
     name: childText(contact, "name"),
@@ -338,10 +436,18 @@ function parseContactPoint(wrapper: Element | null): JsonObject {
 }
 
 function parseTemporalCoverage(wrapper: Element | null): JsonObject {
+  if (wrapper) {
+    assertNamespace(wrapper, DATASHEET_NS, "temporalCoverage");
+    assertAllowedChildren(wrapper, ["ClosedTemporalCoverage"], "temporalCoverage");
+  }
+
   const temporal = wrapper ? childElements(wrapper)[0] : null;
   if (!temporal) {
     return {};
   }
+
+  assertNamespace(temporal, DATASHEET_NS, "ClosedTemporalCoverage");
+  assertAllowedChildren(temporal, ["startDate", "endDate", "referenceDate"], "ClosedTemporalCoverage", BASE_NS);
 
   return {
     startDate: childText(temporal, "startDate"),
@@ -351,10 +457,20 @@ function parseTemporalCoverage(wrapper: Element | null): JsonObject {
 }
 
 function parseAttributeWrapper(wrapper: Element): JsonObject {
+  assertNamespace(wrapper, DATASHEET_NS, "attributes");
+  assertAllowedChildren(wrapper, ["DatasetAttribute"], "attributes", BASE_NS);
   const attribute = childElements(wrapper)[0];
   if (!attribute) {
     return {};
   }
+
+  assertNamespace(attribute, BASE_NS, "DatasetAttribute");
+  assertAllowedChildren(
+    attribute,
+    ["name", "dataType", "description", "unit", "codeList", "mandatory"],
+    "DatasetAttribute",
+    BASE_NS
+  );
 
   return {
     name: childText(attribute, "name"),
@@ -372,6 +488,36 @@ function parseXml(text: string): XMLDocument {
     throw new Error("Die Datei ist nicht lesbar oder enthält kein gültiges XTF/XML.");
   }
   return document;
+}
+
+function assertTransferModels(transfer: Element): void {
+  const headerSection = firstChildElement(transfer, "headersection");
+  const models = headerSection ? firstChildElement(headerSection, "models") : null;
+  const modelNames = models
+    ? childElements(models)
+        .filter((element) => element.localName === "model")
+        .map((element) => element.textContent?.trim() ?? "")
+    : [];
+
+  const requiredModels = ["SO_AGI_DataCatalog_Datasheet_20260523", "SO_AGI_DataCatalog_Base_20260529"];
+  if (modelNames.length !== requiredModels.length || !requiredModels.every((modelName) => modelNames.includes(modelName))) {
+    throw new Error("Der XTF-Transfer verwendet nicht die aktuellen Datenkatalog-Modelle.");
+  }
+}
+
+function assertNamespace(element: Element, namespace: string, context: string): void {
+  if (element.namespaceURI !== namespace) {
+    throw new Error(`Das Element ${context} verwendet einen nicht unterstützten Namespace.`);
+  }
+}
+
+function assertAllowedChildren(parent: Element, allowedNames: string[], context: string, namespace = parent.namespaceURI): void {
+  const unexpected = childElements(parent).find(
+    (element) => element.namespaceURI !== namespace || !allowedNames.includes(element.localName)
+  );
+  if (unexpected) {
+    throw new Error(`Das Element ${context} enthält das nicht modellierte Feld "${unexpected.localName}".`);
+  }
 }
 
 function childText(parent: Element, localName: string): string {

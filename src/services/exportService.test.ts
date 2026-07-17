@@ -51,7 +51,6 @@ describe("exportService", () => {
         identifier: "so.astat.bevoelkerung.2026",
         issueLabel: "2026",
         isCurrentIssue: true,
-        accessLevel: "open",
         publicationStatus: "published"
       }
     ];

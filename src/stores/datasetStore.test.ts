@@ -76,14 +76,14 @@ vi.mock("../services/datasetRepository", () => {
 
 import { useDatasetStore } from "./datasetStore";
 
-describe("datasetStore access level enforcement", () => {
+describe("datasetStore access levels", () => {
   beforeEach(() => {
     repositoryState.drafts.clear();
     repositoryState.settings.clear();
     setActivePinia(createPinia());
   });
 
-  it("normalizes existing drafts to open when opening them in the editor", async () => {
+  it("preserves existing non-open access levels when opening drafts", async () => {
     const root = createEmptyDatasetRoot();
     root.dataset.accessLevel = "restricted";
 
@@ -106,13 +106,13 @@ describe("datasetStore access level enforcement", () => {
 
     expect(openedDraft).not.toBeNull();
     expect(store.currentDraft).not.toBeNull();
-    expect(openedDraft && isDatasetRoot(openedDraft.data) ? openedDraft.data.dataset.accessLevel : null).toBe("open");
+    expect(openedDraft && isDatasetRoot(openedDraft.data) ? openedDraft.data.dataset.accessLevel : null).toBe("restricted");
     expect(
       store.currentDraft && isDatasetRoot(store.currentDraft.data) ? store.currentDraft.data.dataset.accessLevel : null
-    ).toBe("open");
+    ).toBe("restricted");
   });
 
-  it("normalizes imported previews before persisting them", async () => {
+  it("preserves imported access levels before persisting them", async () => {
     const store = useDatasetStore();
     const root = createEmptyDatasetRoot();
     root.dataset.accessLevel = "internal";
@@ -132,10 +132,10 @@ describe("datasetStore access level enforcement", () => {
     expect(store.currentDraft).not.toBeNull();
     expect(
       persistedDraft && isDatasetRoot(persistedDraft.data) ? persistedDraft.data.dataset.accessLevel : null
-    ).toBe("open");
+    ).toBe("internal");
     expect(
       store.currentDraft && isDatasetRoot(store.currentDraft.data) ? store.currentDraft.data.dataset.accessLevel : null
-    ).toBe("open");
+    ).toBe("internal");
   });
 });
 

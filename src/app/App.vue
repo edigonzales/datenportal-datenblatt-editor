@@ -38,7 +38,6 @@ const editorTabs = computed(() => {
 
   return [
     { key: "main", label: "Datensatz", to: currentDraftId.value ? `/draft/${currentDraftId.value}` : "/" },
-    { key: "attributes", label: "Attribute", to: currentDraftId.value ? `/draft/${currentDraftId.value}/attributes` : "/" },
     { key: "xtf", label: "Vorschau", to: currentDraftId.value ? `/draft/${currentDraftId.value}/xtf` : "/" }
   ];
 });

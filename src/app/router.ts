@@ -14,13 +14,6 @@ export const router = createRouter({
       meta: { tab: "main" }
     },
     {
-      path: "/draft/:id/attributes",
-      name: "draft-attributes",
-      component: DatasetEditor,
-      props: { tab: "attributes" },
-      meta: { tab: "attributes" }
-    },
-    {
       path: "/draft/:id/issues/:issueId?",
       name: "draft-issues",
       component: DatasetEditor,

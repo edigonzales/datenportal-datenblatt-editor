@@ -62,7 +62,6 @@ const seriesXtf = `<?xml version="1.0" encoding="UTF-8"?>
             <identifier>so.astat.bevoelkerung.2026</identifier>
             <issueLabel>2026</issueLabel>
             <isCurrentIssue>true</isCurrentIssue>
-            <accessLevel>open</accessLevel>
             <publicationStatus>published</publicationStatus>
           </DatasetIssue>
         </issues>

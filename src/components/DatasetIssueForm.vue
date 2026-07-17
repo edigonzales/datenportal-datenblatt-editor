@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { DatasetIssue, IssueInheritedGroup } from "../domain/datasetTypes";
-import { accessLevelOptions, publicationStatusOptions } from "../config/vocabularies";
+import { publicationStatusOptions } from "../config/vocabularies";
 import {
   disableIssueIdentifierAuto,
   disableIssueTitleAuto,
@@ -15,12 +15,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   "set-current": [value: boolean];
 }>();
-
-const readOnlyAccessLevelOption =
-  accessLevelOptions.find((option) => option.value === "open") ?? {
-    value: "open",
-    label: "Öffentlich, frei zugänglich"
-  };
 
 function updateIdentifier(value: string): void {
   disableIssueIdentifierAuto(props.issue);
@@ -93,28 +87,18 @@ function markOverridden(group: IssueInheritedGroup): void {
           />
           <p class="field-help">{{ (issue.description ?? "").length }} / 1024 Zeichen</p>
         </div>
-        <div class="inline-grid">
-          <div class="field-row">
-            <label for="issue-access-level">Zugänglichkeit *</label>
-            <select id="issue-access-level" v-model="issue.accessLevel" class="select" disabled aria-readonly="true">
-              <option :value="readOnlyAccessLevelOption.value">
-                {{ readOnlyAccessLevelOption.label }}
-              </option>
-            </select>
-          </div>
-          <div class="field-row">
-            <label for="issue-publication-status">Publikationsstatus *</label>
-            <select
-              id="issue-publication-status"
-              v-model="issue.publicationStatus"
-              class="select"
-              @change="markOverridden('publicationStatus')"
-            >
-              <option v-for="option in publicationStatusOptions" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </div>
+        <div class="field-row">
+          <label for="issue-publication-status">Publikationsstatus *</label>
+          <select
+            id="issue-publication-status"
+            v-model="issue.publicationStatus"
+            class="select"
+            @change="markOverridden('publicationStatus')"
+          >
+            <option v-for="option in publicationStatusOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
+          </select>
         </div>
         <label class="checkbox-item">
           <input

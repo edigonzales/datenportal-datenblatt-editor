@@ -27,7 +27,6 @@ export interface DatasetSharedFields extends JsonObject {
   identifier?: string;
   title?: string;
   description?: string;
-  accessLevel?: string;
   publicationStatus?: string;
   accrualPeriodicity?: string;
   modified?: string;
@@ -37,10 +36,11 @@ export interface DatasetSharedFields extends JsonObject {
   attributes?: DatasetAttribute[];
   dataAvailableFrom?: string;
   furtherUses?: string;
-  remarks?: string;
+  auxiliaryData?: string;
 }
 
 export interface Dataset extends DatasetSharedFields {
+  accessLevel?: string;
   creatorRef?: string;
   contactPoint?: ContactPoint;
   themes?: string[];
@@ -48,8 +48,6 @@ export interface Dataset extends DatasetSharedFields {
 }
 
 export interface DatasetIssue extends DatasetSharedFields {
-  issued?: string;
-  auxiliaryData?: string;
   __localIssueId?: string;
   __localIssueState?: LocalIssueState;
   issueLabel?: string;
@@ -58,7 +56,6 @@ export interface DatasetIssue extends DatasetSharedFields {
 
 export type IssueInheritedGroup =
   | "description"
-  | "accessLevel"
   | "publicationStatus"
   | "accrualPeriodicity"
   | "modified"
@@ -66,8 +63,7 @@ export type IssueInheritedGroup =
   | "surveyMethod"
   | "model"
   | "dataAvailableFrom"
-  | "furtherUses"
-  | "remarks";
+  | "furtherUses";
 
 export interface LocalIssueState extends JsonObject {
   inheritedGroups?: Partial<Record<IssueInheritedGroup, boolean>>;
