@@ -1,11 +1,13 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createPinia, setActivePinia } from "pinia";
 import { createEmptyDatasetRoot, isDatasetRoot } from "../domain/normalize";
 import type { DatasetDraftRecord, ImportPreview, SettingRecord } from "../domain/datasetTypes";
 
 const repositoryState = vi.hoisted(() => ({
   drafts: new Map<string, DatasetDraftRecord>(),
-  settings: new Map<string, SettingRecord["value"]>()
+  settings: new Map<string, SettingRecord["value"]>(),
+  saveCalls: [] as DatasetDraftRecord[],
+  saveDraftGate: null as Promise<void> | null
 }));
 
 vi.mock("../services/datasetRepository", () => {
@@ -20,6 +22,10 @@ vi.mock("../services/datasetRepository", () => {
     }
 
     async saveDraft(draft: DatasetDraftRecord): Promise<DatasetDraftRecord> {
+      repositoryState.saveCalls.push(cloneDraft(draft));
+      if (repositoryState.saveDraftGate) {
+        await repositoryState.saveDraftGate;
+      }
       const cloned = cloneDraft(draft);
       repositoryState.drafts.set(cloned.id, cloned);
       return cloneDraft(cloned);
@@ -80,6 +86,8 @@ describe("datasetStore access levels", () => {
   beforeEach(() => {
     repositoryState.drafts.clear();
     repositoryState.settings.clear();
+    repositoryState.saveCalls.length = 0;
+    repositoryState.saveDraftGate = null;
     setActivePinia(createPinia());
   });
 
@@ -136,6 +144,81 @@ describe("datasetStore access levels", () => {
     expect(
       store.currentDraft && isDatasetRoot(store.currentDraft.data) ? store.currentDraft.data.dataset.accessLevel : null
     ).toBe("internal");
+  });
+});
+
+describe("datasetStore autosave", () => {
+  beforeEach(() => {
+    repositoryState.drafts.clear();
+    repositoryState.settings.clear();
+    repositoryState.saveCalls.length = 0;
+    repositoryState.saveDraftGate = null;
+    setActivePinia(createPinia());
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("debounces dirty changes into one save after the quiet period", async () => {
+    vi.useFakeTimers();
+    const store = useDatasetStore();
+    await store.createNewDraft();
+    repositoryState.saveCalls.length = 0;
+
+    store.markDirty();
+    await vi.advanceTimersByTimeAsync(500);
+    store.markDirty();
+    await vi.advanceTimersByTimeAsync(499);
+
+    expect(repositoryState.saveCalls).toHaveLength(0);
+    expect(store.saveState).toBe("dirty");
+
+    await vi.advanceTimersByTimeAsync(251);
+
+    expect(repositoryState.saveCalls).toHaveLength(1);
+    expect(store.saveState).toBe("saved");
+  });
+
+  it("keeps newer edits when a save is still in flight", async () => {
+    vi.useFakeTimers();
+    const store = useDatasetStore();
+    await store.createNewDraft();
+    repositoryState.saveCalls.length = 0;
+
+    let releaseSave!: () => void;
+    repositoryState.saveDraftGate = new Promise<void>((resolve) => {
+      releaseSave = resolve;
+    });
+
+    if (!store.currentDraft || !isDatasetRoot(store.currentDraft.data)) {
+      throw new Error("Expected an open dataset draft");
+    }
+    store.currentDraft.data.dataset.identifier = "old-value";
+    store.markDirty();
+    await vi.advanceTimersByTimeAsync(750);
+    expect(repositoryState.saveCalls).toHaveLength(1);
+    expect(store.saveState).toBe("saving");
+
+    if (!store.currentDraft || !isDatasetRoot(store.currentDraft.data)) {
+      throw new Error("Expected an open dataset draft");
+    }
+    store.currentDraft.data.dataset.identifier = "latest-value";
+    store.markDirty();
+    releaseSave();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(store.currentDraft?.data).toMatchObject({ dataset: { identifier: "latest-value" } });
+    expect(store.saveState).toBe("dirty");
+
+    repositoryState.saveDraftGate = null;
+    await vi.advanceTimersByTimeAsync(750);
+
+    expect(repositoryState.saveCalls).toHaveLength(2);
+    expect(repositoryState.drafts.get(store.currentDraft!.id)?.data).toMatchObject({
+      dataset: { identifier: "latest-value" }
+    });
+    expect(store.saveState).toBe("saved");
   });
 });
 

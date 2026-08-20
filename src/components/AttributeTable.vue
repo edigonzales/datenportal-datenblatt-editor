@@ -10,6 +10,10 @@ const props = defineProps<{
   emptyMessage?: string;
 }>();
 
+const emit = defineEmits<{
+  changed: [];
+}>();
+
 function optionsFor(attribute: DatasetAttribute): string[] {
   const type = (attribute.dataType ?? "").trim();
   return type && !attributeDataTypeOptions.includes(type) ? [...attributeDataTypeOptions, type] : attributeDataTypeOptions;
@@ -24,15 +28,18 @@ function addAttribute(): void {
     codeList: "",
     mandatory: false
   });
+  emit("changed");
 }
 
 function duplicateAttribute(index: number): void {
   const copy = JSON.parse(JSON.stringify(props.attributes[index])) as DatasetAttribute;
   props.attributes.splice(index + 1, 0, copy);
+  emit("changed");
 }
 
 function deleteAttribute(index: number): void {
   props.attributes.splice(index, 1);
+  emit("changed");
 }
 
 function move(index: number, direction: -1 | 1): void {
@@ -42,11 +49,12 @@ function move(index: number, direction: -1 | 1): void {
   }
   const [entry] = props.attributes.splice(index, 1);
   props.attributes.splice(target, 0, entry);
+  emit("changed");
 }
 </script>
 
 <template>
-  <section class="surface surface--editor section-stack">
+  <section class="surface surface--editor section-stack" @change="emit('changed')" @input="emit('changed')">
     <div class="header-line">
       <div>
         <h2>{{ title || "Attribute" }}</h2>

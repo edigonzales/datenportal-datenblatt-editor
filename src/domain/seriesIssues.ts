@@ -59,9 +59,9 @@ export function deriveImportedIssueState(rawIssue: JsonObject): LocalIssueState 
 }
 
 export function ensureIssueLocalState(issue: DatasetIssue): LocalIssueState {
-  issue.__localIssueState = issue.__localIssueState
-    ? createLocalIssueState(issue.__localIssueState)
-    : inferIssueStateFromCurrentValues(issue);
+  if (!issue.__localIssueState) {
+    issue.__localIssueState = inferIssueStateFromCurrentValues(issue);
+  }
   return issue.__localIssueState;
 }
 

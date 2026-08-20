@@ -31,6 +31,10 @@ const validation = computed(() =>
 );
 const isFramelessEditorView = computed(() => props.tab === "main" || props.tab === "issues");
 
+function markDraftChanged(): void {
+  store.markDirty();
+}
+
 watch(
   () => route.params.id,
   async (id) => {
@@ -78,14 +82,6 @@ watch(
   { immediate: true }
 );
 
-watch(
-  () => store.currentDraft?.data,
-  () => {
-    store.markDirty();
-  },
-  { deep: true }
-);
-
 function openSeriesIssue(issueId: string): void {
   if (!currentDraft.value) {
     return;
@@ -106,13 +102,14 @@ function openSeriesIssue(issueId: string): void {
 
       <template v-if="currentDatasetRoot">
         <div v-if="tab === 'main'" class="section-stack">
-          <DatasetForm :dataset="currentDatasetRoot.dataset" />
+          <DatasetForm :dataset="currentDatasetRoot.dataset" @changed="markDraftChanged" />
           <AttributeTable
             :attributes="currentDatasetRoot.dataset.attributes ?? (currentDatasetRoot.dataset.attributes = [])"
             title="Datensatzattribute"
             description="Attribute, die zu diesem Datensatz gehören."
             empty-title="Noch keine Datensatzattribute"
             empty-message="Fügen Sie hier die Attribute dieses Datensatzes hinzu."
+            @changed="markDraftChanged"
           />
         </div>
         <XtfPreview v-else :root="currentDatasetRoot" />
@@ -120,13 +117,14 @@ function openSeriesIssue(issueId: string): void {
 
       <template v-else-if="currentSeriesRoot">
         <div v-if="tab === 'main'" class="section-stack">
-          <DatasetForm :dataset="currentSeriesRoot.series" mode="series" />
+          <DatasetForm :dataset="currentSeriesRoot.series" mode="series" @changed="markDraftChanged" />
           <AttributeTable
             :attributes="currentSeriesRoot.series.attributes ?? (currentSeriesRoot.series.attributes = [])"
             title="Serien-Attribute"
             description="Gemeinsame Attribute der Datensatzserie."
             empty-title="Noch keine Serien-Attribute"
             empty-message="Fügen Sie hier Attribute hinzu, die für alle Ausgaben gelten."
+            @changed="markDraftChanged"
           />
         </div>
         <SeriesIssueWorkspace
@@ -134,6 +132,7 @@ function openSeriesIssue(issueId: string): void {
           :series="currentSeriesRoot.series"
           :validation="validation"
           :active-issue-id="activeIssueId"
+          @changed="markDraftChanged"
           @select="openSeriesIssue($event)"
         />
         <XtfPreview v-else :root="currentSeriesRoot" />

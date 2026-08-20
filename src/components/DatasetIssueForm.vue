@@ -14,6 +14,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   "set-current": [value: boolean];
+  changed: [];
 }>();
 
 function updateIdentifier(value: string): void {
@@ -32,7 +33,7 @@ function markOverridden(group: IssueInheritedGroup): void {
 </script>
 
 <template>
-  <section class="surface surface--editor section-stack">
+  <section class="surface surface--editor section-stack" @change="emit('changed')" @input="emit('changed')">
     <div class="header-line">
       <div>
         <h2>Ausgabe bearbeiten</h2>

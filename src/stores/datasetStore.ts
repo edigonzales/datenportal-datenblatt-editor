@@ -27,10 +27,6 @@ function timestamp(): string {
   return new Date().toISOString();
 }
 
-function snapshot(root: EditableRootJson | null): string {
-  return JSON.stringify(root ?? null);
-}
-
 export const useDatasetStore = defineStore("dataset", {
   state: () => ({
     appMode: "empty" as AppMode,
@@ -41,8 +37,9 @@ export const useDatasetStore = defineStore("dataset", {
     saveState: "idle" as SaveState,
     saveError: "" as string,
     pendingConflict: null as ConflictResolutionContext | null,
-    lastPersistedSnapshot: snapshot(null),
     autosaveTimer: null as ReturnType<typeof setTimeout> | null,
+    changeRevision: 0,
+    saveInFlight: false,
     lastSourceUrl: "",
     lastOrganizationUnit: ""
   }),
@@ -127,7 +124,7 @@ export const useDatasetStore = defineStore("dataset", {
       this.appMode = draft.draftKind === "series" ? "editing-series" : "editing-dataset";
       this.saveState = "saved";
       this.saveError = "";
-      this.lastPersistedSnapshot = snapshot(draft.data);
+      this.changeRevision = 0;
       return draft;
     },
 
@@ -226,23 +223,25 @@ export const useDatasetStore = defineStore("dataset", {
         return;
       }
 
-      const currentSnapshot = snapshot(this.currentDraft.data);
-      if (currentSnapshot === this.lastPersistedSnapshot) {
-        return;
-      }
-
+      this.changeRevision += 1;
       this.saveState = "dirty";
       this.saveError = "";
+      this.scheduleAutosave();
+    },
+
+    scheduleAutosave(): void {
       if (this.autosaveTimer) {
         clearTimeout(this.autosaveTimer);
       }
+
       this.autosaveTimer = setTimeout(() => {
+        this.autosaveTimer = null;
         void this.persistCurrentDraft();
       }, AUTOSAVE_DELAY);
     },
 
     async persistCurrentDraft(): Promise<void> {
-      if (!this.currentDraft) {
+      if (!this.currentDraft || this.saveInFlight) {
         return;
       }
 
@@ -251,25 +250,40 @@ export const useDatasetStore = defineStore("dataset", {
         this.autosaveTimer = null;
       }
 
+      const draftAtStart = this.currentDraft;
+      const draftIdAtStart = draftAtStart.id;
+      const revisionAtStart = this.changeRevision;
+      const dataAtStart = cloneRoot(draftAtStart.data);
+
+      this.saveInFlight = true;
       this.saveState = "saving";
       this.saveError = "";
       try {
         const persisted = await repository.saveDraft({
-          ...this.currentDraft,
-          identifier: getRootIdentifier(this.currentDraft.data).trim(),
-          title: getRootTitle(this.currentDraft.data).trim(),
-          schemaVersion: this.currentDraft.data.schemaVersion,
+          ...draftAtStart,
+          identifier: getRootIdentifier(dataAtStart).trim(),
+          title: getRootTitle(dataAtStart).trim(),
+          schemaVersion: dataAtStart.schemaVersion,
           updatedAt: timestamp(),
           dirty: false,
-          data: cloneRoot(this.currentDraft.data)
+          data: dataAtStart
         });
-        this.currentDraft = persisted;
-        this.lastPersistedSnapshot = snapshot(persisted.data);
-        this.saveState = "saved";
-        await this.refreshDrafts();
+
+        if (this.currentDraft?.id === draftIdAtStart && this.changeRevision === revisionAtStart) {
+          this.currentDraft = persisted;
+          this.saveState = "saved";
+          await this.refreshDrafts();
+        }
       } catch (error) {
         this.saveState = "error";
         this.saveError = error instanceof Error ? error.message : "Der Entwurf konnte nicht gespeichert werden.";
+      } finally {
+        this.saveInFlight = false;
+
+        if (this.currentDraft?.id === draftIdAtStart && this.changeRevision !== revisionAtStart && this.saveState !== "error") {
+          this.saveState = "dirty";
+          this.scheduleAutosave();
+        }
       }
     },
 
@@ -298,7 +312,8 @@ export const useDatasetStore = defineStore("dataset", {
       this.appMode = "empty";
       this.saveState = "idle";
       this.saveError = "";
-      this.lastPersistedSnapshot = snapshot(null);
+      this.changeRevision = 0;
+      this.saveInFlight = false;
     },
 
     async persistPreview(preview: ImportPreview, overrideId?: string): Promise<DatasetDraftRecord> {

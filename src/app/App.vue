@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { RouterLink, RouterView, useRoute } from "vue-router";
 import { downloadDataset } from "../services/exportService";
 import { getRootIdentifier, getRootTitle } from "../domain/normalize";
@@ -8,6 +8,7 @@ import { useDatasetStore } from "../stores/datasetStore";
 
 const store = useDatasetStore();
 const route = useRoute();
+const initializationError = ref("");
 
 const currentDraftId = computed(() => store.currentDraft?.id ?? "");
 const activeTab = computed(() => String(route.meta.tab ?? "start"));
@@ -53,7 +54,11 @@ function exportCurrentDraft(): void {
 }
 
 onMounted(async () => {
-  await store.initialize();
+  try {
+    await store.initialize();
+  } catch (reason) {
+    initializationError.value = reason instanceof Error ? reason.message : "Die lokale Anwendung konnte nicht initialisiert werden.";
+  }
 });
 </script>
 
@@ -76,6 +81,11 @@ onMounted(async () => {
         {{ tab.label }}
       </RouterLink>
     </nav>
+
+    <div v-if="initializationError" class="notice" data-tone="danger" role="alert">
+      <strong>Lokale Entwürfe konnten nicht geladen werden.</strong>
+      <span>{{ initializationError }}</span>
+    </div>
 
     <div v-if="showContextBar" class="context-bar" :data-save-state="store.saveState">
       <div class="context-bar__text">

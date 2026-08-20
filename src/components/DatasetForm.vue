@@ -11,6 +11,10 @@ const props = defineProps<{
   mode?: "dataset" | "series";
 }>();
 
+const emit = defineEmits<{
+  changed: [];
+}>();
+
 const isSeries = computed(() => props.mode === "series");
 
 const officeCatalogLoading = ref(false);
@@ -29,6 +33,7 @@ function normalizeCreatorRef(): void {
 
   if (!officeOptions.value.some((entry) => entry.identifier === currentValue)) {
     props.dataset.creatorRef = "";
+    emit("changed");
   }
 }
 
@@ -61,7 +66,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <section class="surface surface--editor section-stack">
+  <section class="surface surface--editor section-stack" @change="emit('changed')" @input="emit('changed')">
     <div class="header-line">
       <div>
         <h2>{{ isSeries ? "Serien-Metadaten" : "Datensatz-Metadaten" }}</h2>

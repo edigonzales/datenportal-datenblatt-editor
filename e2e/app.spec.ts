@@ -192,6 +192,16 @@ test("loads a dataset from the offline source dialog", async ({ page }) => {
 });
 
 test("creates and navigates a dataset series workspace", async ({ page }) => {
+  const runtimeErrors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      runtimeErrors.push(message.text());
+    }
+  });
+  page.on("pageerror", (error) => {
+    runtimeErrors.push(error.message);
+  });
+
   await page.goto("/");
 
   await actionCard(page, "Neues Datenblatt (Serie) anlegen")
@@ -242,6 +252,7 @@ test("creates and navigates a dataset series workspace", async ({ page }) => {
 
   await page.getByRole("link", { name: "Vorschau", exact: true }).click();
   await expect(page.locator(".preview-panel")).toContainText("<DatasetSeries");
+  expect(runtimeErrors.filter((message) => message.includes("Maximum recursive updates exceeded"))).toEqual([]);
 });
 
 test("shows the current radius on empty state and file import surfaces", async ({ page }) => {

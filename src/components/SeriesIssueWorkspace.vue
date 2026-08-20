@@ -14,6 +14,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   select: [issueId: string];
+  changed: [];
 }>();
 
 const issues = computed(() => props.series.issues ?? (props.series.issues = []));
@@ -56,6 +57,7 @@ function addIssue(): void {
     isCurrentIssue: !issues.value.some((entry) => entry.isCurrentIssue)
   });
   issues.value.push(issue);
+  emit("changed");
   selectIssue(issue.__localIssueId);
 }
 
@@ -71,6 +73,7 @@ function duplicateIssue(issueId?: string): void {
     copy.isCurrentIssue = false;
   }
   issues.value.splice(index + 1, 0, copy);
+  emit("changed");
   selectIssue(copy.__localIssueId);
 }
 
@@ -91,6 +94,7 @@ function deleteIssue(issueId?: string): void {
     issues.value[0].isCurrentIssue = true;
   }
 
+  emit("changed");
   const nextIssue = issues.value[Math.min(index, issues.value.length - 1)];
   selectIssue(nextIssue?.__localIssueId);
 }
@@ -103,11 +107,18 @@ function setCurrentIssue(issueId: string | undefined, value: boolean): void {
   for (const entry of issues.value) {
     entry.isCurrentIssue = entry.__localIssueId === issueId ? value : false;
   }
+  emit("changed");
 }
 
 function syncIssues(): void {
+  let changed = false;
   for (const issue of issues.value) {
+    const before = JSON.stringify(issue);
     syncIssueFromSeriesDefaults(props.series, issue);
+    changed = changed || before !== JSON.stringify(issue);
+  }
+  if (changed) {
+    emit("changed");
   }
 }
 
@@ -207,13 +218,18 @@ watch([seriesDefaultsSignature, issueDerivationSignature], syncIssues, { immedia
     </section>
 
     <div v-if="activeIssue" class="section-stack series-workspace__editor">
-      <DatasetIssueForm :issue="activeIssue" @set-current="setCurrentIssue(activeIssue.__localIssueId, $event)" />
+      <DatasetIssueForm
+        :issue="activeIssue"
+        @changed="emit('changed')"
+        @set-current="setCurrentIssue(activeIssue.__localIssueId, $event)"
+      />
       <AttributeTable
         :attributes="activeIssue.attributes ?? (activeIssue.attributes = [])"
         title="Attribute der Ausgabe"
         description="Attribute, die nur für diese Ausgabe gelten."
         empty-title="Noch keine Ausgabe-Attribute"
         empty-message="Fügen Sie hier ausgabespezifische Attribute hinzu."
+        @changed="emit('changed')"
       />
     </div>
   </div>

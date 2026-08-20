@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { createEmptyDatasetSeriesRoot } from "./normalize";
-import { createEffectiveIssue, markIssueGroupOverridden, syncIssueFromSeriesDefaults } from "./seriesIssues";
+import {
+  createEffectiveIssue,
+  ensureIssueLocalState,
+  markIssueGroupOverridden,
+  syncIssueFromSeriesDefaults
+} from "./seriesIssues";
 
 describe("seriesIssues model inheritance", () => {
   it("propagates the series model to inherited issues", () => {
@@ -38,5 +43,20 @@ describe("seriesIssues model inheritance", () => {
 
     expect(issue.model).toBe("SO_AGI_Issue_Model");
     expect(createEffectiveIssue(root.series, issue).model).toBe("SO_AGI_Issue_Model");
+  });
+
+  it("does not replace local issue state while creating effective values", () => {
+    const root = createEmptyDatasetSeriesRoot();
+    const issue = root.series.issues?.[0];
+    if (!issue) {
+      throw new Error("Expected initial issue");
+    }
+
+    const localState = ensureIssueLocalState(issue);
+
+    createEffectiveIssue(root.series, issue);
+    createEffectiveIssue(root.series, issue);
+
+    expect(issue.__localIssueState).toBe(localState);
   });
 });
