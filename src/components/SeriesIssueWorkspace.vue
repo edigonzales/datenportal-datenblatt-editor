@@ -78,7 +78,7 @@ function duplicateIssue(issueId?: string): void {
 }
 
 function deleteIssue(issueId?: string): void {
-  if (!issueId || issues.value.length <= 1) {
+  if (!issueId || issues.value.length === 0) {
     return;
   }
 
@@ -207,13 +207,17 @@ watch([seriesDefaultsSignature, issueDerivationSignature], syncIssues, { immedia
             <button
               class="button button--danger"
               type="button"
-              :disabled="issues.length <= 1"
               @click.stop="deleteIssue(entry.__localIssueId)"
             >
               Löschen
             </button>
           </div>
         </button>
+      </div>
+
+      <div v-else class="empty-state series-issue-empty">
+        <h3>Noch keine Ausgaben erfasst</h3>
+        <p>Fügen Sie eine Ausgabe hinzu, um IssueLabel und die ausgabespezifischen Felder zu bearbeiten.</p>
       </div>
     </section>
 

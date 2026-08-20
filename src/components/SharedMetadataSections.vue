@@ -129,7 +129,10 @@ const temporalMode = ref<TemporalCoverageMode>(deriveMode(temporalCoverage.value
 watch(
   () => temporalCoverage.value,
   (coverage) => {
-    temporalMode.value = deriveMode(coverage);
+    const derivedMode = deriveMode(coverage);
+    if (derivedMode !== "none" || temporalMode.value === "none") {
+      temporalMode.value = derivedMode;
+    }
   },
   { deep: true }
 );

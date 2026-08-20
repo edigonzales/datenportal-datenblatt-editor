@@ -77,6 +77,8 @@ watch(
 
     if (targetIssueId && issueId !== targetIssueId) {
       void router.replace(`/draft/${draft.id}/issues/${targetIssueId}`);
+    } else if (!targetIssueId && issueId) {
+      void router.replace(`/draft/${draft.id}/issues`);
     }
   },
   { immediate: true }

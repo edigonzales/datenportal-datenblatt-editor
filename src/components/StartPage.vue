@@ -21,7 +21,7 @@ const deleteAllRequested = ref(false);
 
 const drafts = computed(() => store.drafts);
 const exportableDraftIds = computed(() =>
-  drafts.value.filter((entry) => validateEditableRoot(entry.data).errorCount === 0).map((entry) => entry.id)
+  drafts.value.filter((entry) => validateEditableRoot(entry.data).exportable).map((entry) => entry.id)
 );
 const deleteDialogOpen = computed(() => Boolean(deleteId.value) || deleteAllRequested.value);
 const bulkDeleteMessage = computed(() => {
@@ -140,7 +140,7 @@ function scrollToDrafts(): void {
 
       <article class="action-card">
         <h3>Neues Datenblatt (Serie) anlegen</h3>
-        <p>Mit einem Serienkopf und einer ersten leeren Ausgabe starten.</p>
+        <p>Mit einem Serienkopf beginnen und Ausgaben bei Bedarf hinzufügen.</p>
         <div class="card-actions" style="margin-top: 16px">
           <button class="button button--secondary" type="button" @click="createNewSeries">Neues Datenblatt anlegen</button>
         </div>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createEmptyDatasetRoot, createEmptyDatasetSeriesRoot } from "./normalize";
+import { createEmptyDatasetIssue, createEmptyDatasetRoot, createEmptyDatasetSeriesRoot } from "./normalize";
 import { validateDataset, validateDatasetSeries, validateImportedStructure } from "./validation";
 
 describe("validateImportedStructure", () => {
@@ -106,6 +106,62 @@ describe("validateDataset", () => {
 });
 
 describe("validateDatasetSeries", () => {
+  it("warns about missing issues without reporting issue field errors", () => {
+    const root = createEmptyDatasetSeriesRoot();
+    root.series.identifier = "so.astat.bevoelkerung";
+    root.series.title = "Bevölkerungsreihe";
+    root.series.description = "Serie";
+    root.series.accessLevel = "open";
+    root.series.publicationStatus = "published";
+    root.series.creatorRef = "creator";
+    root.series.contactPoint!.email = "mailto:mail@example.org";
+    root.series.themes = ["Bevoelkerung"];
+    root.series.modified = "2026-05-01";
+
+    const result = validateDatasetSeries(root);
+
+    expect(result.errorCount).toBe(0);
+    expect(result.warningCount).toBe(1);
+    expect(result.exportable).toBe(false);
+    expect(result.issues.some((entry) => entry.code === "series-issues-empty")).toBe(true);
+    expect(result.issues.some((entry) => entry.path.includes("issueLabel"))).toBe(false);
+    expect(result.issues.some((entry) => entry.code === "series-current-issue")).toBe(false);
+  });
+
+  it("validates issue required fields after an issue is added", () => {
+    const root = createEmptyDatasetSeriesRoot();
+    const issue = createEmptyDatasetIssue(root.series, { isCurrentIssue: true });
+    root.series.issues!.push(issue);
+
+    const result = validateDatasetSeries(root, issue.__localIssueId);
+
+    expect(result.issues.some((entry) => entry.path.endsWith(".issueLabel"))).toBe(true);
+    expect(result.exportable).toBe(false);
+  });
+
+  it("marks a complete series with an issue as exportable", () => {
+    const root = createEmptyDatasetSeriesRoot();
+    root.series.identifier = "so.astat.bevoelkerung";
+    root.series.title = "Bevölkerungsreihe";
+    root.series.description = "Serie";
+    root.series.accessLevel = "open";
+    root.series.publicationStatus = "published";
+    root.series.creatorRef = "creator";
+    root.series.contactPoint!.email = "mailto:mail@example.org";
+    root.series.themes = ["Bevoelkerung"];
+    root.series.modified = "2026-05-01";
+
+    const issue = createEmptyDatasetIssue(root.series, { isCurrentIssue: true });
+    issue.identifier = "so.astat.bevoelkerung_2026";
+    issue.issueLabel = "2026";
+    root.series.issues!.push(issue);
+
+    const result = validateDatasetSeries(root, issue.__localIssueId);
+
+    expect(result.errorCount).toBe(0);
+    expect(result.exportable).toBe(true);
+  });
+
   it("reports series-level and issue-level problems separately", () => {
     const root = createEmptyDatasetSeriesRoot();
     root.series.identifier = "so.astat.bevoelkerung";
@@ -152,10 +208,8 @@ describe("validateDatasetSeries", () => {
     root.series.themes = ["Bevoelkerung"];
     root.series.modified = "2026-05-01";
 
-    const issue = root.series.issues?.[0];
-    if (!issue) {
-      throw new Error("Expected initial issue");
-    }
+    const issue = createEmptyDatasetIssue(root.series, { isCurrentIssue: true });
+    root.series.issues!.push(issue);
 
     issue.issueLabel = "2026";
 

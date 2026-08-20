@@ -23,7 +23,10 @@ const mode = ref<TemporalCoverageMode>(deriveMode(props.coverage));
 watch(
   () => props.coverage,
   (coverage) => {
-    mode.value = deriveMode(coverage);
+    const derivedMode = deriveMode(coverage);
+    if (derivedMode !== "none" || mode.value === "none") {
+      mode.value = derivedMode;
+    }
   }
 );
 

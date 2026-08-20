@@ -184,20 +184,25 @@ export function validateDatasetSeries(root: DatasetSeriesRootJson, activeIssueId
   const issues = root.series.issues ?? [];
   if (!issues.length) {
     seriesIssues.push(
-      issue("error", "series-issues-empty", "$.series.issues", "Eine Datensatzserie benötigt mindestens eine Ausgabe.")
-    );
-  }
-
-  const currentIssueCount = issues.filter((entry) => entry.isCurrentIssue).length;
-  if (currentIssueCount !== 1) {
-    seriesIssues.push(
       issue(
-        "error",
-        "series-current-issue",
+        "warning",
+        "series-issues-empty",
         "$.series.issues",
-        "Genau eine Ausgabe muss als aktuelle Ausgabe markiert sein."
+        "Noch keine Ausgabe erfasst. Fügen Sie mindestens eine Ausgabe hinzu."
       )
     );
+  } else {
+    const currentIssueCount = issues.filter((entry) => entry.isCurrentIssue).length;
+    if (currentIssueCount !== 1) {
+      seriesIssues.push(
+        issue(
+          "error",
+          "series-current-issue",
+          "$.series.issues",
+          "Genau eine Ausgabe muss als aktuelle Ausgabe markiert sein."
+        )
+      );
+    }
   }
 
   if (!hasProblems(seriesIssues)) {
@@ -237,7 +242,12 @@ export function validateDatasetSeries(root: DatasetSeriesRootJson, activeIssueId
   }
 
   const allIssues = groups.flatMap((group) => group.issues);
-  return finalizeValidation(allIssues, groups, issueSummaries);
+  return finalizeValidation(
+    allIssues,
+    groups,
+    issueSummaries,
+    issues.length > 0 && allIssues.every((entry) => entry.severity !== "error")
+  );
 }
 
 function validateDatasetMetadata(issues: ValidationIssue[], dataset: Dataset, prefix: string): void {
@@ -576,12 +586,14 @@ function finalizeGroup(
 function finalizeValidation(
   issues: ValidationIssue[],
   groups?: ValidationGroup[],
-  issueSummaries?: IssueValidationSummary[]
+  issueSummaries?: IssueValidationSummary[],
+  exportable = issues.every((entry) => entry.severity !== "error")
 ): ValidationResult {
   return {
     issues,
     errorCount: issues.filter((entry) => entry.severity === "error").length,
     warningCount: issues.filter((entry) => entry.severity === "warning").length,
+    exportable,
     groups,
     issueSummaries
   };

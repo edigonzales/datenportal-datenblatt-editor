@@ -174,6 +174,7 @@ export interface ValidationResult {
   issues: ValidationIssue[];
   errorCount: number;
   warningCount: number;
+  exportable: boolean;
   groups?: ValidationGroup[];
   issueSummaries?: IssueValidationSummary[];
 }

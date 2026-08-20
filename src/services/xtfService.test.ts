@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { createEmptyDatasetRoot, createEmptyDatasetSeriesRoot, isDatasetSeriesRoot } from "../domain/normalize";
+import {
+  createEmptyDatasetIssue,
+  createEmptyDatasetRoot,
+  createEmptyDatasetSeriesRoot,
+  isDatasetSeriesRoot
+} from "../domain/normalize";
 import { parseOfficeCatalogTransfer, parseXtfTransfer, serializeToXtf } from "./xtfService";
 
 const exampleTransfer = `<?xml version="1.0" encoding="UTF-8"?>
@@ -151,10 +156,8 @@ describe("xtfService", () => {
     root.series.modified = "2026-05-12";
     root.series.model = "SO_AGI_Series_Model";
 
-    const issue = root.series.issues?.[0];
-    if (!issue) {
-      throw new Error("Expected initial issue");
-    }
+    const issue = createEmptyDatasetIssue(root.series, { isCurrentIssue: true });
+    root.series.issues!.push(issue);
     issue.identifier = "so.astat.reihe_2026";
     issue.issueLabel = "2026";
     issue.isCurrentIssue = true;
@@ -250,10 +253,8 @@ describe("xtfService", () => {
     root.series.modified = "2026-05-12";
     root.series.auxiliaryData = "Registerdaten";
 
-    const issue = root.series.issues?.[0];
-    if (!issue) {
-      throw new Error("Expected initial issue");
-    }
+    const issue = createEmptyDatasetIssue(root.series, { isCurrentIssue: true });
+    root.series.issues!.push(issue);
     issue.identifier = "so.astat.reihe_2026";
     issue.title = "Reihe 2026";
     issue.description = "Ausgabe 2026";

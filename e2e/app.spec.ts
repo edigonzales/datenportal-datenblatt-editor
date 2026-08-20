@@ -227,10 +227,22 @@ test("creates and navigates a dataset series workspace", async ({ page }) => {
   await page.getByLabel("Modified *").fill("2026-05-01");
   await page.getByLabel("Hilfsdaten").fill("Seriengrundlage");
 
+  const rangeRadio = page.getByLabel("Zeitraum");
+  const referenceRadio = page.getByLabel("Stichtag");
+  await rangeRadio.click();
+  await expect(rangeRadio).toBeChecked();
+  await referenceRadio.click();
+  await expect(referenceRadio).toBeChecked();
+  await expect(page.getByLabel("Kein Zeitbezug")).not.toBeChecked();
+
   await page.getByRole("link", { name: "Ausgaben", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Ausgaben" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ausgaben", exact: true })).toBeVisible();
   await expect(page.getByText("Serienkontext")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Ausgabe hinzufügen" })).toBeVisible();
+  await expect(page.getByText("Noch keine Ausgaben erfasst")).toBeVisible();
+  await expect(page.getByText("IssueLabel ist ein Pflichtfeld.")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Ausgabe hinzufügen" }).click();
   await expect(page.getByLabel("Publikationsstatus *")).toHaveValue("published");
 
   const issueListBox = await page.locator(".series-issue-list").boundingBox();
@@ -244,6 +256,17 @@ test("creates and navigates a dataset series workspace", async ({ page }) => {
 
   await page.getByRole("button", { name: "Ausgabe hinzufügen" }).click();
   await expect(page.locator(".series-issue-card")).toHaveCount(2);
+
+  await page.locator(".series-issue-card").nth(1).getByRole("button", { name: "Löschen", exact: true }).click();
+  await expect(page.locator(".series-issue-card")).toHaveCount(1);
+  await page.locator(".series-issue-card").first().getByRole("button", { name: "Löschen", exact: true }).click();
+  await expect(page.locator(".series-issue-card")).toHaveCount(0);
+  await expect(page.getByText("Noch keine Ausgaben erfasst")).toBeVisible();
+  await expect(page).toHaveURL(/\/issues$/);
+
+  await page.getByRole("button", { name: "Ausgabe hinzufügen" }).click();
+  await page.getByLabel("IssueLabel *").fill("2026");
+  await page.getByLabel("Hilfsdaten").fill("Ausgabengrundlage");
 
   await page.getByRole("link", { name: "Serie", exact: true }).click();
   await page.getByLabel("Titel *").fill("Ch Bar");

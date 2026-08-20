@@ -42,7 +42,7 @@ const editorTabs = computed(() => {
     { key: "xtf", label: "Vorschau", to: currentDraftId.value ? `/draft/${currentDraftId.value}/xtf` : "/" }
   ];
 });
-const exportDisabled = computed(() => !store.currentDraft || (currentValidation.value?.errorCount ?? 0) > 0);
+const exportDisabled = computed(() => !store.currentDraft || currentValidation.value?.exportable !== true);
 const showContextBar = computed(() => Boolean(store.currentDraft) && activeTab.value !== "start");
 
 function exportCurrentDraft(): void {

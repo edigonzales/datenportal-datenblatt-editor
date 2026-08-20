@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  createEmptyDatasetIssue,
   createEmptyDatasetRoot,
   createEmptyDatasetSeriesRoot,
   isDatasetRoot,
@@ -15,7 +16,10 @@ describe("createEmptyDatasetRoot", () => {
     expect(datasetRoot.dataset.accessLevel).toBe("open");
     expect(seriesRoot.series.accessLevel).toBe("open");
     expect(seriesRoot.series.auxiliaryData).toBe("");
-    expect(seriesRoot.series.issues?.[0]?.auxiliaryData).toBe("");
+    expect(seriesRoot.series.issues).toEqual([]);
+
+    const issue = createEmptyDatasetIssue(seriesRoot.series, { isCurrentIssue: true });
+    expect(issue.auxiliaryData).toBe("");
   });
 });
 

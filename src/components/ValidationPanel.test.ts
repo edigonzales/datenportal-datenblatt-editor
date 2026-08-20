@@ -9,6 +9,7 @@ describe("ValidationPanel", () => {
         validation: {
           errorCount: 1,
           warningCount: 1,
+          exportable: false,
           issues: [
             { severity: "warning", code: "warn", path: "$.dataset.attributes", message: "1 Attribute ohne Beschreibung." },
             { severity: "error", code: "required", path: "$.dataset.identifier", message: "Identifier ist ein Pflichtfeld." },

@@ -46,8 +46,6 @@ export function createEmptyDatasetSeriesRoot(): DatasetSeriesRootJson {
     issues: []
   };
 
-  series.issues = [createEmptyDatasetIssue(series, { isCurrentIssue: true })];
-
   return {
     type: "DatasetSeries",
     schemaVersion: DEFAULT_SCHEMA_VERSION,
