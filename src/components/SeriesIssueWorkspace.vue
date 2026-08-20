@@ -197,7 +197,7 @@ watch([seriesDefaultsSignature, issueDerivationSignature], syncIssues, { immedia
                   ? `${summaryForIssue(entry, index).errorCount} Fehler`
                   : summaryForIssue(entry, index).warningCount
                     ? `${summaryForIssue(entry, index).warningCount} Warnungen`
-                    : 'OK'
+                    : 'Keine offenen Probleme'
               }}
             </span>
           </div>

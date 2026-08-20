@@ -555,8 +555,8 @@ label.radio-item {
 }
 
 .draft-card--selectable[data-selected="true"] {
-  border-color: var(--dp-color-accent);
-  background: var(--dp-color-accent-soft);
+  border-color: var(--dp-color-info-border);
+  background: var(--dp-color-info-bg);
   box-shadow: none;
   transform: none;
 }

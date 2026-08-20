@@ -253,6 +253,12 @@ test("creates and navigates a dataset series workspace", async ({ page }) => {
   await expect(page.getByLabel("Identifier *")).toHaveValue("ch.foo_2026");
   await expect(page.getByLabel("Titel")).toHaveValue("Ch Foo 2026");
   await page.getByLabel("Hilfsdaten").fill("Ausgabengrundlage");
+  const selectedIssueCard = page.locator('.series-issue-card[data-selected="true"]');
+  await expect(selectedIssueCard).toHaveCount(1);
+  await expect(selectedIssueCard).toHaveCSS("background-color", "rgb(232, 242, 251)");
+  await expect(selectedIssueCard).toHaveCSS("border-color", "rgb(185, 215, 239)");
+  await expect(selectedIssueCard).toContainText("Keine offenen Probleme");
+  await expect(page.getByText("OK")).toHaveCount(0);
 
   await page.getByRole("button", { name: "Ausgabe hinzufügen" }).click();
   await expect(page.locator(".series-issue-card")).toHaveCount(2);

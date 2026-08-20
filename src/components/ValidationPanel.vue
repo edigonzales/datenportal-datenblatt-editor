@@ -36,7 +36,7 @@ const otherIssueGroups = computed(() =>
         <div class="status-section__header">
           <h4>Serie</h4>
           <span class="status-pill" :data-state="seriesGroup.errorCount ? 'error' : seriesGroup.warningCount ? 'dirty' : 'saved'">
-            {{ seriesGroup.errorCount ? `${seriesGroup.errorCount} Fehler` : seriesGroup.warningCount ? `${seriesGroup.warningCount} Warnungen` : "OK" }}
+            {{ seriesGroup.errorCount ? `${seriesGroup.errorCount} Fehler` : seriesGroup.warningCount ? `${seriesGroup.warningCount} Warnungen` : "Keine offenen Probleme" }}
           </span>
         </div>
         <div class="status-list">
@@ -61,7 +61,7 @@ const otherIssueGroups = computed(() =>
                 ? `${activeIssueGroup.errorCount} Fehler`
                 : activeIssueGroup.warningCount
                   ? `${activeIssueGroup.warningCount} Warnungen`
-                  : "OK"
+                  : "Keine offenen Probleme"
             }}
           </span>
         </div>
