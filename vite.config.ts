@@ -4,6 +4,10 @@ import { VitePWA } from "vite-plugin-pwa";
 
 function normalizeBasePath(value?: string): string {
   const trimmed = value?.trim() ?? "";
+  if (trimmed === "." || trimmed === "./") {
+    return "./";
+  }
+
   if (!trimmed || trimmed === "/") {
     return "/";
   }
@@ -14,7 +18,7 @@ function normalizeBasePath(value?: string): string {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const basePath = normalizeBasePath(env.VITE_BASE_PATH);
+  const basePath = normalizeBasePath(env.VITE_BASE_PATH || "./");
 
   return {
     base: basePath,
@@ -49,7 +53,7 @@ export default defineConfig(({ mode }) => {
         },
         workbox: {
           globPatterns: ["**/*.{js,css,html,svg,json,xml,xtf,png,woff2}"],
-          navigateFallback: basePath + "index.html"
+          navigateFallback: "index.html"
         }
       })
     ],

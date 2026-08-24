@@ -1,9 +1,10 @@
 import { createRouter, createWebHistory } from "vue-router";
 import StartPage from "../components/StartPage.vue";
 import DatasetEditor from "../components/DatasetEditor.vue";
+import { getPublicBasePath } from "./publicBase";
 
 export const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(getPublicBasePath()),
   routes: [
     { path: "/", name: "start", component: StartPage, meta: { tab: "start" } },
     {

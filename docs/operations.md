@@ -85,21 +85,23 @@ stammt aus `github.run_number`; `package.json` und Git-Tags haben keinen
 Einfluss auf die Container-Version. Fehlgeschlagene oder manuelle Läufe können
 deshalb Lücken in der Run-Nummer verursachen.
 
-### Build-Pfade
+### Prefix-neutraler Build und Gateway-Prefix
 
-Der öffentliche Pfad wird beim Build über `VITE_BASE_PATH` festgelegt:
+Das produktive Image wird mit relativen URLs gebaut. Der öffentliche Pfad wird
+nicht fest in `dist/` oder in das Containerimage eingebaut:
 
 ```bash
-docker build --build-arg VITE_BASE_PATH=/ \
-  -t datenblatt-editor:root .
-
-docker build --build-arg VITE_BASE_PATH=/metadaten-editor/ \
-  -t datenblatt-editor:metadaten-editor .
+docker build --build-arg VITE_BASE_PATH=./ \
+  -t datenblatt-editor:local .
 ```
 
-Der Base Path wird in den Vite-Assets, im Vue-Router, im PWA-Manifest und in
-den lokalen XTF-URLs verwendet. Das Image selbst erwartet Anfragen nach dem
-Prefix-Strip unter `/`.
+`VITE_BASE_PATH=./` erzeugt relative URLs für Vite-Assets, Manifest, Icons,
+Service Worker und lokale XTF-Snapshots. NGINX setzt bei jeder Auslieferung von
+`index.html` anhand von `X-FORWARDED-PREFIX` ein passendes `<base>`-Element.
+Ohne Header ist der Base-Pfad `/`; mit
+`X-FORWARDED-PREFIX: /metadaten-editor` ist er
+`/metadaten-editor/`. Das Image selbst erwartet Anfragen nach dem Prefix-Strip
+unter `/`.
 
 ## Anwendung lokal starten
 
@@ -279,9 +281,9 @@ Da es kein Backend gibt, ist klassisches Applikationsmonitoring stark reduziert.
 ### Container-Probes
 
 Der Container hat keinen separaten Health-Endpunkt. Für Readiness und Liveness
-kann `GET /` auf Port `8080` verwendet werden. Der Router muss den
-konfigurierten Subpath vor der Probe entfernen oder die Probe direkt gegen den
-Containerpfad ausführen.
+kann `GET /` auf Port `8080` verwendet werden. OpenShift-Probes laufen direkt
+gegen den Service und benötigen keinen öffentlichen Prefix. Eine externe Probe
+über den Gateway muss den Prefix wie jede andere Anfrage weiterleiten.
 
 Sinnvolle Betriebschecks sind:
 
@@ -306,12 +308,12 @@ Vor einem Release:
 
 Bei einem Container-Release zusätzlich:
 
-1. Image mit dem gewünschten `VITE_BASE_PATH` bauen
+1. Image mit `VITE_BASE_PATH=./` bauen
 2. `npm test` und `npm run build` erfolgreich ausführen
 3. Container unter einer beliebigen nicht-root UID starten
-4. Port `8080`, SPA-Fallback und Snapshot-Dateien prüfen
+4. Port `8080`, SPA-Fallback, Forwarded-Prefix und Snapshot-Dateien prüfen
 5. Image in die Zielregistry pushen
-6. OpenShift-Deployment und Route prüfen
+6. OpenShift-Deployment und Gateway-Location prüfen
 
 Für das Container-Release übernimmt die GitHub Action den Build und das
 Publishing. Nach einem erfolgreichen Lauf:

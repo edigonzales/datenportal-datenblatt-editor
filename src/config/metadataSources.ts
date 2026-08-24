@@ -1,6 +1,7 @@
 import type { MetadataSource } from "../domain/datasetTypes";
+import { getPublicBasePath } from "../app/publicBase";
 
-const localMockSourcePath = (filename: string) => import.meta.env.BASE_URL + "mock-sources/" + filename;
+const localMockSourcePath = (filename: string) => getPublicBasePath() + "mock-sources/" + filename;
 
 export const defaultMetadataSource: MetadataSource = {
   label: "Datenportal",

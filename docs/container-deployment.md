@@ -26,39 +26,25 @@ sondern durch OpenShift oder den vorgelagerten Router.
 - Docker oder eine kompatible Build-Umgebung
 - Zugriff auf die Zielregistry
 - Node.js 22 nur für Builds ausserhalb des Containers
-- ein vorgelagerter Router, der den externen Prefix entfernen kann
+- ein vorgelagerter API-Gateway, der den externen Prefix entfernt und
+  `X-FORWARDED-PREFIX` setzt
 
 ## Image bauen
 
-### Betrieb an der Domain-Root
+Das Image wird immer prefix-neutral gebaut. `VITE_BASE_PATH=./` sorgt für
+relative Asset-, Manifest-, Service-Worker- und Snapshot-URLs:
 
 ```bash
 docker build \
-  --build-arg VITE_BASE_PATH=/ \
+  --build-arg VITE_BASE_PATH=./ \
   -t registry.example.org/datenportal/datenblatt-editor:latest \
   .
 ```
 
-### Betrieb unter `/metadaten-editor/`
-
-```bash
-docker build \
-  --build-arg VITE_BASE_PATH=/metadaten-editor/ \
-  -t registry.example.org/datenportal/datenblatt-editor:latest \
-  .
-```
-
-`VITE_BASE_PATH` wird in den Build eingebaut. Der Wert muss mit führendem und
-abschliessendem `/` angegeben werden. Der Build normalisiert einfache
-Abweichungen, empfohlen ist trotzdem die kanonische Schreibweise.
-
-Der Base Path wird für folgende URLs verwendet:
-
-- JavaScript- und CSS-Assets
-- Vue-Router-History
-- PWA-Manifest, Scope und Icons
-- Service-Worker-Navigation
-- gebündelte XTF-Snapshots
+Der öffentliche Prefix wird nicht in das Image eingebaut. NGINX liest ihn bei
+jedem Request aus `X-FORWARDED-PREFIX` und fügt ihn in die ausgelieferte
+`index.html` als `<base href="...">` ein. Ein fehlender oder ungültiger Header
+ergibt den Base-Pfad `/`.
 
 ### Image pushen
 
@@ -153,13 +139,15 @@ Nach dem ersten erfolgreichen Workflow-Lauf:
 
 ## Lokaler Container-Test
 
-Ein Root-Build kann direkt getestet werden:
+Das publizierte Image kann direkt unter `/` getestet werden. Ohne
+`X-FORWARDED-PREFIX` setzt NGINX den Base-Pfad auf `/`:
 
 ```bash
+docker pull sogis/datenportal-datenblatt-editor:0.1.42
 docker run --rm \
   --user 12345:0 \
   -p 8080:8080 \
-  registry.example.org/datenportal/datenblatt-editor:latest
+  sogis/datenportal-datenblatt-editor:0.1.42
 ```
 
 Prüfungen:
@@ -176,9 +164,20 @@ Erwartet wird:
 - `200` für die XTF-Datei
 - `200` für den Deep Link, weil NGINX auf `index.html` zurückfällt
 
-Ein Subpath-Build erwartet den Prefix-Rewrite des vorgelagerten Routers. Ein
-direkter Aufruf von `http://127.0.0.1:8080/metadaten-editor/` simuliert diesen
-Rewrite nicht.
+Der Gateway-Vertrag kann zusätzlich direkt am Container geprüft werden:
+
+```bash
+curl -H 'X-Forwarded-Prefix: /metadaten-editor' \
+  http://127.0.0.1:8080/
+curl -H 'X-Forwarded-Prefix: /metadaten-editor' \
+  http://127.0.0.1:8080/draft/123
+```
+
+Die Antworten müssen `<base href="/metadaten-editor/">` enthalten. Ein
+vollständiger Browser-Test unter
+`http://127.0.0.1:8080/metadaten-editor/` benötigt zusätzlich einen lokalen
+Reverse-Proxy, der `/metadaten-editor/` entfernt und den Header setzt. Der
+Container selbst liefert weiterhin Root-Pfade aus.
 
 ## OpenShift-Vertrag
 
@@ -186,16 +185,20 @@ Rewrite nicht.
 
 Der OpenShift-Service zeigt auf Container-Port `8080`.
 
-Der externe Router stellt beispielsweise bereit:
+Der bestehende API-Gateway stellt beispielsweise bereit:
 
-```text
-Extern:   https://daten.so.ch/metadaten-editor/...
-Intern:   http://service:8080/...
+```nginx
+location /metadaten-editor/ {
+    proxy_set_header X-FORWARDED-PREFIX '/metadaten-editor';
+    proxy_pass http://metadaten-editor.${NAMESPACE}.svc/;
+}
 ```
 
-Der Router entfernt also `/metadaten-editor` vor der Weiterleitung. Das ist
-notwendig, weil der Container den Build-Inhalt ab Root `/usr/share/nginx/html`
-ausliefert.
+Der abschliessende `/` bei `proxy_pass` entfernt den öffentlichen Prefix vor
+der Weiterleitung. Der Container erhält deshalb Root-Pfade und benötigt weder
+eine `/metadaten-editor`-Dateistruktur noch ein OpenShift-Route-Rewrite.
+`X-FORWARDED-PREFIX` teilt NGINX mit, unter welchem öffentlichen Pfad die
+Antwort im Browser sichtbar ist.
 
 Direkte Browser-Navigationen müssen ebenfalls korrekt weitergeleitet werden:
 
@@ -205,9 +208,14 @@ Direkte Browser-Navigationen müssen ebenfalls korrekt weitergeleitet werden:
 /metadaten-editor/assets/app.js    -> /assets/app.js
 ```
 
-Wenn die eingesetzte Routing-Komponente keinen Prefix-Rewrite unterstützt,
-muss entweder eine vorgelagerte Rewrite-Schicht ergänzt oder die alternative
-prefix-aware NGINX-Konfiguration umgesetzt werden.
+Der Gateway muss den Header nur für die vertrauenswürdige interne Verbindung
+setzen. NGINX akzeptiert nur Pfade aus sicheren URL-Segmenten; fehlende,
+absolute, mit Leerzeichen versehene oder sonst ungültige Werte fallen auf `/`
+zurück. Ein öffentlicher Client darf diesen Header nicht selbst kontrollieren.
+
+Die OpenShift-Route bleibt für Hostname und TLS zuständig. Der zentrale
+API-Gateway bleibt für Prefix-Strip und `X-FORWARDED-PREFIX` zuständig; beide
+Aufgaben werden nicht in das statische Image verlagert.
 
 ### Sicherheitsprofil
 
@@ -268,13 +276,17 @@ Die Runtime-Konfiguration:
 - liefert vorhandene Dateien direkt aus
 - liefert für unbekannte Client-Routen `index.html`
 - liefert fehlerhafte Asset-Pfade nicht als `index.html`, sondern mit `404`
+- liest einen sicheren `X-FORWARDED-PREFIX` aus
+- fügt den öffentlichen Prefix in `index.html` als `<base>` ein
 - schreibt Access-Logs nach stdout
 - schreibt Error-Logs nach stderr
-- setzt `index.html` auf Revalidierung statt Langzeit-Cache
+- setzt `index.html` wegen des requestabhängigen `<base>` auf `no-store`
+- setzt Manifest und Service Worker auf Revalidierung
 - setzt gehashte Dateien unter `/assets/` auf Langzeit-Cache
 
-Damit bleiben neue App-Versionen auffindbar, während unveränderliche Assets
-effizient gecacht werden.
+Damit bleiben neue App-Versionen auffindbar, und eine zwischengespeicherte
+`index.html` kann nicht versehentlich für einen anderen Gateway-Prefix
+verwendet werden. Unveränderliche Assets werden trotzdem effizient gecacht.
 
 ## Object-Storage-Migration
 
@@ -282,8 +294,8 @@ Der Builder erzeugt `dist/`. Dieses Verzeichnis ist das Deployment-Artefakt
 und kann später ohne Anwendungsänderung in einen Object Storage kopiert
 werden.
 
-Der externe Gateway oder Object-Storage-Website-Endpunkt muss dabei denselben
-Routing-Vertrag erfüllen:
+Bei einem Prefix als Verzeichnis werden die Dateien beispielsweise so
+abgelegt:
 
 ```text
 /metadaten-editor/assets/...     -> dist/assets/...
@@ -291,8 +303,14 @@ Routing-Vertrag erfüllen:
 /metadaten-editor/draft/123      -> dist/index.html
 ```
 
-Alternativ kann der Object Storage den Prefix als Verzeichnis abbilden. In
-diesem Fall müssen die Dateien entsprechend unter dem Prefix abgelegt werden.
+Die relativen URLs funktionieren am Prefix-Root ohne Anpassung des Artefakts.
+Für direkte Deep Links muss der Object-Storage-Endpunkt zusätzlich eine
+prefixbewusste SPA-Auslieferung anbieten: entweder durch dieselbe
+`<base>`-Injektion am Gateway/Edge wie NGINX oder durch eine Hosting-Funktion,
+die die Anfrage unter dem öffentlichen Prefix als App-Root behandelt. Ein
+reines Fallback auf `index.html` ohne diese Prefix-Behandlung kann bei
+`/metadaten-editor/draft/123` versuchen, Assets unter
+`/metadaten-editor/draft/assets/` zu laden.
 
 ### Erforderliche Object-Storage-Einstellungen
 
@@ -301,6 +319,8 @@ diesem Fall müssen die Dateien entsprechend unter dem Prefix abgelegt werden.
 - `index.html` nicht langfristig cachen
 - gehashte Dateien unter `assets/` langfristig und immutable cachen
 - externe TLS-Auslieferung für den Browser beziehungsweise PWA-Betrieb
+- bei requestabhängiger `<base>`-Injektion `index.html` nicht zwischen
+  verschiedenen Prefixes teilen
 
 ## Manueller Release-Ablauf
 
@@ -312,7 +332,7 @@ npm test
 npm run build
 
 docker build \
-  --build-arg VITE_BASE_PATH=/metadaten-editor/ \
+  --build-arg VITE_BASE_PATH=./ \
   -t registry.example.org/datenportal/datenblatt-editor:RELEASE \
   .
 
@@ -322,7 +342,7 @@ docker push registry.example.org/datenportal/datenblatt-editor:RELEASE
 Danach:
 
 1. Image in OpenShift deployen.
-2. Service-Port `8080` und Prefix-Rewrite prüfen.
+2. Service-Port `8080`, Prefix-Strip und `X-FORWARDED-PREFIX` prüfen.
 3. Startseite und einen Deep Link direkt aufrufen.
 4. Quellen-Dialog und XTF-Snapshot prüfen.
 5. Browser-Reload und PWA-Update prüfen.
@@ -337,8 +357,22 @@ korrekt weiter. NGINX muss unbekannte Routen auf `/index.html` zurückführen.
 
 ### JavaScript- oder CSS-Dateien liefern 404 unter dem Subpath
 
-Der Build wurde mit einem falschen `VITE_BASE_PATH` erstellt oder der Router
-entfernt den Prefix nicht. `dist/index.html` zeigt den erwarteten Base Path.
+Prüfen, ob der Gateway den öffentlichen Prefix entfernt und
+`X-FORWARDED-PREFIX` setzt. Der Container muss intern beispielsweise
+`/assets/index-<hash>.js` erhalten; der Browser darf es öffentlich unter
+`/metadaten-editor/assets/...` anfordern. Der produktive Build verwendet
+`VITE_BASE_PATH=./`; ein fest eingebauter `/metadaten-editor/`-Prefix ist nicht
+erforderlich.
+
+Bei einer direkten Containeranfrage kann der Header für den Test gesetzt
+werden:
+
+```bash
+curl -sS -H 'X-Forwarded-Prefix: /metadaten-editor' \
+  http://127.0.0.1:8080/ | grep '<base'
+```
+
+Erwartet wird `<base href="/metadaten-editor/">`.
 
 ### Container startet als nicht-root UID nicht
 
@@ -362,3 +396,5 @@ Die Ursache ist meist ein alter Service Worker oder Browser-Cache:
 
 Der Object Storage benötigt ein SPA-Fallback oder ein Gateway-Rewrite. Ein
 reiner Dateiserver ohne Fallback kann Vue-Router-History-Routen nicht bedienen.
+Zusätzlich muss die Auslieferung unter einem Prefix die relativen Assets auch
+für Deep Links korrekt auflösen; siehe die Object-Storage-Anforderungen oben.

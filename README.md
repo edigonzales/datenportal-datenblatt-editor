@@ -77,24 +77,25 @@ Das produktive Image baut die Anwendung und liefert den Inhalt von `dist/` über
 NGINX auf Port `8080` aus. Das Runtime-Image läuft unprivilegiert und benötigt
 kein Backend.
 
-Für einen Betrieb unter der Domain-Root:
+Das Image wird prefix-neutral gebaut. Die relativen URLs funktionieren direkt
+unter `/` und hinter dem bestehenden API-Gateway auch unter einem öffentlichen
+Prefix:
 
 ```bash
-docker build --build-arg VITE_BASE_PATH=/ -t datenblatt-editor:local .
+docker build --build-arg VITE_BASE_PATH=./ -t datenblatt-editor:local .
 docker run --rm --user 12345:0 -p 8080:8080 datenblatt-editor:local
 ```
 
-Für den geplanten Betrieb unter `/metadaten-editor/`:
-
-```bash
-docker build --build-arg VITE_BASE_PATH=/metadaten-editor/ \
-  -t datenblatt-editor:metadaten-editor .
-```
-
-Der vorgelagerte Router muss den Prefix `/metadaten-editor` entfernen, bevor
-die Anfrage an den Container weitergeleitet wird. Die vollständige
-Betriebsanleitung steht in
+Lokal liefert der Container die Anwendung direkt unter
+`http://localhost:8080/` aus. Produktiv entfernt der Gateway den öffentlichen
+Prefix vor der Weiterleitung und setzt `X-FORWARDED-PREFIX`; NGINX erzeugt
+daraus zur Laufzeit den passenden HTML-Base-Pfad. Das gleiche Image kann damit
+beispielsweise unter `/metadaten-editor/` betrieben werden. Die vollständige
+Gateway-Konfiguration steht in
 [docs/container-deployment.md](docs/container-deployment.md).
+
+`VITE_BASE_PATH=./` ist deshalb der produktive Build-Wert. Der öffentliche
+Prefix wird nicht in das Image einprogrammiert.
 
 ### GitHub Action und Container-Registries
 

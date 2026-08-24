@@ -55,12 +55,15 @@ Das produktive Laufzeitverhalten kann mit dem Dockerimage geprüft werden.
 `npm run preview` bleibt für lokale Vorschauen nützlich, ist aber nicht der
 produktive Webserver im Container.
 
-### Root-Build
+### Prefix-neutraler Container-Build
+
+Das Dockerimage wird mit relativen Vite-URLs gebaut. Dadurch kann dasselbe
+Image lokal unter `/` und produktiv hinter dem API-Gateway unter einem Prefix
+verwendet werden.
 
 ```bash
-docker build --build-arg VITE_BASE_PATH=/ \
+docker build --build-arg VITE_BASE_PATH=./ \
   -t datenblatt-editor:local .
-
 docker run --rm --user 12345:0 -p 8080:8080 \
   datenblatt-editor:local
 ```
@@ -76,18 +79,22 @@ curl -I http://127.0.0.1:8080/draft/example
 Die Startseite und der Deep Link müssen `200` liefern. Die XTF-Datei muss als
 statische Datei erreichbar sein.
 
-### Subpath-Build
+### Gateway-Prefix lokal simulieren
+
+Der Container erwartet intern Root-Pfade. Für einen einfachen Test des
+Gateway-Vertrags kann der Header direkt gesetzt werden:
 
 ```bash
-docker build --build-arg VITE_BASE_PATH=/metadaten-editor/ \
-  -t datenblatt-editor:metadaten-editor .
+curl -H 'X-Forwarded-Prefix: /metadaten-editor' \
+  http://127.0.0.1:8080/
+curl -H 'X-Forwarded-Prefix: /metadaten-editor' \
+  http://127.0.0.1:8080/draft/example
 ```
 
-Bei einem Subpath-Build prüfen, dass `dist/index.html` auf URLs unter
-`/metadaten-editor/` verweist. Im produktiven OpenShift-Aufbau entfernt der
-vorgelagerte Router diesen Prefix vor der Weiterleitung an NGINX. Ein direkter
-Aufruf des Containers ohne diesen Prefix-Rewrite ist deshalb nur für den
-Root-Build geeignet.
+Die HTML-Antwort muss dann `<base href="/metadaten-editor/">` enthalten.
+Ein vollständiger Browser-Test mit der öffentlichen URL benötigt zusätzlich
+den Prefix-Strip des API-Gateways. Der Container selbst kennt keine
+`/metadaten-editor`-Dateistruktur.
 
 ### OpenShift-Sicherheitsprofil lokal simulieren
 
