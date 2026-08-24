@@ -51,6 +51,11 @@ test("shows the simplified start screen", async ({ page }) => {
   await expect(newDatasetCard).toHaveCSS("border-radius", "4px");
   await expect(page.locator(".action-grid .button--primary")).toHaveCount(1);
   await expect(primaryButton).toBeVisible();
+  await expect(sourceCard).toHaveClass(/action-card--disabled/);
+  await expect(sourceCard).toHaveAttribute("aria-disabled", "true");
+  await expect(sourceCard).toContainText("Temporär nicht verfügbar, bis die Daten publiziert sind.");
+  await expect(sourceCard).toHaveCSS("background-color", "rgb(244, 247, 249)");
+  await expect(primaryButton).toBeDisabled();
   await expect(sourceCard.locator(".button--primary")).toHaveCount(1);
   await expect(newDatasetCard.locator(".button--primary")).toHaveCount(0);
   await expect(draftCard.getByRole("button", { name: "Zu den Entwürfen" })).toBeVisible();
@@ -58,7 +63,8 @@ test("shows the simplified start screen", async ({ page }) => {
   await expect(page.locator(".eyebrow")).toHaveCount(0);
   await expect(page.locator(".toolbar-actions")).toHaveCount(0);
   await expect(page.locator("body")).toHaveCSS("background-color", "rgb(255, 255, 255)");
-  await expect(primaryButton).toHaveCSS("background-color", "rgb(210, 10, 17)");
+  await expect(primaryButton).toHaveCSS("background-color", "rgb(217, 224, 230)");
+  await expect(primaryButton).toHaveCSS("border-color", "rgb(217, 224, 230)");
   await expect(primaryButton).toHaveCSS("border-radius", "4px");
   await expect(secondaryButton).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
   await expect(secondaryButton).toHaveCSS("border-color", "rgb(210, 10, 17)");
@@ -87,108 +93,14 @@ test("shows the simplified start screen", async ({ page }) => {
   await expect(page.locator(".empty-state h3")).toHaveCSS("margin-top", "0px");
 });
 
-test("loads a dataset from the offline source dialog", async ({ page }) => {
+test("keeps source loading disabled until source data is published", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { name: "Datenportal: Datenblatt-Editor" })).toBeVisible();
-  await page.getByRole("button", { name: "Quelle öffnen" }).click();
-  const sourceDialog = page.locator(".dialog");
-  await expect(sourceDialog).toHaveCSS("border-radius", "4px");
-  const closeButton = page.getByRole("button", { name: "Schließen" });
-  await expect(closeButton).toHaveCSS("background-color", "rgb(255, 255, 255)");
-  await expect(closeButton).toHaveCSS("border-color", "rgb(217, 224, 230)");
-  await expect(page.getByLabel("Quelle")).toHaveValue("/mock-sources/dataset.index.xtf");
-  await expect(page.getByLabel("Quelle")).toHaveCSS("height", "40px");
-  await expect(page.getByLabel("Organisationseinheit")).toHaveCSS("height", "40px");
-  await expect(page.getByRole("heading", { name: "Vorschau" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Identifier auswählen" })).toHaveCount(0);
-  const importButton = page.getByRole("button", { name: "In Editor übernehmen" });
-  await expect(importButton).toBeDisabled();
+  const sourceCard = actionCard(page, "Metadaten von Quelle laden");
 
-  await page.getByLabel("Quelle").fill("/missing/dataset.index.xtf");
-  await page.getByRole("button", { name: "Quelle laden" }).click();
-  const errorNotice = page.locator(".notice");
-  await expect(errorNotice).toBeVisible();
-  await expect(errorNotice).toHaveCSS("border-radius", "4px");
-  await expect(errorNotice).toContainText("Die Quelle konnte nicht geladen werden.");
-
-  await page.getByLabel("Quelle").fill("/mock-sources/dataset.index.xtf");
-  await page.getByRole("button", { name: "Quelle laden" }).click();
-  await expect(sourceDialog).toContainText("2 Einträge gefunden");
-
-  await page.getByLabel("Eintrag suchen oder Identifier eingeben").fill("ch.so.grundwasser.qualitaet");
-  await page.getByRole("button", { name: "Suchen" }).click();
-  const nitratCard = sourceDialog.locator(".draft-card").filter({ hasText: "Wasserqualität Grundwasser Kanton Solothurn" }).first();
-  await nitratCard.click();
-  const selectedCard = sourceDialog.locator('.draft-card[data-selected="true"]');
-  await expect(selectedCard).toContainText("Wasserqualität Grundwasser Kanton Solothurn");
-  await expect(importButton).toBeEnabled();
-
-  await importButton.click();
-
-  const contextBar = page.locator(".context-bar");
-  await expect(contextBar).toContainText("Wasserqualität Grundwasser Kanton Solothurn");
-  await expect(page.getByText("Von Quelle geladen")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Attribute", exact: true })).toHaveCount(0);
-  await expect(page.locator(".attribute-table")).toBeVisible();
-  await expect(contextBar).toHaveCSS("padding-top", "12px");
-  await expect(contextBar).toHaveCSS("padding-left", "16px");
-  await expect(contextBar).toHaveCSS("background-color", "rgb(231, 246, 236)");
-  await expect(contextBar.locator(".status-pill")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Datenblatt exportieren" })).toHaveCSS("border-radius", "4px");
-  await expect(page.getByLabel("Identifier *")).toHaveCSS("border-radius", "4px");
-
-  await expectVerticalGap(
-    page.getByRole("heading", { name: "Datensatz-Metadaten" }),
-    page.getByRole("heading", { name: "Grundangaben" }),
-    16
-  );
-
-  const checkboxMarginTop = await page.locator('.checkbox-item input[type="checkbox"]').first().evaluate((element) => {
-    return window.getComputedStyle(element).marginTop;
-  });
-  const radioMarginTop = await page.locator('.radio-item input[type="radio"]').first().evaluate((element) => {
-    return window.getComputedStyle(element).marginTop;
-  });
-  const checkboxAlignItems = await page.locator(".checkbox-item").first().evaluate((element) => {
-    return window.getComputedStyle(element).alignItems;
-  });
-  const radioAlignItems = await page.locator(".radio-item").first().evaluate((element) => {
-    return window.getComputedStyle(element).alignItems;
-  });
-  expect(checkboxMarginTop).toBe("0px");
-  expect(radioMarginTop).toBe("0px");
-  expect(checkboxAlignItems).toBe("center");
-  expect(radioAlignItems).toBe("center");
-
-  await page.evaluate(() => {
-    document.querySelector(".context-bar")?.setAttribute("data-save-state", "dirty");
-  });
-  await expect(contextBar).toHaveCSS("background-color", "rgb(255, 243, 224)");
-  await page.evaluate(() => {
-    document.querySelector(".context-bar")?.setAttribute("data-save-state", "saved");
-  });
-  await expect(contextBar).toHaveCSS("background-color", "rgb(231, 246, 236)");
-
-  await page.evaluate(() => window.scrollTo({ top: 1200, behavior: "auto" }));
-  const sidebarPanelBox = await page.locator(".sidebar-panel").boundingBox();
-  const contextBarBox = await contextBar.boundingBox();
-  const validationHeadingBox = await page.getByRole("heading", { name: "Prüfstatus" }).boundingBox();
-  expect(sidebarPanelBox).not.toBeNull();
-  expect(validationHeadingBox).not.toBeNull();
-  expect(contextBarBox).not.toBeNull();
-  expect((sidebarPanelBox?.y ?? 0) >= 14 && (sidebarPanelBox?.y ?? 0) <= 18).toBe(true);
-  expect((validationHeadingBox?.y ?? 0) >= (sidebarPanelBox?.y ?? 0)).toBe(true);
-  expect((contextBarBox?.y ?? 0) + (contextBarBox?.height ?? 0)).toBeLessThan(0);
-
-  await expect(page.locator(".surface").first()).toHaveCSS("border-radius", "0px");
-  await expect(page.locator(".sidebar-panel")).toHaveCSS("border-radius", "0px");
-
-  await expect(page.locator(".table-wrap")).toHaveCSS("border-radius", "4px");
-
-  await page.getByRole("link", { name: "Vorschau" }).click();
-  await expect(page.locator(".preview-panel")).toHaveCSS("border-radius", "4px");
-  await expect(page.locator(".preview-panel pre")).toHaveCSS("border-radius", "4px");
+  await expect(sourceCard).toHaveAttribute("aria-disabled", "true");
+  await expect(sourceCard.getByRole("button", { name: "Quelle öffnen" })).toBeDisabled();
+  await expect(page.locator(".dialog")).toHaveCount(0);
 });
 
 test("creates and navigates a dataset series workspace", async ({ page }) => {

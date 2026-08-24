@@ -541,6 +541,32 @@ label.radio-item {
   color: var(--dp-color-text);
 }
 
+.action-card--disabled {
+  background: var(--dp-color-surface-alt);
+  border-color: var(--dp-color-line);
+  color: var(--dp-color-text-muted);
+  cursor: not-allowed;
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.action-card--disabled h3,
+.action-card--disabled p {
+  color: var(--dp-color-text-muted);
+}
+
+.action-card__notice {
+  margin-top: var(--dp-space-2) !important;
+  font-size: var(--dp-font-size-sm);
+}
+
+.action-card--disabled .button:disabled {
+  background: var(--dp-color-border);
+  border-color: var(--dp-color-border);
+  color: var(--dp-color-text-muted);
+  opacity: 1;
+}
+
 .draft-card--selectable {
   cursor: pointer;
   font: inherit;
