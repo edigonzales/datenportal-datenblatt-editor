@@ -62,14 +62,23 @@ anschliessende Push in das GitHub-Spiegelrepository löst die Action aus.
 
 Veröffentlichte Images:
 
-- Docker Hub: `sogis/datenportal-metadaten-editor`
+- Docker Hub: `sogis/datenportal-datenblatt-editor`
 - GitHub Container Registry:
   `ghcr.io/<github-owner>/<github-repository>`
+
+Das Image wird für `linux/amd64` und `linux/arm64` veröffentlicht. Beim Pull
+wählt Docker anhand der Host-Architektur automatisch das passende Image aus.
+Ein veröffentlichtes Manifest lässt sich so prüfen:
+
+```bash
+docker buildx imagetools inspect sogis/datenportal-datenblatt-editor:latest
+```
 
 Benötigte Repository-Secrets:
 
 - `DOCKERHUB_USERNAME`: Docker-Hub-Benutzer oder Servicekonto mit Schreibzugriff
-- `DOCKERHUB_TOKEN`: Docker-Hub-Access-Token mit Schreibzugriff auf das Image
+- `DOCKERHUB_TOKEN`: Docker-Hub-Access-Token mit Schreibzugriff auf
+  `sogis/datenportal-datenblatt-editor`
 
 Für GHCR wird `GITHUB_TOKEN` verwendet. Der Workflow benötigt deshalb die
 Berechtigungen `contents: read` und `packages: write`.

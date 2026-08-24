@@ -74,8 +74,19 @@ Git-Tags werden dabei nicht speziell ausgewertet.
 Die Action veröffentlicht dasselbe Image mit denselben Tags an beide Ziele:
 
 ```text
-sogis/datenportal-metadaten-editor
+sogis/datenportal-datenblatt-editor
 ghcr.io/<github-owner>/<github-repository>
+```
+
+Das Image wird als Multiarch-Manifest für `linux/amd64` und `linux/arm64`
+veröffentlicht. Docker wählt beim Pull automatisch die passende Architektur;
+der Container und seine Betriebsparameter bleiben auf beiden Architekturen
+gleich.
+
+Die veröffentlichten Plattformen können geprüft werden mit:
+
+```bash
+docker buildx imagetools inspect sogis/datenportal-datenblatt-editor:latest
 ```
 
 ### GitHub-Secrets
@@ -85,7 +96,7 @@ folgende Secrets eingerichtet werden:
 
 - `DOCKERHUB_USERNAME`: Benutzername oder Servicekonto für Docker Hub
 - `DOCKERHUB_TOKEN`: Docker-Hub-Access-Token mit Schreibzugriff
-  auf `sogis/datenportal-metadaten-editor`
+  auf `sogis/datenportal-datenblatt-editor`
 
 Der Token sollte ein Access-Token und kein persönliches Passwort sein. Für GHCR
 verwendet die Action den automatisch bereitgestellten `GITHUB_TOKEN`; ein
@@ -134,8 +145,10 @@ Nach dem ersten erfolgreichen Workflow-Lauf:
 1. Image und Tags in Docker Hub prüfen.
 2. Package und Tags unter **Packages** im GitHub-Repository prüfen.
 3. Das Image aus beiden Registries mit einem SHA-Tag pullen.
-4. Einen Container als nicht-root User auf Port `8080` starten.
-5. Startseite, Snapshot-Datei und einen Deep Link prüfen.
+4. Mit `docker buildx imagetools inspect` die Plattformen `linux/amd64` und
+   `linux/arm64` prüfen.
+5. Einen Container als nicht-root User auf Port `8080` starten.
+6. Startseite, Snapshot-Datei und einen Deep Link prüfen.
 
 ## Lokaler Container-Test
 

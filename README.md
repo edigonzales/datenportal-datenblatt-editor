@@ -104,8 +104,16 @@ Der Workflow
 Push zuerst `npm ci`, `npm test` und `npm run build` aus. Anschliessend wird das
 Image gebaut und veröffentlicht auf:
 
-- Docker Hub: `sogis/datenportal-metadaten-editor`
+- Docker Hub: `sogis/datenportal-datenblatt-editor`
 - GHCR: `ghcr.io/<github-owner>/<github-repository>`
+
+Das veröffentlichte Image ist ein Multiarch-Image für `linux/amd64` und
+`linux/arm64`. Docker wählt beim Pull automatisch die passende Architektur.
+Die Plattformen können beispielsweise mit folgendem Befehl geprüft werden:
+
+```bash
+docker buildx imagetools inspect sogis/datenportal-datenblatt-editor:latest
+```
 
 Für Docker Hub müssen im GitHub-Repository die Secrets `DOCKERHUB_USERNAME` und
 `DOCKERHUB_TOKEN` hinterlegt werden. GHCR verwendet den automatisch verfügbaren
