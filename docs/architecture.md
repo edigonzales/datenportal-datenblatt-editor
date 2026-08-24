@@ -4,10 +4,10 @@ Diese Datei beschreibt die technische Architektur der Anwendung aus Sicht von En
 
 ## Zielbild
 
-Die Anwendung ist eine lokale SPA fuer die Bearbeitung von Metadaten einzelner `Dataset` und hierarchischer `DatasetSeries`. Der Fokus liegt auf:
+Die Anwendung ist eine lokale SPA für die Bearbeitung von Metadaten einzelner `Dataset` und hierarchischer `DatasetSeries`. Der Fokus liegt auf:
 
 - klaren Ladepfaden
-- vollstaendigem Offline-Betrieb
+- vollständigem Offline-Betrieb
 - robuster lokaler Persistenz
 - einfacher Erweiterbarkeit
 - klarer Trennung zwischen Domain, Persistenz und UI
@@ -18,7 +18,7 @@ Die Anwendung ist eine lokale SPA fuer die Bearbeitung von Metadaten einzelner `
 - Internes Objektmodell als kanonisches Speicherformat, XTF als externes Austauschformat
 - Toleranter Import, strenger Export
 - Lokale Persistenz als Default, nicht als Sonderfall
-- UI-Zustaende werden zentral ueber den Store koordiniert
+- UI-Zustände werden zentral über den Store koordiniert
 - Validierung ist von Komponenten getrennt
 - Quellen sind konfigurierbar und im MVP als Offline-Snapshots umgesetzt
 
@@ -50,12 +50,12 @@ flowchart TD
 ### `src/domain`
 
 - `datasetTypes.ts`
-  - zentrale Typen fuer Drafts, Quellen und Validierung
+  - zentrale Typen für Drafts, Quellen und Validierung
 - `normalize.ts`
   - erzeugt das leere Default-Root
   - erkennt `Dataset`- und `DatasetSeries`-Importe
   - normalisiert Root-Import und Naked-Import
-  - fuellt fehlende Strukturen mit Default-Werten auf
+  - füllt fehlende Strukturen mit Default-Werten auf
 - `validation.ts`
   - Strukturvalidierung mit AJV
   - fachliche Validierung auf Feldebene
@@ -65,17 +65,17 @@ flowchart TD
 
 - `datasetRepository.ts`
   - kapselt Dexie
-  - listet, speichert, loescht und dupliziert Drafts
+  - listet, speichert, löscht und dupliziert Drafts
   - verwaltet Settings
 - `endpointLoader.ts`
-  - laedt eine `dataset.index.xtf` aus einer konfigurierten URL
-  - leitet daraus Suchtreffer ab und importiert den gewaehlten Datensatz
+  - lädt eine `dataset.index.xtf` aus einer konfigurierten URL
+  - leitet daraus Suchtreffer ab und importiert den gewählten Datensatz
 - `fileImporter.ts`
   - liest lokale Dateien
-  - XTF/XML-Parse + Strukturpruefung + Normalisierung
+  - XTF/XML-Parse + Strukturprüfung + Normalisierung
 - `exportService.ts`
   - XTF serialisieren
-  - Download ausloesen
+  - Download auslösen
 
 ### `src/stores`
 
@@ -87,23 +87,23 @@ flowchart TD
 ### `src/components`
 
 - `StartPage.vue`
-  - Einstieg in Quellen, Dateiimport, neue Datasets, neue Serien und lokale Entwuerfe
+  - Einstieg in Quellen, Dateiimport, neue Datasets, neue Serien und lokale Entwürfe
 - `SourceLoadDialog.vue`
-  - Quellen-URL laden, suchen, Auswahl markieren, uebernehmen
+  - Quellen-URL laden, suchen, Auswahl markieren, übernehmen
 - `FileImportDialog.vue`
   - Dateiimport mit Fehlerbehandlung und Vorschau
 - `DatasetEditor.vue`
-  - Editor-Wrapper fuer Dataset- und Series-Workspaces
+  - Editor-Wrapper für Dataset- und Series-Workspaces
 - `DatasetForm.vue`
-  - Hauptformular fuer Dataset und Serienkopf
+  - Hauptformular für Dataset und Serienkopf
 - `DatasetIssueForm.vue`
-  - Formular fuer issue-spezifische Felder
+  - Formular für issue-spezifische Felder
 - `SeriesIssueWorkspace.vue`
-  - Master-Detail-Ansicht fuer Ausgaben
+  - Master-Detail-Ansicht für Ausgaben
 - `AttributeTable.vue`
   - tabellarische Bearbeitung der Attribute
 - `ValidationPanel.vue`
-  - rechte Pruefspalte mit Gruppen fuer Serie und Ausgaben
+  - rechte Prüfspalte mit Gruppen für Serie und Ausgaben
 
 ## Routing
 
@@ -117,41 +117,41 @@ Die Anwendung verwendet vier Editor-Routen plus Startseite:
 /draft/:id/xtf         XTF-Vorschau
 ```
 
-Die Routen sind bewusst flach gehalten. Der aktuelle Draft wird ueber die `id` im URL-Pfad geladen; bei `DatasetSeries` wird die aktive Ausgabe ueber `issueId` adressiert.
+Die Routen sind bewusst flach gehalten. Der aktuelle Draft wird über die `id` im URL-Pfad geladen; bei `DatasetSeries` wird die aktive Ausgabe über `issueId` adressiert.
 
 ## Datenfluss
 
 ### 1. App-Start
 
 1. `App.vue` mounted.
-2. `datasetStore.initialize()` wird ausgefuehrt.
+2. `datasetStore.initialize()` wird ausgeführt.
 3. Draft-Liste wird aus IndexedDB gelesen.
 4. letzte Quellenfilter werden aus `settings` geladen.
 
 ### 2. Dateiimport
 
-1. Benutzer waehlt eine lokale Datei.
+1. Benutzer wählt eine lokale Datei.
 2. `fileImporter.ts` liest den Inhalt.
 3. `validation.ts` validiert die Struktur.
-4. `normalize.ts` ueberfuehrt das Ergebnis in `DatasetRootJson` oder `DatasetSeriesRootJson`.
-5. `datasetStore.stageImport()` prueft Identifier-Konflikte.
-6. Der Draft wird in IndexedDB gespeichert und geoeffnet.
+4. `normalize.ts` überführt das Ergebnis in `DatasetRootJson` oder `DatasetSeriesRootJson`.
+5. `datasetStore.stageImport()` prüft Identifier-Konflikte.
+6. Der Draft wird in IndexedDB gespeichert und geöffnet.
 
 ### 3. Quellen-Import
 
-1. Benutzer oeffnet den Dialog mit einer vorbelegten Quellen-URL.
-2. `endpointLoader.ts` laedt `dataset.index.xtf`.
+1. Benutzer öffnet den Dialog mit einer vorbelegten Quellen-URL.
+2. `endpointLoader.ts` lädt `dataset.index.xtf`.
 3. Suche/Filter laufen im Browser.
 4. Bei Identifier-Auswahl oder Trefferwahl wird ein Eintrag aus dem geladenen Index selektiert.
-5. Strukturvalidierung und Normalisierung laufen erst bei der Uebernahme in den Editor.
-6. Der Draft wird gespeichert und geoeffnet.
+5. Strukturvalidierung und Normalisierung laufen erst bei der Übernahme in den Editor.
+6. Der Draft wird gespeichert und geöffnet.
 
 ### 4. Bearbeitung und Autosave
 
 1. Formularfelder mutieren direkt `currentDraft.data`.
 2. `DatasetEditor.vue` beobachtet `store.currentDraft.data`.
 3. `store.markDirty()` setzt den Status auf `dirty`.
-4. Nach `750 ms` ohne weitere Aenderung wird `persistCurrentDraft()` ausgefuehrt.
+4. Nach `750 ms` ohne weitere Änderung wird `persistCurrentDraft()` ausgeführt.
 5. Der Draft wird mit neuem `updatedAt` in IndexedDB geschrieben.
 
 ### 5. Export
@@ -162,7 +162,7 @@ Die Routen sind bewusst flach gehalten. Der aktuelle Draft wird ueber die `id` i
 
 ## Root-Format und Importtoleranz
 
-Interne und exportierte Zielzustaende:
+Interne und exportierte Zielzustände:
 
 ```json
 {
@@ -180,7 +180,7 @@ Interne und exportierte Zielzustaende:
 }
 ```
 
-Beim Import sind fuer beide Typen zwei Formen erlaubt:
+Beim Import sind für beide Typen zwei Formen erlaubt:
 
 - Root-Wrapper
 - nacktes Objekt
@@ -193,7 +193,7 @@ Wichtig:
 
 ## DatasetSeries-Erkennung und Routing
 
-Serien werden in `normalize.ts` und `validation.ts` frueh erkannt. Typische Marker:
+Serien werden in `normalize.ts` und `validation.ts` früh erkannt. Typische Marker:
 
 - `type === "DatasetSeries"`
 - `series`
@@ -207,7 +207,7 @@ Die App leitet solche Dateien in den Series-Workspace. Eine nackte `DatasetIssue
 
 ### Strukturvalidierung
 
-AJV prueft:
+AJV prüft:
 
 - Root muss Objekt sein
 - bei Dataset-Wrapper: `type === "Dataset"` und `dataset` vorhanden
@@ -216,12 +216,12 @@ AJV prueft:
 
 ### Fachliche Validierung
 
-Die fachliche Validierung prueft:
+Die fachliche Validierung prüft:
 
 - Pflichtfelder im Dataset oder Serienkopf
 - Pflichtfelder pro Ausgabe
 - Beschreibung max. 1024 Zeichen
-- keine fuehrenden/nachgestellten Leerzeichen im Identifier
+- keine führenden/nachgestellten Leerzeichen im Identifier
 - E-Mail-Format
 - URL-Format
 - ISO-Daten `YYYY-MM-DD`
@@ -275,7 +275,7 @@ Wichtige Felder:
 
 ### Store `settings`
 
-Wichtige Eintraege:
+Wichtige Einträge:
 
 - `lastSourceUrl`
 - `lastOrganizationUnit`
@@ -284,13 +284,13 @@ Wichtige Eintraege:
 
 Beim Import oder Quellenladen wird vor der Speicherung nach einem existierenden Draft mit demselben fachlichen `identifier` und demselben `draftKind` gesucht.
 
-Moegliche Benutzerentscheidungen:
+Mögliche Benutzerentscheidungen:
 
-- lokalen Entwurf oeffnen
+- lokalen Entwurf öffnen
 - Import als neue Kopie speichern
-- lokalen Entwurf ueberschreiben
+- lokalen Entwurf überschreiben
 
-Der interne Primarschluessel bleibt immer eine UUID und ist bewusst vom fachlichen `identifier` getrennt.
+Der interne Primarschlüssel bleibt immer eine UUID und ist bewusst vom fachlichen `identifier` getrennt.
 
 ## PWA und Offline
 
@@ -312,12 +312,12 @@ Damit sind auch die Snapshot-Dateien in `public/mock-sources/**` Teil des Precac
 
 ### Konsequenz
 
-Die Anwendung ist nach erfolgreichem Laden installierbar und auch offline lauffaehig.
+Die Anwendung ist nach erfolgreichem Laden installierbar und auch offline lauffähig.
 
 Grenzen:
 
 - Snapshot-Inhalte werden nicht online synchronisiert.
-- Ein Browser kann lokale Entwuerfe eines anderen Browsers nicht sehen.
+- Ein Browser kann lokale Entwürfe eines anderen Browsers nicht sehen.
 
 ## UI-System
 
@@ -330,11 +330,11 @@ Die Styles sind in vier Ebenen getrennt:
 
 Die Grundidee:
 
-- semantische Tokens fuer Farben und Borders
-- neutrale, helle Flaechen
+- semantische Tokens für Farben und Borders
+- neutrale, helle Flächen
 - kleine Radien
-- rote Primaeraktionen
-- klare Werkzeugs- und Formdensitaet
+- rote Primäraktionen
+- klare Werkzeugs- und Formdensität
 
 ## Testarchitektur
 
@@ -354,7 +354,7 @@ Die Grundidee:
 
 ### E2E
 
-- Offline-Quellenfluss vom Suchdialog bis zur Editor-Uebernahme
+- Offline-Quellenfluss vom Suchdialog bis zur Editor-Übernahme
 - Serien-Workspace mit Serienkopf, Ausgaben und XTF-Vorschau
 
 ## Erweiterungspunkte
@@ -365,7 +365,7 @@ Heute:
 
 - `indexUrl`
 
-Spaeter moeglich:
+Später möglich:
 
 - HTTP-Suche
 - Authentifizierung
@@ -373,7 +373,7 @@ Spaeter moeglich:
 
 ### Weitere Felder
 
-Neue Felder muessen in mehreren Schichten nachgezogen werden:
+Neue Felder müssen in mehreren Schichten nachgezogen werden:
 
 1. Typ in `datasetTypes.ts`
 2. Default in `createEmptyDatasetRoot()`
@@ -381,18 +381,18 @@ Neue Felder muessen in mehreren Schichten nachgezogen werden:
 4. fachliche Regel in `validation.ts`
 5. UI in `DatasetForm.vue`, `DatasetIssueForm.vue` oder `AttributeTable.vue`
 
-### Staerkere Routing-Segmentierung
+### Stärkere Routing-Segmentierung
 
-Der Editor koennte spaeter weiter aufgeteilt werden, etwa:
+Der Editor könnte später weiter aufgeteilt werden, etwa:
 
 - eigener Route-Abschnitt pro Formsegment
 - Deep-Linking zu Validierungsfehlern
-- Wizard fuer Nicht-MVP-Faelle
+- Wizard für Nicht-MVP-Fälle
 
 ## Bekannte Architekturgrenzen
 
 - Kein globaler Undo/Redo-Mechanismus
 - Kein Versionsvergleich zwischen Drafts
-- Keine migrationsgestuetzte Schema-Transformation fuer alte Drafts
+- Keine migrationsgestützte Schema-Transformation für alte Drafts
 - Keine serverseitige Validierungsquelle
 - Keine testweise simulierbare Live-Quelle neben dem Snapshot-Modell

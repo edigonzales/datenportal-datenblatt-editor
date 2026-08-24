@@ -1,13 +1,15 @@
 import type { MetadataSource } from "../domain/datasetTypes";
 
+const localMockSourcePath = (filename: string) => import.meta.env.BASE_URL + "mock-sources/" + filename;
+
 export const defaultMetadataSource: MetadataSource = {
   label: "Datenportal",
-  indexUrl: "/mock-sources/dataset.index.xtf",
+  indexUrl: localMockSourcePath("dataset.index.xtf"),
   version: "2026-05-25"
 };
 
 export const defaultSourceIndexUrl = defaultMetadataSource.indexUrl;
-const localOfficeCatalogUrl = "/mock-sources/offices.xtf";
+const localOfficeCatalogUrl = localMockSourcePath("offices.xtf");
 export const defaultOfficeCatalogUrl = import.meta.env.VITE_OFFICE_CATALOG_URL?.trim() || localOfficeCatalogUrl;
 
 export function normalizeSourceIndexUrl(sourceUrl?: string): string {

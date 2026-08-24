@@ -19,7 +19,7 @@ Der Server muss nur statische Dateien ausliefern.
 
 ### Quellcode
 
-Das Git-Repository enthaelt:
+Das Git-Repository enthält:
 
 - den Applikationscode
 - die gemockte Quellen-Datei unter `public/mock-sources/`
@@ -33,7 +33,73 @@ Nach `npm run build` liegt die produktive Auslieferung in:
 dist/
 ```
 
-Dieses Verzeichnis ist das einzige Artefakt, das fuer die Auslieferung benoetigt wird.
+Dieses Verzeichnis ist das einzige Artefakt, das für die Auslieferung benötigt wird.
+
+### Container-Auslieferung
+
+Das Repository enthält ein Multi-Stage-Dockerfile. Die Build-Stage verwendet
+Node.js 22; die Runtime-Stage verwendet
+`nginxinc/nginx-unprivileged:1.30.4-alpine-slim` und lauscht auf Port `8080`.
+Im Container wird nur der Inhalt von `dist/` ausgeliefert.
+
+Der Container:
+
+- benötigt kein Backend und keine Datenbank
+- verwendet kein TLS
+- läuft ohne Root-Rechte
+- schreibt Logs nach stdout/stderr
+- unterstützt SPA-Fallbacks für direkte Routen
+
+Die vollständige Anleitung mit Docker-, OpenShift- und Object-Storage-Beispielen
+steht in [Container-Deployment](container-deployment.md).
+
+### GitHub Action und Registries
+
+Der Workflow `.github/workflows/publish-container.yml` läuft bei jedem Push
+und kann zusätzlich über `workflow_dispatch` manuell gestartet werden. Das ist
+für den Codeberg-Spiegel wichtig: Nicht der Push nach Codeberg, sondern der
+anschliessende Push in das GitHub-Spiegelrepository löst die Action aus.
+
+Veröffentlichte Images:
+
+- Docker Hub: `sogis/datenportal-metadaten-editor`
+- GitHub Container Registry:
+  `ghcr.io/<github-owner>/<github-repository>`
+
+Benötigte Repository-Secrets:
+
+- `DOCKERHUB_USERNAME`: Docker-Hub-Benutzer oder Servicekonto mit Schreibzugriff
+- `DOCKERHUB_TOKEN`: Docker-Hub-Access-Token mit Schreibzugriff auf das Image
+
+Für GHCR wird `GITHUB_TOKEN` verwendet. Der Workflow benötigt deshalb die
+Berechtigungen `contents: read` und `packages: write`.
+
+Die Action verwendet folgende Tags:
+
+- `sha-<kurzer-commit-sha>` für jeden erfolgreichen Push
+- `0.1.<github.run_number>` für jeden erfolgreichen Workflow-Lauf
+- `latest` nur auf dem Default-Branch
+
+Die `0.1`-Major-/Minor-Version ist im Workflow festgelegt. Die Patch-Version
+stammt aus `github.run_number`; `package.json` und Git-Tags haben keinen
+Einfluss auf die Container-Version. Fehlgeschlagene oder manuelle Läufe können
+deshalb Lücken in der Run-Nummer verursachen.
+
+### Build-Pfade
+
+Der öffentliche Pfad wird beim Build über `VITE_BASE_PATH` festgelegt:
+
+```bash
+docker build --build-arg VITE_BASE_PATH=/ \
+  -t datenblatt-editor:root .
+
+docker build --build-arg VITE_BASE_PATH=/metadaten-editor/ \
+  -t datenblatt-editor:metadaten-editor .
+```
+
+Der Base Path wird in den Vite-Assets, im Vue-Router, im PWA-Manifest und in
+den lokalen XTF-URLs verwendet. Das Image selbst erwartet Anfragen nach dem
+Prefix-Strip unter `/`.
 
 ## Anwendung lokal starten
 
@@ -44,12 +110,12 @@ npm install
 npm run dev
 ```
 
-Geeignet fuer:
+Geeignet für:
 
 - lokale Entwicklung
-- schnelle Sichtpruefungen
+- schnelle Sichtprüfungen
 
-Weniger geeignet fuer:
+Weniger geeignet für:
 
 - PWA-/Offline-Abnahme
 - Cache-/Update-Tests
@@ -62,10 +128,10 @@ npm run build
 npm run preview
 ```
 
-Geeignet fuer:
+Geeignet für:
 
 - Review
-- Offline-Pruefung
+- Offline-Prüfung
 - PWA-Verifikation
 
 ## Zielumgebung
@@ -81,31 +147,31 @@ Geeignet ist jeder statische Webserver oder Objekt-Storage mit Web-Auslieferung,
 ## Minimale Anforderungen
 
 - Auslieferung von `dist/`
-- korrekter MIME-Type fuer JS/CSS/JSON/SVG
+- korrekter MIME-Type für JS/CSS/JSON/SVG
 - SPA-Fallback auf `index.html`
-- Zugriff ueber `http://` oder besser `https://`
+- Zugriff über `http://` oder besser `https://`
 
 Wichtig:
 
-- `file://` ist fuer sauberen PWA-Betrieb nicht geeignet.
-- Fuer installierbare PWAs ist HTTPS im Normalfall die richtige Zielumgebung.
+- `file://` ist für sauberen PWA-Betrieb nicht geeignet.
+- Für installierbare PWAs ist HTTPS im Normalfall die richtige Zielumgebung.
 
 ## Empfohlene HTTP-Strategie
 
 ### `index.html`
 
-- moeglichst nicht lange cachen
+- möglichst nicht lange cachen
 
 ### gehashte Assets in `dist/assets/`
 
-- duerfen lang gecacht werden
+- dürfen lang gecacht werden
 
 ### XTF-Snapshots
 
 - werden mit dem Build ausgeliefert
-- koennen ebenfalls normal statisch gecacht werden
+- können ebenfalls normal statisch gecacht werden
 
-Da die App via Service Worker precached wird, kommen Updates ohnehin ueber neue Builds in die Clients.
+Da die App via Service Worker precached wird, kommen Updates ohnehin über neue Builds in die Clients.
 
 ## Offline- und PWA-Verhalten
 
@@ -113,13 +179,13 @@ Da die App via Service Worker precached wird, kommen Updates ohnehin ueber neue 
 
 - Start der Anwendung
 - Navigation zwischen den Routen
-- Oeffnen lokaler Entwuerfe
+- Öffnen lokaler Entwürfe
 - Bearbeiten und Speichern in IndexedDB
 - Laden von `dataset.index.xtf`
 - Laden von `offices.xtf`
 - Export von XTF
 
-### Was fuer Offline vorher passiert sein muss
+### Was für Offline vorher passiert sein muss
 
 Die Anwendung muss mindestens einmal erfolgreich geladen worden sein, damit:
 
@@ -129,7 +195,7 @@ Die Anwendung muss mindestens einmal erfolgreich geladen worden sein, damit:
 - `offices.xtf`
 - Service Worker
 
-im Browser verfuegbar sind.
+im Browser verfügbar sind.
 
 ## Update-Modell
 
@@ -144,11 +210,11 @@ Praktisch bedeutet das:
 Wichtig:
 
 - Index-Inhalte werden nicht separat synchronisiert
-- geaenderte Mock-Daten kommen nur mit einem neuen Build auf die Clients
+- geänderte Mock-Daten kommen nur mit einem neuen Build auf die Clients
 
 ## Snapshot-Daten aktualisieren
 
-Wenn sich die "externen" Quelldaten aendern sollen:
+Wenn sich die "externen" Quelldaten ändern sollen:
 
 1. `public/mock-sources/dataset.index.xtf` aktualisieren
 2. bei Bedarf `public/mock-sources/offices.xtf` aktualisieren
@@ -159,7 +225,7 @@ Es reicht nicht, nur einen laufenden Browser-Cache zu erwarten. Die XTF-Dateien 
 
 ### XTF fachlich validieren
 
-Vor Release oder bei geaenderten Mock-Daten:
+Vor Release oder bei geänderten Mock-Daten:
 
 ```bash
 java -jar /Users/stefan/apps/ilivalidator-1.15.0/ilivalidator-1.15.0.jar \
@@ -167,27 +233,27 @@ java -jar /Users/stefan/apps/ilivalidator-1.15.0/ilivalidator-1.15.0.jar \
   public/mock-sources/dataset.index.xtf
 ```
 
-JSON-Snapshots unter `public/mock-sources/` sind kein unterstuetztes Format.
+JSON-Snapshots unter `public/mock-sources/` sind kein unterstütztes Format.
 
 ## Datenschutz und Sicherheit
 
 ### Positiv
 
-- keine automatische Uebertragung an ein Backend
+- keine automatische Übertragung an ein Backend
 - keine LLM-Integration
 - lokale Persistenz nur im Browser
 - kein Serverzustand
 
 ### Zu beachten
 
-- Entwuerfe liegen lokal im Browserprofil
+- Entwürfe liegen lokal im Browserprofil
 - bei gemeinsam genutzten Arbeitsstationen ist das ein reales Betriebsrisiko
-- Browserdaten loeschen entfernt auch die Entwuerfe
+- Browserdaten löschen entfernt auch die Entwürfe
 - es gibt kein externes Backup
 
 Empfehlung:
 
-- Nutzer sollten regelmaessig als XTF exportieren, wenn ein Arbeitsstand archiviert werden soll
+- Nutzer sollten regelmässig als XTF exportieren, wenn ein Arbeitsstand archiviert werden soll
 - sensible Inhalte nicht in gemeinsam genutzten Browserprofilen pflegen
 
 ## Browserdaten und Support
@@ -197,11 +263,11 @@ Die wichtigsten lokalen Daten liegen in:
 - IndexedDB-Datenbank `datenblatt-editor`
 - Service-Worker-Cache des Hosts
 
-Bei Supportfaellen kann es hilfreich sein, Browserdaten fuer die Site gezielt zu loeschen.
+Bei Supportfällen kann es hilfreich sein, Browserdaten für die Site gezielt zu löschen.
 
 Folge:
 
-- lokale Entwuerfe gehen verloren
+- lokale Entwürfe gehen verloren
 - die App muss erneut geladen werden
 
 Das sollte nur bewusst geschehen.
@@ -210,9 +276,16 @@ Das sollte nur bewusst geschehen.
 
 Da es kein Backend gibt, ist klassisches Applikationsmonitoring stark reduziert.
 
+### Container-Probes
+
+Der Container hat keinen separaten Health-Endpunkt. Für Readiness und Liveness
+kann `GET /` auf Port `8080` verwendet werden. Der Router muss den
+konfigurierten Subpath vor der Probe entfernen oder die Probe direkt gegen den
+Containerpfad ausführen.
+
 Sinnvolle Betriebschecks sind:
 
-- laesst sich `index.html` ausliefern?
+- lässt sich `index.html` ausliefern?
 - werden Assets korrekt geladen?
 - funktioniert SPA-Fallback?
 - ist die PWA installierbar?
@@ -226,14 +299,31 @@ Vor einem Release:
 2. `npm test`
 3. `npm run build`
 4. `npm run test:e2e`
-5. `dataset.index.xtf` fachlich pruefen
-6. bei Aenderungen `offices.xtf` fachlich pruefen
-7. `dist/` deployen
-8. installierte App / Offline-Verhalten einmal pruefen
+5. `dataset.index.xtf` fachlich prüfen
+ 6. bei Änderungen `offices.xtf` fachlich prüfen
+ 7. `dist/` deployen
+ 8. installierte App / Offline-Verhalten einmal prüfen
+
+Bei einem Container-Release zusätzlich:
+
+1. Image mit dem gewünschten `VITE_BASE_PATH` bauen
+2. `npm test` und `npm run build` erfolgreich ausführen
+3. Container unter einer beliebigen nicht-root UID starten
+4. Port `8080`, SPA-Fallback und Snapshot-Dateien prüfen
+5. Image in die Zielregistry pushen
+6. OpenShift-Deployment und Route prüfen
+
+Für das Container-Release übernimmt die GitHub Action den Build und das
+Publishing. Nach einem erfolgreichen Lauf:
+
+1. SHA-Tag in Docker Hub und GHCR prüfen.
+2. Bei Default-Branch-Push `latest` prüfen.
+3. Den Versionstag `0.1.<github.run_number>` prüfen.
+4. Das veröffentlichte Image in OpenShift deployen.
 
 ## Typische Betriebsfragen
 
-### "Wie starte ich die Anwendung lokal fuer eine Fachabnahme?"
+### "Wie starte ich die Anwendung lokal für eine Fachabnahme?"
 
 Empfohlen:
 
@@ -243,7 +333,7 @@ npm run build
 npm run preview
 ```
 
-Dann die ausgegebene URL im Browser oeffnen.
+Dann die ausgegebene URL im Browser öffnen.
 
 ### "Brauchen wir einen Server mit Datenbank?"
 
@@ -259,15 +349,15 @@ Lokal im Browser in IndexedDB.
 
 ### "Wie wird die Mock-Quelle aktualisiert?"
 
-Nur ueber geaenderte XTF-Dateien plus neuen Build und neues Deployment.
+Nur über geänderte XTF-Dateien plus neuen Build und neues Deployment.
 
-### "Was passiert beim Browserwechsel oder auf einem zweiten Geraet?"
+### "Was passiert beim Browserwechsel oder auf einem zweiten Gerät?"
 
-Lokale Entwuerfe sind nicht zwischen Browsern oder Geraeten synchronisiert.
+Lokale Entwürfe sind nicht zwischen Browsern oder Geräten synchronisiert.
 
 ## Troubleshooting
 
-### Seite laedt, aber Routen direkt aufgerufen liefern 404
+### Seite lädt, aber Routen direkt aufgerufen liefern 404
 
 Ursache:
 
@@ -275,7 +365,7 @@ Ursache:
 
 Massnahme:
 
-- alle nicht-Asset-Routen auf `index.html` zurueckfuehren
+- alle nicht-Asset-Routen auf `index.html` zurückführen
 
 ### App ist online aktuell, aber offline noch alt
 
@@ -286,30 +376,30 @@ Ursache:
 Massnahmen:
 
 - Seite neu laden
-- Site Data loeschen
+- Site Data löschen
 - ggf. App neu installieren
 
 ### Quellen-Dialog zeigt keine Treffer
 
-Pruefen:
+Prüfen:
 
 - liegt die erwartete `dataset.index.xtf` im Build?
 - liegt die erwartete `offices.xtf` im Build?
 - wurden die korrekten XTF-Dateien deployed?
-- ist das XTF/XML syntaktisch gueltig?
+- ist das XTF/XML syntaktisch gültig?
 
-### Lokale Entwuerfe "verschwinden"
+### Lokale Entwürfe "verschwinden"
 
-Moegliche Ursachen:
+Mögliche Ursachen:
 
-- Browserdaten wurden geloescht
+- Browserdaten wurden gelöscht
 - anderes Browserprofil
 - anderer Browser
 
-## Was Betreiber nicht tun muessen
+## Was Betreiber nicht tun müssen
 
 - keine Datenbank pflegen
-- keinen Migrationsjob ausfuehren
+- keinen Migrationsjob ausführen
 - keine Geheimnisse konfigurieren
 - keine API-Tokens hinterlegen
 - keine Benutzer anlegen

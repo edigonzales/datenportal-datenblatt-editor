@@ -1,16 +1,16 @@
 # datenblatt-editor
 
-Lokaler, vollstaendig offline-faehiger Metadateneditor fuer genau ein `Dataset` oder eine `DatasetSeries` pro XTF/XML-Datei.
+Lokaler, vollständig offline-fähiger Metadateneditor für genau ein `Dataset` oder eine `DatasetSeries` pro XTF/XML-Datei.
 
-Die Anwendung ist als clientseitige SPA umgesetzt. Es gibt kein Backend, keine Anmeldung und keine Server-Persistenz. Alle Arbeitsstaende bleiben lokal im Browser und werden in IndexedDB gespeichert.
+Die Anwendung ist als clientseitige SPA umgesetzt. Es gibt kein Backend, keine Anmeldung und keine Server-Persistenz. Alle Arbeitsstände bleiben lokal im Browser und werden in IndexedDB gespeichert.
 
 ## Funktionsumfang des MVP
 
 - Bearbeitung einzelner `Dataset`
 - Bearbeitung hierarchischer `DatasetSeries` mit Serienkopf und Ausgaben
-- Import von XTF/XML-Dateien fuer `Dataset` und `DatasetSeries`
-- Offline-"Endpunkte" ueber gebuendelte Snapshot-Dateien
-- Lokale Entwuerfe in IndexedDB
+- Import von XTF/XML-Dateien für `Dataset` und `DatasetSeries`
+- Offline-"Endpunkte" über gebündelte Snapshot-Dateien
+- Lokale Entwürfe in IndexedDB
 - Debounced Autosave
 - Fachliche und strukturelle Validierung
 - Export als XTF 2.4
@@ -19,7 +19,7 @@ Die Anwendung ist als clientseitige SPA umgesetzt. Es gibt kein Backend, keine A
 Nicht Teil der aktuellen Ausbaustufe:
 
 - Materialisierung einzelner `DatasetIssue` als getrennte `Dataset`
-- Serien-Wizard fuer Bulk-Operationen
+- Serien-Wizard für Bulk-Operationen
 - Backend-Einreichung
 - Login
 - CSV-Analyse
@@ -38,7 +38,7 @@ Nicht Teil der aktuellen Ausbaustufe:
 - Vitest
 - Playwright
 
-Die aktuelle UI ist an der reduzierten, hellen Jenkins-Anmutung orientiert: feine Borders, kleine Radien, rote Primaeraktionen, kompakte Werkzeugleisten.
+Die aktuelle UI ist an der reduzierten, hellen Jenkins-Anmutung orientiert: feine Borders, kleine Radien, rote Primäraktionen, kompakte Werkzeugleisten.
 
 ## Schnellstart
 
@@ -61,7 +61,7 @@ npm install
 npm run dev
 ```
 
-Danach ist die App standardmaessig unter `http://localhost:5173` verfuegbar.
+Danach ist die App standardmässig unter `http://localhost:5173` verfügbar.
 
 ### Produktionsbuild
 
@@ -70,6 +70,56 @@ npm run build
 ```
 
 Der gebaute Stand liegt danach unter `dist/`.
+
+### Dockerimage
+
+Das produktive Image baut die Anwendung und liefert den Inhalt von `dist/` über
+NGINX auf Port `8080` aus. Das Runtime-Image läuft unprivilegiert und benötigt
+kein Backend.
+
+Für einen Betrieb unter der Domain-Root:
+
+```bash
+docker build --build-arg VITE_BASE_PATH=/ -t datenblatt-editor:local .
+docker run --rm --user 12345:0 -p 8080:8080 datenblatt-editor:local
+```
+
+Für den geplanten Betrieb unter `/metadaten-editor/`:
+
+```bash
+docker build --build-arg VITE_BASE_PATH=/metadaten-editor/ \
+  -t datenblatt-editor:metadaten-editor .
+```
+
+Der vorgelagerte Router muss den Prefix `/metadaten-editor` entfernen, bevor
+die Anfrage an den Container weitergeleitet wird. Die vollständige
+Betriebsanleitung steht in
+[docs/container-deployment.md](docs/container-deployment.md).
+
+### GitHub Action und Container-Registries
+
+Der Workflow
+[publish-container.yml](.github/workflows/publish-container.yml) führt bei jedem
+Push zuerst `npm ci`, `npm test` und `npm run build` aus. Anschliessend wird das
+Image gebaut und veröffentlicht auf:
+
+- Docker Hub: `sogis/datenportal-metadaten-editor`
+- GHCR: `ghcr.io/<github-owner>/<github-repository>`
+
+Für Docker Hub müssen im GitHub-Repository die Secrets `DOCKERHUB_USERNAME` und
+`DOCKERHUB_TOKEN` hinterlegt werden. GHCR verwendet den automatisch verfügbaren
+`GITHUB_TOKEN`.
+
+Jeder erfolgreiche Workflow-Lauf erzeugt zusätzlich einen Versionstag wie
+`0.1.42`. Die Nummer basiert auf `github.run_number`; Git-Tags und
+`package.json` bestimmen die Container-Version nicht.
+Zusätzlich werden ein `sha-<kurzer-commit-sha>`-Tag und auf dem Default-Branch
+`latest` veröffentlicht.
+
+Der Codeberg-Spiegel muss die Commits nach GitHub pushen. Dadurch wird der
+GitHub-Workflow automatisch ausgelöst. Die Tag-Strategie und die vollständige
+Einrichtung sind in
+[docs/container-deployment.md](docs/container-deployment.md) beschrieben.
 
 ### Lokale Vorschau des Produktionsbuilds
 
@@ -86,7 +136,7 @@ npm run test:e2e
 
 Hinweis zu Playwright:
 
-- Wenn lokal noch kein Browser installiert ist, kann ein zusaetzlicher Schritt noetig sein:
+- Wenn lokal noch kein Browser installiert ist, kann ein zusätzlicher Schritt nötig sein:
 
 ```bash
 npx playwright install
@@ -111,12 +161,12 @@ src/
   config/       Quellen- und Vokabular-Konfiguration
   domain/       Typen, Normalisierung, Validierung
   services/     Import, Export, Offline-Quellen, IndexedDB
-  stores/       Pinia-Store fuer App- und Draft-State
+  stores/       Pinia-Store für App- und Draft-State
   styles/       Tokens und Jenkins-inspirierte Styling-Layer
 
 public/
   icons/        PWA-Icons
-  mock-sources/ Offline-Snapshot-Daten fuer Quellen
+  mock-sources/ Offline-Snapshot-Daten für Quellen
 
 e2e/            Playwright-Smoke-Test
 docs/           Entwickler- und Betreiberdokumentation
@@ -128,15 +178,16 @@ spec/           Eingangsspezifikation und Mockups
 - [Architektur](docs/architecture.md)
 - [Entwicklung](docs/development.md)
 - [Betrieb und Deployment](docs/operations.md)
+- [Container-Deployment](docs/container-deployment.md)
 
 ## Architektur in Kurzform
 
-- Die Startseite bietet Ladewege fuer Quellen, Dateiimport, neue Einzel-Datasets, neue Serien und lokale Entwuerfe.
-- Jeder erfolgreich uebernommene Eintrag wird in ein kanonisches Root-Format fuer `Dataset` oder `DatasetSeries` normalisiert.
-- Entwuerfe werden unter der Dexie-Datenbank `datenblatt-editor` gespeichert.
-- Formularaenderungen werden mit `750 ms` Debounce nach IndexedDB geschrieben.
+- Die Startseite bietet Ladewege für Quellen, Dateiimport, neue Einzel-Datasets, neue Serien und lokale Entwürfe.
+- Jeder erfolgreich übernommene Eintrag wird in ein kanonisches Root-Format für `Dataset` oder `DatasetSeries` normalisiert.
+- Entwürfe werden unter der Dexie-Datenbank `datenblatt-editor` gespeichert.
+- Formularänderungen werden mit `750 ms` Debounce nach IndexedDB geschrieben.
 - Der Export ist bei Validierungsfehlern blockiert.
-- Die PWA cached App-Shell, Assets und die gemockten XTF-Snapshots fuer kompletten Offline-Betrieb.
+- Die PWA cached App-Shell, Assets und die gemockten XTF-Snapshots für kompletten Offline-Betrieb.
 
 ## Quellenmodell im MVP
 
@@ -146,7 +197,7 @@ Die "externe Quelle" des MVP bleibt ein mit der App ausgelieferter XTF-Snapshot:
 public/mock-sources/dataset.index.xtf
 ```
 
-Zusaetzlich wird der Datenherr-Katalog als XTF mit ausgeliefert:
+Zusätzlich wird der Datenherr-Katalog als XTF mit ausgeliefert:
 
 ```text
 public/mock-sources/offices.xtf
@@ -154,17 +205,17 @@ public/mock-sources/offices.xtf
 
 Das hat zwei Konsequenzen:
 
-1. Die App funktioniert vollstaendig offline.
-2. Aenderungen an Quelleninhalten erfordern einen neuen Build und ein neues Deployment.
+1. Die App funktioniert vollständig offline.
+2. Änderungen an Quelleninhalten erfordern einen neuen Build und ein neues Deployment.
 
 ## Datenhaltung
 
-Lokale Entwuerfe werden in IndexedDB gehalten. Es gibt zwei Stores:
+Lokale Entwürfe werden in IndexedDB gehalten. Es gibt zwei Stores:
 
 - `datasets`
 - `settings`
 
-`datasets` speichert den kompletten Draft inklusive Herkunftsinformationen und dem internen Objektmodell. `settings` speichert zuletzt verwendete URL und Filter fuer den Quellen-Dialog.
+`datasets` speichert den kompletten Draft inklusive Herkunftsinformationen und dem internen Objektmodell. `settings` speichert zuletzt verwendete URL und Filter für den Quellen-Dialog.
 
 ## Validierung
 
@@ -173,13 +224,13 @@ Die App verwendet zwei Ebenen:
 1. Strukturvalidierung
 2. Fachliche Validierung
 
-Geprueft werden unter anderem:
+Geprüft werden unter anderem:
 
 - Root `type === "Dataset"` oder `type === "DatasetSeries"`
 - Pflichtfelder
 - Datumsformat
 - bei Issues `modified >= issued`
-- gueltiger `temporalCoverage`
+- gültiger `temporalCoverage`
 - doppelte Attributnamen
 - Warnung bei Attributen ohne Beschreibung
 
@@ -196,6 +247,6 @@ Die wichtigsten Erweiterungspunkte sind:
 
 - echte Remote-Endpunkte statt Snapshot-Dateien
 - kontrollierte Vokabulare aus externer Konfiguration
-- staerkere Formularsegmentierung
+- stärkere Formularsegmentierung
 - weitere E2E-Szenarien
 - konfigurierbare Feldverteilung zwischen Serienkopf und Ausgaben

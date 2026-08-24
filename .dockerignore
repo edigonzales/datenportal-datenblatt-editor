@@ -1,0 +1,11 @@
+.git
+.gitignore
+.github
+node_modules
+dist
+coverage
+playwright-report
+test-results
+.DS_Store
+*.log
+spec/mockups
