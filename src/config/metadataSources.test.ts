@@ -9,7 +9,7 @@ describe("normalizeSourceIndexUrl", () => {
   });
 
   it("keeps local xtf urls unchanged", () => {
-    expect(normalizeSourceIndexUrl("/mock-sources/dataset.index.xtf")).toBe(defaultSourceIndexUrl);
+    expect(normalizeSourceIndexUrl("/mock-sources/dataset.index.xtf")).toBe("/mock-sources/dataset.index.xtf");
   });
 
   it("keeps absolute xtf urls unchanged", () => {
