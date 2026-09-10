@@ -217,3 +217,34 @@ describe("loadDatasetFromSource", () => {
     expect(preview.root.dataset.creatorRef).toBe("ch.so.afu");
   });
 });
+
+describe("publication manifest", () => {
+  const manifest = { schemaVersion: 1, releaseId: "a", datasheets: "datasheets-a.xtf", catalog: null };
+
+  it("resolves the pointer once and loads its datasheets even without a catalog", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify(manifest)))
+      .mockResolvedValueOnce(new Response(datasetIndexPayload));
+    const records = await loadSourceIndex("https://example.test/current.json");
+    expect(records.length).toBeGreaterThan(0);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenNthCalledWith(2, "https://example.test/datasheets-a.xtf", expect.objectContaining({ cache: "no-store" }));
+  });
+
+  it.each([
+    {}, { ...manifest, schemaVersion: 2 }, { ...manifest, catalog: "../catalog.xtf" },
+    { ...manifest, datasheets: "https://other.test/sheet.xtf" },
+    { ...manifest, catalog: "published-catalog-b.xtf" }
+  ])("rejects invalid references without fetching another source", async (value) => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response(JSON.stringify(value)));
+    await expect(loadSourceIndex("https://example.test/current.json")).rejects.toThrow("Veröffentlichungsverweis");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports missing referenced sheets rather than falling back to a snapshot", async () => {
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify(manifest)))
+      .mockResolvedValueOnce(new Response("", { status: 404 }));
+    await expect(loadSourceIndex("https://example.test/current.json")).rejects.toThrow("Datenblattsammlung");
+  });
+});

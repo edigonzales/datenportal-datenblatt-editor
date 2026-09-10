@@ -51,11 +51,7 @@ test("shows the simplified start screen", async ({ page }) => {
   await expect(newDatasetCard).toHaveCSS("border-radius", "4px");
   await expect(page.locator(".action-grid .button--primary")).toHaveCount(1);
   await expect(primaryButton).toBeVisible();
-  await expect(sourceCard).toHaveClass(/action-card--disabled/);
-  await expect(sourceCard).toHaveAttribute("aria-disabled", "true");
-  await expect(sourceCard).toContainText("Temporär nicht verfügbar, bis die Daten publiziert sind.");
-  await expect(sourceCard).toHaveCSS("background-color", "rgb(244, 247, 249)");
-  await expect(primaryButton).toBeDisabled();
+  await expect(primaryButton).toBeEnabled();
   await expect(sourceCard.locator(".button--primary")).toHaveCount(1);
   await expect(newDatasetCard.locator(".button--primary")).toHaveCount(0);
   await expect(draftCard.getByRole("button", { name: "Zu den Entwürfen" })).toBeVisible();
@@ -63,8 +59,8 @@ test("shows the simplified start screen", async ({ page }) => {
   await expect(page.locator(".eyebrow")).toHaveCount(0);
   await expect(page.locator(".toolbar-actions")).toHaveCount(0);
   await expect(page.locator("body")).toHaveCSS("background-color", "rgb(255, 255, 255)");
-  await expect(primaryButton).toHaveCSS("background-color", "rgb(217, 224, 230)");
-  await expect(primaryButton).toHaveCSS("border-color", "rgb(217, 224, 230)");
+  await expect(primaryButton).toHaveCSS("background-color", "rgb(210, 10, 17)");
+  await expect(primaryButton).toHaveCSS("border-color", "rgb(210, 10, 17)");
   await expect(primaryButton).toHaveCSS("border-radius", "4px");
   await expect(secondaryButton).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
   await expect(secondaryButton).toHaveCSS("border-color", "rgb(210, 10, 17)");
@@ -93,14 +89,30 @@ test("shows the simplified start screen", async ({ page }) => {
   await expect(page.locator(".empty-state h3")).toHaveCSS("margin-top", "0px");
 });
 
-test("keeps source loading disabled until source data is published", async ({ page }) => {
+test("loads a manifest and clears the results after a remote failure", async ({ page }) => {
+  const fixture = await page.request.get("/mock-sources/dataset.index.xtf");
+  let fail = false;
+  let manifestReads = 0;
+  await page.route("**/test-source/current.json", async route => {
+    manifestReads++;
+    await route.fulfill({ contentType: "application/json", body: JSON.stringify({
+      schemaVersion: 1, releaseId: "test", datasheets: "datasheets-test.xtf", catalog: null
+    }) });
+  });
+  await page.route("**/test-source/datasheets-test.xtf", async route => {
+    await route.fulfill({ status: fail ? 503 : 200, contentType: "application/xml", body: await fixture.text() });
+  });
   await page.goto("/");
-
-  const sourceCard = actionCard(page, "Metadaten von Quelle laden");
-
-  await expect(sourceCard).toHaveAttribute("aria-disabled", "true");
-  await expect(sourceCard.getByRole("button", { name: "Quelle öffnen" })).toBeDisabled();
-  await expect(page.locator(".dialog")).toHaveCount(0);
+  await page.getByRole("button", { name: "Quelle öffnen" }).click();
+  await page.getByLabel("Quelle", { exact: true }).fill("http://127.0.0.1:4173/test-source/current.json");
+  await page.getByRole("button", { name: "Quelle laden", exact: true }).click();
+  await expect(page.locator(".dialog .draft-card").first()).toBeVisible();
+  expect(manifestReads).toBe(1);
+  fail = true;
+  await page.getByRole("button", { name: "Quelle laden", exact: true }).click();
+  await expect(page.getByText("Vorgang fehlgeschlagen", { exact: true })).toBeVisible();
+  await expect(page.locator(".dialog .draft-card")).toHaveCount(0);
+  expect(manifestReads).toBe(2);
 });
 
 test("creates and navigates a dataset series workspace", async ({ page }) => {

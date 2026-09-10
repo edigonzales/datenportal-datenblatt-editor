@@ -200,7 +200,7 @@ spec/           Eingangsspezifikation und Mockups
 
 ## Quellenmodell im MVP
 
-Die "externe Quelle" des MVP bleibt ein mit der App ausgelieferter XTF-Snapshot:
+Ohne abweichende Konfiguration verwendet die App einen ausgelieferten XTF-Snapshot:
 
 ```text
 public/mock-sources/dataset.index.xtf
@@ -248,7 +248,7 @@ Geprüft werden unter anderem:
 - Kein Mehrbenutzerbetrieb
 - Keine Synchronisation zwischen Browsern
 - Kein automatisches Backup ausserhalb des Browsers
-- Kein Live-Abruf externer APIs im MVP
+- Remote-Quellen benötigen öffentliche HTTP(S)-Zugriffe und gegebenenfalls CORS
 
 ## Weiterentwicklung
 
@@ -259,3 +259,15 @@ Die wichtigsten Erweiterungspunkte sind:
 - stärkere Formularsegmentierung
 - weitere E2E-Szenarien
 - konfigurierbare Feldverteilung zwischen Serienkopf und Ausgaben
+
+## Veröffentlichte Datenblattsammlung
+
+`VITE_METADATA_SOURCE_URL` kann beim Vite-/Docker-Build eine öffentliche
+`current.json` als Standardquelle setzen. Der Quellenlader unterstützt sowohl
+Manifest-URLs (Pfad endet auf `.json`) als auch direkte XTF-Adressen. Er liest
+den Verweis einmal und lädt dessen `datasheets`-Datei; `catalog: null` ist zulässig.
+Ungültige Verweise oder fehlende Dateien werden als Fehler angezeigt und nicht
+durch einen veralteten Snapshot ersetzt. Der Abruf verwendet `cache: no-store`;
+Remote-Verweise werden vom Service Worker nicht vorab gespeichert.
+Lokale Entwürfe, Dateiimporte und gebündelte Offline-Quellen bleiben erhalten.
+Es werden keine S3-Zugangsdaten im Browser benötigt.

@@ -5,7 +5,7 @@ const localMockSourcePath = (filename: string) => getPublicBasePath() + "mock-so
 
 export const defaultMetadataSource: MetadataSource = {
   label: "Datenportal",
-  indexUrl: localMockSourcePath("dataset.index.xtf"),
+  indexUrl: import.meta.env.VITE_METADATA_SOURCE_URL?.trim() || localMockSourcePath("dataset.index.xtf"),
   version: "2026-05-25"
 };
 

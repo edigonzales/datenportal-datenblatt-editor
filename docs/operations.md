@@ -239,8 +239,8 @@ Es reicht nicht, nur einen laufenden Browser-Cache zu erwarten. Die XTF-Dateien 
 Vor Release oder bei geänderten Mock-Daten:
 
 ```bash
-java -jar /Users/stefan/apps/ilivalidator-1.15.0/ilivalidator-1.15.0.jar \
-  --modeldir /Users/stefan/sources/sogis-interlis-repository/models/AGI \
+java -jar /pfad/zu/ilivalidator-1.15.0.jar \
+  --modeldir ../sogis-interlis-repository/models/AGI \
   public/mock-sources/dataset.index.xtf
 ```
 
@@ -414,3 +414,18 @@ Mögliche Ursachen:
 - keine Geheimnisse konfigurieren
 - keine API-Tokens hinterlegen
 - keine Benutzer anlegen
+
+## Remote-Veröffentlichungsverweis
+
+Die optionale Buildvariable `VITE_METADATA_SOURCE_URL` setzt die Standardquelle,
+z.B. `/ch.so.daten/current.json` hinter demselben Gateway oder eine absolute
+HTTPS-Adresse. Sie ist im Dockerfile als Buildargument verfügbar; eine Änderung
+erfordert einen neuen Frontend-Build. Ohne Wert bleibt die gebündelte XTF-Quelle
+aktiv. Benutzer können weiterhin eine direkte XTF- oder Manifestadresse wählen.
+
+Der Manifestvertrag entspricht dem Themenrepo: `schemaVersion=1`, sichere
+`releaseId`, `datasheets-<releaseId>.xtf` und ein gleich benannter Katalog oder
+`catalog: null`. Beide Felder sind erforderlich, obwohl der Editor nur die
+Datenblattsammlung lädt. Manifest und referenzierte Datei benötigen öffentlichen
+Lesezugriff und bei fremder Herkunft passende CORS-Header. Fehler werden sichtbar
+angezeigt; lokale Entwürfe werden dabei nicht ersetzt.

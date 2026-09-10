@@ -131,7 +131,7 @@ async function importSelected(): Promise<void> {
               type="url"
               placeholder="https://example.org/dataset.index.xtf"
             />
-            <p class="field-help">Direkte URL zu einer XTF-Datei mit Dataset- und DatasetSeries-Objekten.</p>
+            <p class="field-help">URL einer XTF-Datei oder eines Veröffentlichungsverweises (current.json).</p>
           </div>
           <div class="field-row">
             <label for="organization-filter">Organisationseinheit</label>
