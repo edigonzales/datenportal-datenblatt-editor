@@ -167,6 +167,41 @@ Wichtig:
 - `file://` ist für sauberen PWA-Betrieb nicht geeignet.
 - Für installierbare PWAs ist HTTPS im Normalfall die richtige Zielumgebung.
 
+## Quellen konfigurieren
+
+Die optionale Buildvariable `VITE_METADATA_SOURCE_URL` setzt die Standardquelle,
+z.B. `/ch.so.daten/current.json` hinter demselben Gateway oder eine absolute
+HTTPS-Adresse. Sie ist im Dockerfile als Buildargument verfügbar; eine Änderung
+erfordert einen neuen Frontend-Build. Ohne Wert bleibt die gebündelte XTF-Quelle
+aktiv. Benutzer können weiterhin eine direkte XTF- oder Manifestadresse wählen.
+
+Der Manifestvertrag entspricht dem Themenrepo: `schemaVersion=1`, sichere
+`releaseId`, `datasheets-<releaseId>.xtf` und ein gleich benannter Katalog oder
+`catalog: null`. Beide Felder sind erforderlich, obwohl der Editor nur die
+Datenblattsammlung lädt. Manifest und referenzierte Datei benötigen öffentlichen
+Lesezugriff und bei fremder Herkunft passende CORS-Header. Fehler werden sichtbar
+angezeigt; lokale Entwürfe werden dabei nicht ersetzt.
+
+Eine im Quellen-Dialog zuletzt gespeicherte Adresse hat Vorrang vor dem
+Builddefault. Eine neue Imageversion ändert diese Präferenz nicht. Im Dialog
+die gewünschte Adresse wählen; Browserdaten löschen würde auch Entwürfe löschen.
+Neue Inhalte unter derselben Remote-Adresse benötigen keinen App-Build.
+
+Manifest-URLs werden anhand der Endung `.json` im URL-Pfad erkannt. Der Lader
+liest das Manifest einmal und lädt dessen `datasheets`-Datei relativ dazu.
+Direkte XTF-Adressen bleiben unterstützt. Beide Remote-Abrufe verwenden
+`cache: no-store`; der Service Worker precacht nur gebündelte Quellen, keine
+Remote-Manifeste. Bei Ladefehlern zeigt die Quellenauswahl einen Fehler und keine
+unbemerkt veralteten Remote-Treffer. Lokale Entwürfe, Dateiimporte und gebündelte
+Offline-Quellen bleiben nutzbar. Bei fremder Origin CORS für JSON **und XTF**
+bereitstellen; keine S3-Zugangsdaten oder Git-Tokens in Vite-Variablen setzen.
+
+`VITE_OFFICE_CATALOG_URL` kann im Vite-Build die separate Ämterquelle ändern.
+Sie wird nicht aus `current.json` abgeleitet. Das Dockerfile stellt dafür kein
+eigenes Buildargument bereit; die Standardauslieferung nutzt weiterhin
+`mock-sources/offices.xtf`. Die lokale Compose-Integration und ihr Manifestpfad
+stehen in der [Stack-Anleitung](https://codeberg.org/edigonzales/datenportal-dev-stack/src/branch/main/docs/biblios/entwicklung/inbetriebnahme.adoc).
+
 ## Empfohlene HTTP-Strategie
 
 ### `index.html`
@@ -177,12 +212,14 @@ Wichtig:
 
 - dürfen lang gecacht werden
 
-### XTF-Snapshots
+### Gebündelte XTF-Snapshots
 
 - werden mit dem Build ausgeliefert
 - können ebenfalls normal statisch gecacht werden
 
-Da die App via Service Worker precached wird, kommen Updates ohnehin über neue Builds in die Clients.
+App- und gebündelte Quellenupdates kommen über neue Builds. Entfernte
+`current.json` und zugehörige XTF dagegen ohne dauerhafte Zwischenspeicherung
+ausliefern; sie werden beim Remote-Laden neu abgefragt.
 
 ## Offline- und PWA-Verhalten
 
@@ -220,12 +257,12 @@ Praktisch bedeutet das:
 
 Wichtig:
 
-- Index-Inhalte werden nicht separat synchronisiert
+- Gebündelte Index-Inhalte werden nicht separat synchronisiert; Remote-Quellen werden beim Laden abgerufen
 - geänderte Mock-Daten kommen nur mit einem neuen Build auf die Clients
 
-## Snapshot-Daten aktualisieren
+## Gebündelte Snapshot-Daten aktualisieren
 
-Wenn sich die "externen" Quelldaten ändern sollen:
+Wenn sich die mitgelieferten Offline-Quelldaten ändern sollen:
 
 1. `public/mock-sources/dataset.index.xtf` aktualisieren
 2. bei Bedarf `public/mock-sources/offices.xtf` aktualisieren
@@ -244,7 +281,9 @@ java -jar /pfad/zu/ilivalidator-1.15.0.jar \
   public/mock-sources/dataset.index.xtf
 ```
 
-JSON-Snapshots unter `public/mock-sources/` sind kein unterstütztes Format.
+JSON-Datenblattsnapshots unter `public/mock-sources/` sind kein unterstütztes
+Format. Das JSON-Veröffentlichungsmanifest ist ein Verweis auf XTF und wird
+als eigener Remote-Quellentyp unterstützt.
 
 ## Datenschutz und Sicherheit
 
@@ -352,7 +391,9 @@ Nein. Es reicht ein statischer Webserver.
 
 ### "Kann die Anwendung ohne Internet verwendet werden?"
 
-Ja, nach einmaligem Laden der App-Version.
+Ja, für App, gebündelte Quellen und lokale Entwürfe nach einmaligem Laden der
+App-Version. Eine aktuelle Remote-Quelle benötigt Netzwerk; bei Ausfall gibt es
+keinen stillen Rückfall auf einen alten Remote-Stand.
 
 ### "Wo liegen die bearbeiteten Daten?"
 
@@ -394,7 +435,9 @@ Massnahmen:
 
 Prüfen:
 
-- liegt die erwartete `dataset.index.xtf` im Build?
+- ist die gespeicherte Quelladresse korrekt, und handelt es sich um eine gebündelte oder entfernte Quelle?
+- sind bei Remote-Quellen Manifest und referenzierte XTF öffentlich erreichbar und durch CORS freigegeben?
+- liegt bei gebündelten Quellen die erwartete `dataset.index.xtf` im Build?
 - liegt die erwartete `offices.xtf` im Build?
 - wurden die korrekten XTF-Dateien deployed?
 - ist das XTF/XML syntaktisch gültig?
@@ -414,18 +457,3 @@ Mögliche Ursachen:
 - keine Geheimnisse konfigurieren
 - keine API-Tokens hinterlegen
 - keine Benutzer anlegen
-
-## Remote-Veröffentlichungsverweis
-
-Die optionale Buildvariable `VITE_METADATA_SOURCE_URL` setzt die Standardquelle,
-z.B. `/ch.so.daten/current.json` hinter demselben Gateway oder eine absolute
-HTTPS-Adresse. Sie ist im Dockerfile als Buildargument verfügbar; eine Änderung
-erfordert einen neuen Frontend-Build. Ohne Wert bleibt die gebündelte XTF-Quelle
-aktiv. Benutzer können weiterhin eine direkte XTF- oder Manifestadresse wählen.
-
-Der Manifestvertrag entspricht dem Themenrepo: `schemaVersion=1`, sichere
-`releaseId`, `datasheets-<releaseId>.xtf` und ein gleich benannter Katalog oder
-`catalog: null`. Beide Felder sind erforderlich, obwohl der Editor nur die
-Datenblattsammlung lädt. Manifest und referenzierte Datei benötigen öffentlichen
-Lesezugriff und bei fremder Herkunft passende CORS-Header. Fehler werden sichtbar
-angezeigt; lokale Entwürfe werden dabei nicht ersetzt.

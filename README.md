@@ -212,10 +212,28 @@ Zusätzlich wird der Datenherr-Katalog als XTF mit ausgeliefert:
 public/mock-sources/offices.xtf
 ```
 
-Das hat zwei Konsequenzen:
+Diese gebündelten Quellen stehen nach dem ersten erfolgreichen Laden offline
+zur Verfügung. Änderungen **gebündelter** Quellen benötigen einen neuen Build
+und ein neues Deployment. Remote-XTF und Manifestquellen werden dagegen beim
+Laden aktuell abgerufen; neue Inhalte unter derselben Adresse benötigen keinen
+neuen App-Build.
 
-1. Die App funktioniert vollständig offline.
-2. Änderungen an Quelleninhalten erfordern einen neuen Build und ein neues Deployment.
+## Veröffentlichte Datenblattsammlung
+
+`VITE_METADATA_SOURCE_URL` kann beim Vite-/Docker-Build eine öffentliche
+`current.json` als Standardquelle setzen. Der Quellenlader unterstützt sowohl
+Manifest-URLs (Pfad endet auf `.json`) als auch direkte XTF-Adressen. Er liest
+den Verweis einmal und lädt dessen `datasheets`-Datei; `catalog: null` ist zulässig.
+Ungültige Verweise oder fehlende Dateien werden als Fehler angezeigt und nicht
+durch einen veralteten Snapshot ersetzt. Der Abruf verwendet `cache: no-store`;
+Remote-Verweise werden vom Service Worker nicht vorab gespeichert.
+Lokale Entwürfe, Dateiimporte und gebündelte Offline-Quellen bleiben erhalten.
+Es werden keine S3-Zugangsdaten im Browser benötigt.
+Die im Quellen-Dialog gespeicherte Adresse hat Vorrang vor dem Builddefault.
+Nach Umstellung eines Deployments dort die Quelle gezielt ändern; lokale
+Entwürfe dafür nicht löschen. Konfiguration und CORS sind in
+[Betrieb](docs/operations.md#quellen-konfigurieren) und
+[Container-Deployment](docs/container-deployment.md#quellenadresse-beim-build) beschrieben.
 
 ## Datenhaltung
 
@@ -254,20 +272,7 @@ Geprüft werden unter anderem:
 
 Die wichtigsten Erweiterungspunkte sind:
 
-- echte Remote-Endpunkte statt Snapshot-Dateien
 - kontrollierte Vokabulare aus externer Konfiguration
 - stärkere Formularsegmentierung
 - weitere E2E-Szenarien
 - konfigurierbare Feldverteilung zwischen Serienkopf und Ausgaben
-
-## Veröffentlichte Datenblattsammlung
-
-`VITE_METADATA_SOURCE_URL` kann beim Vite-/Docker-Build eine öffentliche
-`current.json` als Standardquelle setzen. Der Quellenlader unterstützt sowohl
-Manifest-URLs (Pfad endet auf `.json`) als auch direkte XTF-Adressen. Er liest
-den Verweis einmal und lädt dessen `datasheets`-Datei; `catalog: null` ist zulässig.
-Ungültige Verweise oder fehlende Dateien werden als Fehler angezeigt und nicht
-durch einen veralteten Snapshot ersetzt. Der Abruf verwendet `cache: no-store`;
-Remote-Verweise werden vom Service Worker nicht vorab gespeichert.
-Lokale Entwürfe, Dateiimporte und gebündelte Offline-Quellen bleiben erhalten.
-Es werden keine S3-Zugangsdaten im Browser benötigt.

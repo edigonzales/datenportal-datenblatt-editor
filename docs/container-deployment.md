@@ -46,6 +46,34 @@ jedem Request aus `X-FORWARDED-PREFIX` und fügt ihn in die ausgelieferte
 `index.html` als `<base href="...">` ein. Ein fehlender oder ungültiger Header
 ergibt den Base-Pfad `/`.
 
+### Quellenadresse beim Build
+
+```bash
+docker build \
+  --build-arg VITE_BASE_PATH=./ \
+  --build-arg VITE_METADATA_SOURCE_URL=/ch.so.daten/current.json \
+  -t datenblatt-editor:local .
+```
+
+| Buildargument | Default | Wirkung |
+|---|---|---|
+| `VITE_BASE_PATH` | `./` im Dockerfile | Relative Assets; öffentlicher Prefix wird über den Gateway-Header ergänzt. |
+| `VITE_METADATA_SOURCE_URL` | leer | Ohne Wert gebündelte `mock-sources/dataset.index.xtf`; andernfalls direkte XTF- oder Manifestadresse als Standardquelle. |
+
+Diese Werte sind öffentlich sichtbare Buildkonfiguration, keine Secrets.
+Container-Runtime-ENV verändert das fertig gebaute JavaScript nicht. Eine im
+Browser gespeicherte Quelladresse hat Vorrang; im Quellen-Dialog umstellen,
+ohne lokale Entwürfe zu löschen. Ein root-relativer Manifestpfad bezieht sich
+auf die öffentliche Origin, nicht auf den Editor-Prefix. Bei fremder Origin
+müssen JSON und XTF CORS erlauben. Der Client ruft Remote-Quellen ohne dauerhaften
+Cache ab; Offline-Entwürfe und gebündelte Quellen bleiben separat verfügbar.
+Details: [Quellen konfigurieren](operations.md#quellen-konfigurieren).
+
+Die aktuelle GitHub Action übergibt nur `VITE_BASE_PATH`. Ein unverändert dort
+gebautes Image enthält daher keinen spezifischen Manifestdefault. Der lokale
+Dev-Stack setzt ihn mit `compose.editor-local.yaml`; alternativ können Benutzer
+eine unterstützte Remote-Adresse im Quellen-Dialog auswählen.
+
 ### Image pushen
 
 ```bash
