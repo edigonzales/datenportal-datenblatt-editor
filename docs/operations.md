@@ -200,7 +200,7 @@ bereitstellen; keine S3-Zugangsdaten oder Git-Tokens in Vite-Variablen setzen.
 Sie wird nicht aus `current.json` abgeleitet. Das Dockerfile stellt dafür kein
 eigenes Buildargument bereit; die Standardauslieferung nutzt weiterhin
 `mock-sources/offices.xtf`. Die lokale Compose-Integration und ihr Manifestpfad
-stehen in der [Stack-Anleitung](https://codeberg.org/edigonzales/datenportal-dev-stack/src/branch/main/docs/biblios/entwicklung/inbetriebnahme.adoc).
+stehen in der [Stack-Anleitung](https://codeberg.org/edigonzales/datenportal-dev-stack/src/branch/main/docs/biblios/inbetriebnahme.adoc).
 
 ## Empfohlene HTTP-Strategie
 
