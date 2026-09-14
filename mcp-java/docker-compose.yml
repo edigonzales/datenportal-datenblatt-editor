@@ -1,0 +1,24 @@
+# Open-WebUI-Demoinstanz für den Datenblatt-Editor-MCP.
+#
+# Der Java-MCP läuft weiterhin direkt auf dem Host (siehe OPENWEBUI-DEMO.md).
+# Der Compose-Projektname und der explizite Volume-Name verhindern jede
+# Kollision mit der Agentic-BI-Demo (Projekt openwebui-demo1).
+name: datenblatt-demo
+
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:v0.11.3
+    ports:
+      - "127.0.0.1:${OPEN_WEBUI_HOST_PORT:-3001}:8080"
+    environment:
+      ENABLE_FOLLOW_UP_GENERATION: "False"
+    volumes:
+      - open-webui-data:/app/backend/data
+      - ./custom.css:/app/backend/open_webui/static/custom.css:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+volumes:
+  open-webui-data:
+    name: datenblatt-open-webui-data

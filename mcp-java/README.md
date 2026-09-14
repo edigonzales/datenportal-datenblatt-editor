@@ -212,11 +212,19 @@ docker run --rm -p 127.0.0.1:8000:8000 datasheet-mcp
 ```
 
 Das Image nutzt dieselben Gradle-/Java-Basisversionen wie das Referenzprojekt
-und läuft als unprivilegierter Benutzer. Datenbank, persistente Volumes und
-Open-WebUI-Compose-Installation sind für diesen Server nicht erforderlich.
+und läuft als unprivilegierter Benutzer. Datenbank und persistente Volumes
+sind für den MCP-Server nicht erforderlich.
 
+Für die lokale Demo steht unter [`OPENWEBUI-DEMO.md`](OPENWEBUI-DEMO.md) eine
+eigene Open-WebUI-Compose-Instanz bereit, die Provider, Modelle, den
+MCP-Toolserver und das XTF-Workspace-Tool automatisch konfiguriert.
 
 ## Open WebUI 0.11.3: XTF-Anhang importieren und herunterladen
+
+Für eine vorkonfigurierte Demoinstanz (Compose, Provider, Modelle und
+automatisch registrierter MCP-Toolserver) siehe
+[`OPENWEBUI-DEMO.md`](OPENWEBUI-DEMO.md). Die folgenden Schritte beschreiben
+die manuelle Einrichtung in einer bestehenden Open-WebUI-Installation.
 
 Die installierbare Datei ist [openwebui/xtf_import.py](openwebui/xtf_import.py).
 Sie läuft als Workspace Tool im vorhandenen Open-WebUI-Prozess. Es ist keine

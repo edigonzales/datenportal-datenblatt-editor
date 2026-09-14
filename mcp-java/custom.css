@@ -1,0 +1,485 @@
+/*
+ * ============================================================
+ * Open WebUI – Custom UI
+ * ============================================================
+ *
+ * Ziele:
+ * - UI leicht vergrössern
+ * - konsistentere Schriftgrössen
+ * - Sidebar mit klarerer Informationshierarchie
+ * - User-Fragen hellblau
+ * - Modellname und Thinking bewusst zurücknehmen
+ * - eigentliche Antwort visuell hervorheben
+ * - Aktionsicons heller und weiter von der Antwort entfernt
+ * - Message-Input flacher und ruhiger, ohne Glow/Glass-Effekt
+ * ============================================================
+ */
+
+
+/* ============================================================
+ * 1. Globale UI-Skalierung
+ * ============================================================
+ */
+
+:root {
+  --app-text-scale: 1.07 !important;
+}
+
+
+/* ============================================================
+ * 2. Feste Pixel-Schriftgrössen mitskalieren
+ * ============================================================
+ */
+
+body [class~="text-[11px]"] {
+  font-size: 11.8px !important;
+}
+
+body [class~="text-[12px]"] {
+  font-size: 12.8px !important;
+}
+
+body [class~="text-[13px]"] {
+  font-size: 13.9px !important;
+}
+
+body [class~="text-[14px]"] {
+  font-size: 15px !important;
+}
+
+body [class~="text-[15px]"] {
+  font-size: 16.1px !important;
+}
+
+body [class~="text-[16px]"] {
+  font-size: 17.1px !important;
+}
+
+
+/* ============================================================
+ * 3. Sidebar – Hauptnavigation
+ * ============================================================
+ */
+
+#sidebar svg[class~="size-4"] {
+  width: 1.05rem !important;
+  height: 1.05rem !important;
+}
+
+#sidebar img.sidebar-new-chat-icon {
+  width: 1.30rem !important;
+  height: 1.30rem !important;
+}
+
+
+/* ============================================================
+ * 4. Sidebar – Rubriken
+ * ============================================================
+ *
+ * Folders / Chats:
+ * klein, hell und klar sekundär.
+ */
+
+#sidebar-folders button[aria-controls="sidebar-folders-content"],
+#sidebar-chats button[aria-controls="sidebar-chats-content"] {
+  font-size: 0.70rem !important;
+  font-weight: 400 !important;
+  color: #9299a1 !important;
+}
+
+#sidebar-folders button svg,
+#sidebar-chats button svg {
+  color: #9aa0a7;
+}
+
+
+/* ============================================================
+ * 5. Sidebar – Zeitgruppen
+ * ============================================================
+ *
+ * Today / Yesterday / Previous 7 days / Previous 30 days
+ */
+
+#sidebar-chats-content
+> div
+> div
+> div[class~="text-xs"][class~="text-gray-500"] {
+  font-size: 0.70rem !important;
+  font-weight: 400 !important;
+  color: #9299a1 !important;
+
+  padding-top: 0.85rem !important;
+  padding-bottom: 0.25rem !important;
+}
+
+#sidebar-chats-content
+> div
+> div
+> div[class~="text-xs"][class~="text-gray-500"]:first-child {
+  padding-top: 0.30rem !important;
+}
+
+
+/* ============================================================
+ * 6. Sidebar – eigentliche Chat-Einträge
+ * ============================================================
+ */
+
+#sidebar-chats-content #sidebar-chat-item {
+  font-size: 0.92rem !important;
+  font-weight: 400 !important;
+  color: #3f444a !important;
+}
+
+#sidebar-chats-content
+#sidebar-chat-item
+div[dir="auto"] {
+  color: #3f444a !important;
+}
+
+#sidebar-chats-content
+#sidebar-chat-item[aria-current="page"] {
+  color: #292d32 !important;
+}
+
+#sidebar-chats-content
+#sidebar-chat-item[aria-current="page"]
+div[dir="auto"] {
+  color: #292d32 !important;
+}
+
+#sidebar-chats-content
+#sidebar-chat-item
+[class~="text-[0.625rem]"] {
+  color: #9aa0a7 !important;
+  font-size: 0.64rem !important;
+}
+
+#sidebar-chat-item-menu {
+  color: #858c94 !important;
+}
+
+
+/* ============================================================
+ * 7. Sidebar – Ordner-Einträge
+ * ============================================================
+ */
+
+#sidebar-folders-content
+[id^="folder-"][id$="-button"] {
+  font-size: 0.92rem !important;
+  font-weight: 400 !important;
+  color: #3f444a !important;
+}
+
+#sidebar-folders-content
+[id^="folder-"][id$="-button"] svg {
+  color: #555d66 !important;
+}
+
+
+/* ============================================================
+ * 8. User-Frage – hellblaue Bubble
+ * ============================================================
+ */
+
+.user-message
+.chat-user
+> div
+> div
+> div.rounded-3xl {
+  background-color: #e7f1fa !important;
+  color: #213547 !important;
+}
+
+
+/* Dark Mode */
+
+.dark
+.user-message
+.chat-user
+> div
+> div
+> div.rounded-3xl {
+  background-color: #1d3448 !important;
+  color: #eef5fb !important;
+}
+
+
+/* ============================================================
+ * 9. Modellname
+ * ============================================================
+ */
+
+#response-message-model-name {
+  color: #7f8790 !important;
+  font-weight: 400 !important;
+}
+
+.dark #response-message-model-name {
+  color: #aeb5bd !important;
+}
+
+
+/* ============================================================
+ * 10. Thinking / Reasoning / Detail-Status
+ * ============================================================
+ */
+
+#response-content-container button.text-gray-500,
+#response-content-container [class~="text-gray-500"] {
+  color: #9097a0 !important;
+}
+
+#response-content-container button.text-gray-500:hover {
+  color: #69717a !important;
+}
+
+.dark #response-content-container button.text-gray-500,
+.dark #response-content-container [class~="text-gray-500"] {
+  color: #aeb5bd !important;
+}
+
+
+/* ============================================================
+ * 11. Abstand Modellname → Inhalt
+ * ============================================================
+ */
+
+#messages-container #response-content-container {
+  margin-top: 0.30rem !important;
+}
+
+
+/* ============================================================
+ * 12. Thinking / Tool-Aktivität → eigentliche Antwort
+ * ============================================================
+ */
+
+#messages-container
+#response-content-container
+> div
+> .w-full
++ .markdown-prose {
+  margin-top: 0.80rem !important;
+}
+
+#messages-container
+#response-content-container
+> div
+> .markdown-prose
++ .whitespace-pre-wrap {
+  margin-top: 0.80rem !important;
+}
+
+
+/* ============================================================
+ * 13. Aktionsicons unter Assistant-Antworten
+ * ============================================================
+ */
+
+#messages-container .buttons {
+  margin-top: 1rem !important;
+  color: #858c94 !important;
+}
+
+#messages-container .buttons button:hover {
+  color: #32373d !important;
+}
+
+.dark #messages-container .buttons {
+  color: #9ca3aa !important;
+}
+
+.dark #messages-container .buttons button:hover {
+  color: #e5e7eb !important;
+}
+
+
+/* ============================================================
+ * 14. User-Message-Aktionsicons
+ * ============================================================
+ */
+
+.user-message button {
+  color: #858c94;
+}
+
+.user-message button:hover {
+  color: #32373d;
+}
+
+
+/* ============================================================
+ * 15. Message Input / Composer
+ * ============================================================
+ *
+ * Flacher, ruhiger Look:
+ * - kein Glow
+ * - kein Glassmorphism
+ * - opake Fläche
+ * - feine klare Umrandung
+ * - nur sehr dezenter Schatten
+ */
+
+#message-input-container {
+  background: #ffffff !important;
+  background-image: none !important;
+
+  border: 1px solid #dfe3e8 !important;
+
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.025),
+    0 3px 10px rgba(0, 0, 0, 0.025) !important;
+
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+
+  border-radius: 1.6rem !important;
+
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease !important;
+}
+
+
+/* Hover */
+
+#message-input-container:hover {
+  border-color: #d3d8de !important;
+}
+
+
+/* Fokus */
+
+#message-input-container:focus-within {
+  border-color: #bfc6ce !important;
+
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.025),
+    0 3px 10px rgba(0, 0, 0, 0.025) !important;
+
+  outline: none !important;
+}
+
+
+/* ============================================================
+ * 16. Composer – Texteingabe
+ * ============================================================
+ */
+
+#message-input-container .ProseMirror {
+  color: #30363d !important;
+}
+
+
+/* Placeholder heller */
+
+#message-input-container .ProseMirror[data-placeholder]::before,
+#message-input-container [data-placeholder]::before {
+  color: #a8afb7 !important;
+}
+
+
+/* ============================================================
+ * 17. Composer – Bedienelemente
+ * ============================================================
+ */
+
+#message-input-container button {
+  color: #626a73;
+}
+
+#message-input-container button:hover {
+  color: #30363d;
+}
+
+#message-input-container button,
+#message-input-container [role="button"] {
+  transition:
+    color 120ms ease,
+    background-color 120ms ease !important;
+}
+
+
+/* ============================================================
+ * 18. Dark Mode – Composer
+ * ============================================================
+ */
+
+.dark #message-input-container {
+  background: #17191c !important;
+
+  border-color: #353a40 !important;
+
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.15),
+    0 3px 10px rgba(0, 0, 0, 0.10) !important;
+
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.dark #message-input-container:hover {
+  border-color: #434950 !important;
+}
+
+.dark #message-input-container:focus-within {
+  border-color: #555c64 !important;
+}
+
+.dark #message-input-container .ProseMirror {
+  color: #e5e7eb !important;
+}
+
+.dark #message-input-container .ProseMirror[data-placeholder]::before,
+.dark #message-input-container [data-placeholder]::before {
+  color: #777f88 !important;
+}
+
+
+/* ============================================================
+ * 19. Dark Mode – Sidebar
+ * ============================================================
+ */
+
+.dark
+#sidebar-folders button[aria-controls="sidebar-folders-content"],
+.dark
+#sidebar-chats button[aria-controls="sidebar-chats-content"] {
+  color: #7f8790 !important;
+}
+
+.dark
+#sidebar-chats-content
+> div
+> div
+> div[class~="text-xs"][class~="text-gray-500"] {
+  color: #7f8790 !important;
+}
+
+.dark
+#sidebar-chats-content
+#sidebar-chat-item,
+.dark
+#sidebar-chats-content
+#sidebar-chat-item
+div[dir="auto"] {
+  color: #d4d7db !important;
+}
+
+.dark
+#sidebar-chats-content
+#sidebar-chat-item[aria-current="page"],
+.dark
+#sidebar-chats-content
+#sidebar-chat-item[aria-current="page"]
+div[dir="auto"] {
+  color: #f0f1f2 !important;
+}
+
+.dark
+#sidebar-folders-content
+[id^="folder-"][id$="-button"] {
+  color: #d4d7db !important;
+}
