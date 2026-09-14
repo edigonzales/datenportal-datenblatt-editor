@@ -126,7 +126,7 @@ body [class~="text-[16px]"] {
  */
 
 #sidebar-chats-content #sidebar-chat-item {
-  font-size: 0.92rem !important;
+  font-size: 13.9px !important; /* gleich gross wie die Navigationspunkte (Workspace, Notes, …) */
   font-weight: 400 !important;
   color: #3f444a !important;
 }
