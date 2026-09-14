@@ -483,3 +483,33 @@ div[dir="auto"] {
 [id^="folder-"][id$="-button"] {
   color: #d4d7db !important;
 }
+
+
+/* ============================================================
+ * 20. Header / Navbar – deckend statt Verlauf
+ * ============================================================
+ *
+ * Der Sticky-Header lag halbtransparent über dem scrollenden Chat.
+ * Jetzt: opake weisse Fläche mit grauer Unterkante.
+ */
+
+#navbar-bg-gradient-to-b {
+  background-image: none !important;
+  background-color: #ffffff !important;
+
+  /* Die ursprüngliche Verlaufsfläche reichte 2.5rem unter den Header.
+     Auf die tatsächliche Header-Höhe kürzen, damit die Linie direkt
+     unter dem Titel liegt. */
+  bottom: 0 !important;
+
+  border-bottom: 1px solid #dfe3e8 !important;
+}
+
+
+/* Dark Mode */
+
+.dark #navbar-bg-gradient-to-b {
+  background-color: #17191c !important;
+
+  border-bottom-color: #353a40 !important;
+}
