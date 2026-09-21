@@ -106,11 +106,12 @@ function scrollToDrafts(): void {
 <template>
   <div class="section-stack">
     <section class="action-grid">
-      <article class="action-card">
+      <article class="action-card action-card--disabled" aria-disabled="true">
         <h3>Metadaten von Quelle laden</h3>
         <p>Einen XTF-Katalog per URL laden, durchsuchen und Datasets oder DatasetSeries in den Editor übernehmen.</p>
+        <p class="action-card__notice">Der Quellenimport ist derzeit deaktiviert.</p>
         <div class="card-actions" style="margin-top: 16px">
-          <button class="button button--primary" type="button" @click="sourceDialogOpen = true">Quelle öffnen</button>
+          <button class="button button--primary" type="button" disabled @click="sourceDialogOpen = true">Quelle öffnen</button>
         </div>
       </article>
 
